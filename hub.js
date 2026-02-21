@@ -965,26 +965,28 @@
 
     // ✅ 블러/글로우 제거: 깔끔한 카드형 블록만
     function blockSpan(html, opt = {}) {
-      const bg = opt.bg || "rgba(10,14,24,0.86)";
-      const fg = opt.fg || "rgba(255,255,255,0.98)";
-      const br = opt.br || "18px";
-      return `
-        <span style="
-          display:inline-block;
-          padding:12px 16px;
-          border-radius:${br};
-          background:${bg};
-          color:${fg};
-          box-shadow: 0 18px 54px rgba(0,0,0,0.22);
-          letter-spacing: 0.4px;
-          border: 1px solid rgba(255,255,255,0.10);
-          filter:none;
-          backdrop-filter:none;
-          -webkit-backdrop-filter:none;
-          text-shadow:none;
-        ">${html}</span>
-      `;
-    }
+  const bg = opt.bg || "rgba(10,14,24,0.86)";
+  const fg = opt.fg || "#ffffff";   // 🔥 완전 흰색
+  const br = opt.br || "18px";
+
+  return `
+    <span style="
+      display:inline-block;
+      padding:12px 16px;
+      border-radius:${br};
+      background:${bg};
+      color:${fg};
+      box-shadow: 0 18px 54px rgba(0,0,0,0.22);
+      letter-spacing: 0.4px;
+      border: 1px solid rgba(255,255,255,0.10);
+      filter:none;
+      backdrop-filter:none;
+      -webkit-backdrop-filter:none;
+
+      text-shadow: 0 2px 6px rgba(0,0,0,0.85);  /* ⭐ 가독성 핵심 */
+    ">${html}</span>
+  `;
+}
 
     function openModal(title, body, hint) {
       UI.modalTitle.innerHTML = blockSpan(title, { bg: "rgba(255,255,255,0.90)", fg: "rgba(10,14,24,0.92)", br: "20px" });
