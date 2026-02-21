@@ -1,12 +1,8 @@
 // =====================================================
-// HBU.JS (FULL) - LEGO 3D BLOCK WORLD
-// - 전체 배경/캐릭터/건물/차량/소품 레고 스타일
-// - 포탈 6개 + 입장(Enter/E, 모바일 손떼기)
-// - 차량 가로/세로 이동 + 세로 위로갈 때 테일라이트(뒷모습) FIX
-// - 레고 하늘/구름/새 + 원근 + 파티클
-// - 고급 3D 그림자/AO + 스터드 + 브릭 텍스처
-// - 상단 타이틀: FA미니월드
-// - 줌아웃
+// HBU.JS (FULL) - LEGO 3D BLOCK WORLD (AAA Upgrade)
+// - (1) Baseplate studs grid locked to WORLD coords (no drift)
+// - (2) Minifig faces: expression + directional printing
+// - (3) Portal-themed LEGO decorations for all 6 portals
 // =====================================================
 
 const canvas = document.getElementById("world");
@@ -22,7 +18,7 @@ let W = 0, H = 0, DPR = 1;
 /** =========================
  *  VIEW(줌) - 줌아웃
  * ========================= */
-const VIEW = { zoom: 0.88, w: 0, h: 0 }; // 0.82~0.92
+const VIEW = { zoom: 0.88, w: 0, h: 0 };
 
 function resize() {
   DPR = Math.max(1, window.devicePixelRatio || 1);
@@ -45,7 +41,6 @@ function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function lerp(a, b, t) { return a + (b - a) * t; }
 function smoothstep(a, b, t) { t = clamp((t - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); }
 function rnd01(seed) {
-  // deterministic-ish pseudo random (fast)
   seed = (seed ^ 0x9e3779b9) >>> 0;
   seed = Math.imul(seed, 0x85ebca6b) >>> 0;
   seed = Math.imul(seed ^ (seed >>> 13), 0xc2b2ae35) >>> 0;
@@ -62,7 +57,7 @@ function hash01(s) {
 function isTouchDevice() { return (navigator.maxTouchPoints || 0) > 0; }
 
 /** =========================
- *  월드 + 카메라
+ *  WORLD / CAMERA
  * ========================= */
 const WORLD = { w: 2800, h: 2100, margin: 140 };
 
@@ -82,7 +77,7 @@ function updateCamera(dt) {
 }
 
 /** =========================
- *  포탈 건물 6개 (기존 유지)
+ *  PORTALS (6)
  * ========================= */
 const portals = [
   { key: "avoid",   label: "미니게임 피하기",   status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", x: 0, y: 0, w: 0, h: 0 },
@@ -95,7 +90,7 @@ const portals = [
 function portalsByKey(k) { return portals.find(p => p.key === k); }
 
 /** =========================
- *  플레이어 (레고 미니피규어)
+ *  PLAYER (LEGO MINIFIG)
  * ========================= */
 const player = {
   x: 360, y: 360,
@@ -105,13 +100,14 @@ const player = {
   animT: 0,
   bobT: 0,
   dir: "down",
+  face: { mood: "smile", moodT: 0 }, // smile | wow | spark
 };
 
 let activePortal = null;
 let entering = false;
 
 /** =========================
- *  입력
+ *  INPUT
  * ========================= */
 const keys = new Set();
 let dragging = false;
@@ -173,14 +169,14 @@ function clampPlayerToWorld() {
 }
 
 /** =========================
- *  도로/인도/횡단보도
+ *  ROADS / SIDEWALKS / CROSSINGS
  * ========================= */
 const roads = [];
 const sidewalks = [];
 const crossings = [];
 
 /** =========================
- *  자동차
+ *  CARS
  * ========================= */
 const cars = [];
 const CAR_COLORS = ["#ff3b30", "#ff9500", "#ffcc00", "#34c759", "#0a84ff", "#5856d6", "#ff2d55", "#ffffff"];
@@ -233,11 +229,12 @@ function seedCars() {
 }
 
 /** =========================
- *  레고 패턴/텍스처(한번 생성)
+ *  LEGO PATTERNS / BASEPLATE LOCK
  * ========================= */
 let studPattern = null;
 let brickPattern = null;
-let platePattern = null;
+
+const STUD = 24; // ✅ (1) WORLD 기준 스터드 간격 고정
 
 function makePattern(w, h, drawFn) {
   const c = document.createElement("canvas");
@@ -248,11 +245,10 @@ function makePattern(w, h, drawFn) {
 }
 
 function buildPatterns() {
-  // studs (general overlay)
-  studPattern = makePattern(64, 64, (g, w, h) => {
+  studPattern = makePattern(STUD * 4, STUD * 4, (g, w, h) => {
     g.clearRect(0, 0, w, h);
-    for (let y = 8; y < h; y += 20) {
-      for (let x = 8; x < w; x += 20) {
+    for (let y = STUD * 0.5; y < h; y += STUD) {
+      for (let x = STUD * 0.5; x < w; x += STUD) {
         g.fillStyle = "rgba(255,255,255,0.18)";
         g.beginPath(); g.arc(x, y, 4.2, 0, Math.PI * 2); g.fill();
         g.fillStyle = "rgba(0,0,0,0.10)";
@@ -263,7 +259,6 @@ function buildPatterns() {
     }
   });
 
-  // brick lines + micro scratches
   brickPattern = makePattern(120, 80, (g, w, h) => {
     g.fillStyle = "rgba(255,255,255,0.05)";
     g.fillRect(0, 0, w, h);
@@ -290,24 +285,10 @@ function buildPatterns() {
     }
     g.globalAlpha = 1;
   });
-
-  // base plate: studs grid
-  platePattern = makePattern(84, 84, (g, w, h) => {
-    g.fillStyle = "rgba(0,0,0,0.04)";
-    g.fillRect(0, 0, w, h);
-    for (let y = 10; y < h; y += 24) {
-      for (let x = 10; x < w; x += 24) {
-        g.fillStyle = "rgba(255,255,255,0.16)";
-        g.beginPath(); g.arc(x, y, 4.0, 0, Math.PI * 2); g.fill();
-        g.fillStyle = "rgba(0,0,0,0.10)";
-        g.beginPath(); g.arc(x + 1.2, y + 1.2, 4.0, 0, Math.PI * 2); g.fill();
-      }
-    }
-  });
 }
 
 /** =========================
- *  props (레고 소품)
+ *  props / signs
  * ========================= */
 const props = [];
 const signs = [];
@@ -323,7 +304,6 @@ function seedProps() {
     return false;
   };
 
-  // LEGO houses/shops
   for (let i = 0; i < 9; i++) {
     props.push({
       kind: "house",
@@ -343,11 +323,9 @@ function seedProps() {
     });
   }
 
-  // Amusement area (lego style)
   props.push({ kind: "ferris", x: WORLD.w * 0.84, y: WORLD.h * 0.78, s: 1.05 });
   props.push({ kind: "carousel", x: WORLD.w * 0.70, y: WORLD.h * 0.82, s: 1.0 });
 
-  // Scatter: trees, lamps, benches, flowers, fences
   const tries = 260;
   for (let i = 0; i < tries; i++) {
     const x = WORLD.margin + rnd01(10000 + i) * (WORLD.w - WORLD.margin * 2);
@@ -362,7 +340,6 @@ function seedProps() {
     else props.push({ kind: "fence", x, y, s: 0.90 + rnd01(18000 + i) * 0.70, a: (rnd01(19000 + i) < 0.5 ? 0 : Math.PI / 2) });
   }
 
-  // portal flowers + signs
   for (const p of portals) {
     props.push({ kind: "flower", x: p.x + p.w * 0.22, y: p.y + p.h + 28, s: 1.35 });
     props.push({ kind: "flower", x: p.x + p.w * 0.78, y: p.y + p.h + 20, s: 1.15 });
@@ -370,12 +347,12 @@ function seedProps() {
 
   const arch = portalsByKey("archery");
   const jang = portalsByKey("janggi");
-  signs.push({ x: arch.x + arch.w * 0.5 - 10, y: arch.y + arch.h + 92, text: "양궁 →", dir: "right" });
-  signs.push({ x: jang.x + jang.w * 0.5 + 10, y: jang.y + jang.h + 92, text: "← 장기", dir: "left" });
+  signs.push({ x: arch.x + arch.w * 0.5 - 10, y: arch.y + arch.h + 92, text: "양궁 →" });
+  signs.push({ x: jang.x + jang.w * 0.5 + 10, y: jang.y + jang.h + 92, text: "← 장기" });
 }
 
 /** =========================
- *  파티클/발자국(레고 스파클)
+ *  particles / footprints
  * ========================= */
 const particles = [];
 function spawnPortalParticles(p, t) {
@@ -423,7 +400,7 @@ function addFootprint(dt) {
 }
 
 /** =========================
- *  포탈 입장 존
+ *  portal enter zone
  * ========================= */
 function portalEnterZone(p) {
   const zx = p.x + p.w * 0.50 - 28;
@@ -438,7 +415,7 @@ function circleRectHit(cx, cy, r, rect) {
 }
 
 /** =========================
- *  입장
+ *  enter
  * ========================= */
 function tryEnter(p) {
   if (entering) return;
@@ -449,12 +426,14 @@ function tryEnter(p) {
     return;
   }
   entering = true;
+  player.face.mood = "wow"; // ✅ 입장 시 놀람 표정
+  player.face.moodT = 0.55;
   fadeEl.classList.add("on");
   setTimeout(() => window.location.href = p.url, 380);
 }
 
 /** =========================
- *  방향
+ *  direction helpers
  * ========================= */
 function updateDirFromAxes(ax, ay) {
   if (Math.abs(ay) >= Math.abs(ax)) player.dir = ay < 0 ? "up" : "down";
@@ -466,7 +445,7 @@ function updateDirFromDelta(dx, dy) {
 }
 
 /** =========================
- *  배경(레고 하늘/구름/새)
+ *  background sky/clouds/birds
  * ========================= */
 const clouds = Array.from({ length: 12 }, (_, i) => ({
   x: rnd01(70000 + i) * 3400,
@@ -484,7 +463,7 @@ const birds = Array.from({ length: 7 }, (_, i) => ({
 }));
 
 /** =========================
- *  Depth sorting
+ *  depth sort
  * ========================= */
 function getFootY(entity) {
   if (entity.kind === "building") return entity.y + entity.h;
@@ -504,13 +483,12 @@ function getFootY(entity) {
 }
 
 /** =========================
- *  월드 레이아웃
+ *  layout
  * ========================= */
 function layoutWorld() {
   WORLD.w = Math.max(3200, Math.floor(W * 3.7));
   WORLD.h = Math.max(2350, Math.floor(H * 3.3));
 
-  // 포탈 크기
   const base = 240;
   const mul = { S: 0.82, M: 1.00, L: 1.26 };
   for (const p of portals) {
@@ -519,7 +497,6 @@ function layoutWorld() {
     p.h = base * 0.92 * m;
   }
 
-  // 포탈 배치(기존과 유사)
   portalsByKey("jump").x = WORLD.w * 0.22; portalsByKey("jump").y = WORLD.h * 0.22;
   portalsByKey("archery").x = WORLD.w * 0.50; portalsByKey("archery").y = WORLD.h * 0.18;
   portalsByKey("omok").x = WORLD.w * 0.78; portalsByKey("omok").y = WORLD.h * 0.24;
@@ -535,14 +512,13 @@ function layoutWorld() {
     p.y = clamp(p.y, WORLD.margin, WORLD.h - WORLD.margin - p.h);
   }
 
-  // 도로/인도/횡단보도
   roads.length = 0; sidewalks.length = 0; crossings.length = 0;
 
-  roads.push({ x: WORLD.w * 0.10, y: WORLD.h * 0.48, w: WORLD.w * 0.80, h: 144 }); // main horizontal
+  roads.push({ x: WORLD.w * 0.10, y: WORLD.h * 0.48, w: WORLD.w * 0.80, h: 144 });
   sidewalks.push({ x: WORLD.w * 0.10, y: WORLD.h * 0.48 - 52, w: WORLD.w * 0.80, h: 40 });
   sidewalks.push({ x: WORLD.w * 0.10, y: WORLD.h * 0.48 + 156, w: WORLD.w * 0.80, h: 40 });
 
-  roads.push({ x: WORLD.w * 0.50 - 70, y: WORLD.h * 0.10, w: 140, h: WORLD.h * 0.82 }); // vertical
+  roads.push({ x: WORLD.w * 0.50 - 70, y: WORLD.h * 0.10, w: 140, h: WORLD.h * 0.82 });
   sidewalks.push({ x: WORLD.w * 0.50 - 70 - 52, y: WORLD.h * 0.10, w: 38, h: WORLD.h * 0.82 });
   sidewalks.push({ x: WORLD.w * 0.50 + 70 + 14, y: WORLD.h * 0.10, w: 38, h: WORLD.h * 0.82 });
 
@@ -553,13 +529,12 @@ function layoutWorld() {
   seedCars();
   seedProps();
 
-  // 플레이어 시작
   player.x = clamp(player.x, WORLD.margin + 90, WORLD.w - WORLD.margin - 90);
   player.y = clamp(player.y, WORLD.margin + 90, WORLD.h - WORLD.margin - 90);
 }
 
 /** =========================
- *  LEGO 팔레트(포탈 타입별)
+ *  palettes
  * ========================= */
 function buildingPalette(type) {
   const pal = {
@@ -574,7 +549,7 @@ function buildingPalette(type) {
 }
 
 /** =========================
- *  LEGO 3D 유틸
+ *  LEGO 3D utils
  * ========================= */
 function roundRect(x, y, w, h, r) {
   const rr = Math.min(r, w / 2, h / 2);
@@ -621,7 +596,6 @@ function groundAO(x, y, rx, ry, a = 0.22) {
 }
 
 function brick3D(x, y, w, h, color, r = 14) {
-  // front
   ctx.save();
   ctx.fillStyle = color;
   ctx.strokeStyle = "rgba(0,0,0,0.18)";
@@ -630,17 +604,14 @@ function brick3D(x, y, w, h, color, r = 14) {
   ctx.fill();
   ctx.stroke();
 
-  // top highlight strip (3D)
   ctx.fillStyle = "rgba(255,255,255,0.22)";
-  roundRect(x + 2, y + 2, w - 4, Math.max(8, h * 0.20), r - 2);
+  roundRect(x + 2, y + 2, w - 4, Math.max(8, h * 0.20), Math.max(2, r - 2));
   ctx.fill();
 
-  // side shade strip
   ctx.fillStyle = "rgba(0,0,0,0.14)";
-  roundRect(x + w - 10, y + 2, 8, h - 4, r - 2);
+  roundRect(x + w - 10, y + 2, 8, h - 4, Math.max(2, r - 2));
   ctx.fill();
 
-  // brick lines texture
   ctx.save();
   ctx.globalAlpha = 0.35;
   ctx.fillStyle = brickPattern || "rgba(255,255,255,0.08)";
@@ -648,7 +619,6 @@ function brick3D(x, y, w, h, color, r = 14) {
   ctx.fill();
   ctx.restore();
 
-  // studs overlay (if big enough)
   if (w > 40 && h > 26) {
     const cols = Math.max(1, Math.floor(w / 26));
     const rows = Math.max(1, Math.floor(h / 26));
@@ -679,9 +649,7 @@ function brick3D(x, y, w, h, color, r = 14) {
 }
 
 function windowLego(x, y, w, h) {
-  // frame
   brick3D(x - 3, y - 3, w + 6, h + 6, "#ffffff", 10);
-  // glass
   ctx.save();
   const g = ctx.createLinearGradient(x, y, x + w, y + h);
   g.addColorStop(0, "rgba(120,220,255,0.95)");
@@ -692,7 +660,6 @@ function windowLego(x, y, w, h) {
   roundRect(x, y, w, h, 9);
   ctx.fill();
   ctx.stroke();
-  // reflection stripe
   ctx.globalAlpha = 0.28;
   ctx.fillStyle = "rgba(255,255,255,0.85)";
   roundRect(x + 2, y + 2, w * 0.45, 6, 6);
@@ -701,18 +668,17 @@ function windowLego(x, y, w, h) {
 }
 
 /** =========================
- *  draw: 하늘/구름/새/땅
+ *  SKY / CLOUDS / GROUND
  * ========================= */
 function drawSkyWorld(t) {
   const g = ctx.createLinearGradient(0, 0, 0, WORLD.h);
-  g.addColorStop(0, "#89d2ff");     // lego sky
+  g.addColorStop(0, "#89d2ff");
   g.addColorStop(0.42, "#b9f0ff");
   g.addColorStop(0.70, "#bdf6c8");
-  g.addColorStop(1, "#f7d0ff");     // playful
+  g.addColorStop(1, "#f7d0ff");
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, WORLD.w, WORLD.h);
 
-  // soft haze slabs (very subtle, still opaque vibe)
   ctx.save();
   ctx.globalAlpha = 0.10;
   ctx.fillStyle = "#ffffff";
@@ -722,7 +688,6 @@ function drawSkyWorld(t) {
   }
   ctx.restore();
 
-  // lego birds (blocky)
   ctx.save();
   ctx.globalAlpha = 0.55;
   ctx.fillStyle = "rgba(0,0,0,0.50)";
@@ -736,14 +701,7 @@ function drawSkyWorld(t) {
   ctx.restore();
 }
 
-function drawCloudsWorld() {
-  for (const c of clouds) {
-    const alpha = (c.layer === 0 ? 0.90 : 0.74);
-    legoCloud(c.x, c.y, 170 * c.s, 58 * c.s, alpha);
-  }
-}
 function legoCloud(x, y, w, h, a) {
-  // blocky cloud: stack of rounded bricks
   ctx.save();
   ctx.globalAlpha = a;
   const parts = 6;
@@ -755,18 +713,46 @@ function legoCloud(x, y, w, h, a) {
   ctx.restore();
 }
 
+function drawCloudsWorld() {
+  for (const c of clouds) {
+    const alpha = (c.layer === 0 ? 0.90 : 0.74);
+    legoCloud(c.x, c.y, 170 * c.s, 58 * c.s, alpha);
+  }
+}
+
+// ✅ (1) WORLD 기준 격자 고정 플레이트 렌더링
+function drawBaseplateStuds(x0, y0, x1, y1) {
+  // view 범위만 그려 성능 유지
+  const startX = Math.floor(x0 / STUD) * STUD;
+  const startY = Math.floor(y0 / STUD) * STUD;
+  const endX = Math.ceil(x1 / STUD) * STUD;
+  const endY = Math.ceil(y1 / STUD) * STUD;
+
+  ctx.save();
+  ctx.globalAlpha = 0.22;
+
+  for (let y = startY; y <= endY; y += STUD) {
+    for (let x = startX; x <= endX; x += STUD) {
+      // studs: tiny bevel
+      ctx.fillStyle = "rgba(255,255,255,0.18)";
+      ctx.beginPath(); ctx.arc(x + STUD * 0.5 - 1.2, y + STUD * 0.5 - 1.4, 4.1, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "rgba(0,0,0,0.11)";
+      ctx.beginPath(); ctx.arc(x + STUD * 0.5 + 0.8, y + STUD * 0.5 + 1.0, 4.3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.14)";
+      ctx.beginPath(); ctx.arc(x + STUD * 0.5 - 1.8, y + STUD * 0.5 - 2.0, 2.1, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
 function drawGroundWorld() {
-  // base plate color
   ctx.save();
   ctx.fillStyle = "#43d17a";
   ctx.fillRect(0, WORLD.h * 0.30, WORLD.w, WORLD.h * 0.70);
 
-  // plate studs pattern
-  ctx.globalAlpha = 0.40;
-  ctx.fillStyle = platePattern || "rgba(255,255,255,0.08)";
-  ctx.fillRect(0, WORLD.h * 0.30, WORLD.w, WORLD.h * 0.70);
+  // studs locked (WORLD coords)
+  drawBaseplateStuds(0, WORLD.h * 0.30, WORLD.w, WORLD.h);
 
-  // depth shade (bottom darker)
   ctx.globalAlpha = 0.12;
   const sh = ctx.createLinearGradient(0, WORLD.h * 0.30, 0, WORLD.h);
   sh.addColorStop(0, "rgba(0,0,0,0.00)");
@@ -777,17 +763,13 @@ function drawGroundWorld() {
 }
 
 /** =========================
- *  도로/인도/횡단보도(레고 타일)
+ *  roads / sidewalks / crossings
  * ========================= */
 function drawRoadsAndSidewalks(t) {
-  // roads
   for (const r of roads) {
-    // cast shadow / curb
     groundAO(r.x + r.w * 0.52, r.y + r.h * 0.65, r.w * 0.55, r.h * 0.40, 0.18);
-
     brick3D(r.x, r.y, r.w, r.h, "#2c2f3a", 44);
 
-    // dashed center
     ctx.save();
     ctx.globalAlpha = 0.80;
     ctx.fillStyle = "#ffffff";
@@ -798,7 +780,6 @@ function drawRoadsAndSidewalks(t) {
     }
     ctx.restore();
 
-    // highlight strip
     ctx.save();
     ctx.globalAlpha = 0.16;
     ctx.fillStyle = "#ffffff";
@@ -807,12 +788,10 @@ function drawRoadsAndSidewalks(t) {
     ctx.restore();
   }
 
-  // sidewalks
   for (const s of sidewalks) {
     groundAO(s.x + s.w * 0.52, s.y + s.h * 0.70, s.w * 0.52, s.h * 0.55, 0.12);
     brick3D(s.x, s.y, s.w, s.h, "#ffe9d6", 20);
 
-    // tile lines
     ctx.save();
     ctx.globalAlpha = 0.18;
     ctx.strokeStyle = "rgba(0,0,0,0.35)";
@@ -827,7 +806,6 @@ function drawRoadsAndSidewalks(t) {
     ctx.restore();
   }
 
-  // crossings
   for (const c of crossings) {
     groundAO(c.x + c.w * 0.5, c.y + c.h * 0.65, c.w * 0.55, c.h * 0.45, 0.12);
     brick3D(c.x, c.y, c.w, c.h, "#2c2f3a", 16);
@@ -844,7 +822,7 @@ function drawRoadsAndSidewalks(t) {
 }
 
 /** =========================
- *  표지판(레고)
+ *  sign
  * ========================= */
 function drawSign(s, t) {
   const sway = Math.sin(t * 1.6 + s.x * 0.01) * 1.2;
@@ -853,11 +831,7 @@ function drawSign(s, t) {
   ctx.translate(s.x, s.y + sway);
 
   groundAO(0, 26, 22, 8, 0.16);
-
-  // pole
   brick3D(-6, -20, 12, 48, "#cfd5dd", 8);
-
-  // sign board
   brick3D(-62, -58, 124, 38, "#ffffff", 16);
   brick3D(-60, -56, 120, 34, "#0a84ff", 14);
 
@@ -865,7 +839,6 @@ function drawSign(s, t) {
   ctx.font = "900 14px system-ui";
   ctx.fillText(s.text, -44, -34);
 
-  // stud accent
   ctx.globalAlpha = 0.9;
   ctx.fillStyle = "#ffcc00";
   ctx.beginPath(); ctx.arc(50, -38, 5, 0, Math.PI * 2); ctx.fill();
@@ -874,7 +847,7 @@ function drawSign(s, t) {
 }
 
 /** =========================
- *  LEGO 자동차(가로/세로 + 테일라이트 FIX)
+ *  car draw
  * ========================= */
 function drawCar(c, t) {
   const bounce = Math.sin(c.bob) * 0.6;
@@ -882,21 +855,15 @@ function drawCar(c, t) {
   ctx.translate(c.x, c.y + bounce);
 
   if (c.axis === "h") {
-    // side view (flip)
     if (c.dir < 0) ctx.scale(-1, 1);
-
     const w = c.w, h = c.h;
 
     groundAO(0, h * 0.62, w * 0.60, h * 0.28, 0.20);
-
-    // body bricks
     brick3D(-w * 0.54, -h * 0.44, w * 1.08, h * 0.86, c.color, 12);
 
-    // top cabin
     brick3D(-w * 0.18, -h * 0.78, w * 0.46, h * 0.40, "#ffffff", 10);
     windowLego(-w * 0.14, -h * 0.68, w * 0.30, h * 0.22);
 
-    // wheels
     ctx.save();
     ctx.fillStyle = "#1a1a1a";
     ctx.globalAlpha = 0.95;
@@ -911,7 +878,6 @@ function drawCar(c, t) {
     ctx.fill();
     ctx.restore();
 
-    // headlight(front)
     ctx.save();
     ctx.globalAlpha = 0.9;
     ctx.fillStyle = "#ffffff";
@@ -923,19 +889,13 @@ function drawCar(c, t) {
     return;
   }
 
-  // vertical: top-ish view
   const w = c.w, h = c.h;
-  const goingDown = c.dir > 0; // + 아래로
+  const goingDown = c.dir > 0;
 
   groundAO(0, h * 0.46, w * 0.75, h * 0.22, 0.20);
-
-  // body
   brick3D(-w * 0.60, -h * 0.54, w * 1.20, h * 1.08, c.color, 14);
-
-  // glass
   windowLego(-w * 0.34, -h * 0.32, w * 0.68, h * 0.55);
 
-  // wheels (block style)
   ctx.save();
   ctx.fillStyle = "#1a1a1a";
   ctx.globalAlpha = 0.95;
@@ -946,9 +906,8 @@ function drawCar(c, t) {
   ctx.fill();
   ctx.restore();
 
-  // LIGHTS: FIX (위로 갈 때 뒷모습=테일라이트가 위쪽)
+  // ✅ FIX: 위로 갈 때는 위쪽에 테일라이트(뒷모습)
   if (goingDown) {
-    // headlights at bottom
     ctx.save();
     ctx.globalAlpha = 0.95;
     ctx.fillStyle = "#ffffff";
@@ -957,7 +916,6 @@ function drawCar(c, t) {
     ctx.fill();
     ctx.restore();
   } else {
-    // taillights at top (when going up)
     ctx.save();
     ctx.globalAlpha = 0.95;
     ctx.fillStyle = "#ff2d55";
@@ -965,7 +923,6 @@ function drawCar(c, t) {
     roundRect(w * 0.06,  -h * 0.56, w * 0.18, h * 0.10, 8);
     ctx.fill();
 
-    // trunk line
     ctx.globalAlpha = 0.25;
     ctx.fillStyle = "#ffffff";
     roundRect(-w * 0.38, -h * 0.52, w * 0.76, h * 0.06, 10);
@@ -977,119 +934,14 @@ function drawCar(c, t) {
 }
 
 /** =========================
- *  포탈 건물(레고 AAA 디테일)
+ *  portal roof
  * ========================= */
-function drawBuildingPortal(p, t) {
-  const pal = buildingPalette(p.type);
-  const isActive = (activePortal === p);
-  const pulse = 0.55 + 0.45 * Math.sin(t * 3.2 + hash01(p.key) * 6);
-  const glow = isActive ? 1.0 : 0.55;
-
-  // ground shadow
-  groundAO(p.x + p.w * 0.5, p.y + p.h * 0.88, p.w * 0.40, p.h * 0.18, 0.25);
-
-  // floor glow ring
-  const zx = p.x + p.w * 0.5;
-  const zy = p.y + p.h * 0.86;
-  ctx.save();
-  ctx.globalAlpha = (isActive ? 0.30 : 0.16) + 0.10 * pulse * glow;
-  ctx.fillStyle = (p.status === "open") ? "rgba(10,132,255,0.92)" : "rgba(255,149,0,0.86)";
-  ctx.beginPath();
-  ctx.ellipse(zx, zy, 70, 22, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  // main building: stacked bricks
-  const bodyX = p.x + 16;
-  const bodyY = p.y + 54;
-  const bodyW = p.w - 32;
-  const bodyH = p.h - 82;
-
-  // layers for "real LEGO bricks"
-  const brickH = 18;
-  const rows = Math.max(4, Math.floor(bodyH / brickH));
-  for (let i = 0; i < rows; i++) {
-    const y = bodyY + i * brickH;
-    const a = 10 + Math.sin(t * 0.7 + i * 0.3 + hash01(p.key) * 8) * 1.0;
-    const col = (i % 2 === 0) ? pal.main : shadeHex(pal.main, -10);
-    brick3D(bodyX, y, bodyW, brickH + 2, col, 16);
-    // slight AO between bricks
-    ctx.save();
-    ctx.globalAlpha = 0.10;
-    ctx.fillStyle = "rgba(0,0,0,0.35)";
-    ctx.fillRect(bodyX + 8, y + brickH - 2, bodyW - 16, 2);
-    ctx.restore();
-  }
-
-  // roof: type-based lego roof
-  drawPortalRoofLego(p, pal, t);
-
-  // windows (more)
-  const winRowY = p.y + p.h * 0.54;
-  const winCount = 4;
-  for (let i = 0; i < winCount; i++) {
-    const wx = p.x + p.w * 0.18 + i * (p.w * 0.16);
-    const wy = winRowY;
-    windowLego(wx, wy, p.w * 0.12, p.h * 0.10);
-  }
-
-  // door
-  const dx = p.x + p.w * 0.43;
-  const dy = p.y + p.h * 0.66;
-  const dw = p.w * 0.14;
-  const dh = p.h * 0.22;
-  brick3D(dx - 4, dy - 4, dw + 8, dh + 8, "#ffffff", 12);
-  brick3D(dx, dy, dw, dh, "#ffe9d6", 10);
-  windowLego(dx + dw * 0.16, dy + dh * 0.12, dw * 0.68, dh * 0.40);
-
-  ctx.save();
-  ctx.globalAlpha = 0.95;
-  ctx.fillStyle = "#ffcc00";
-  ctx.beginPath();
-  ctx.arc(dx + dw * 0.80, dy + dh * 0.56, 3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  // sign board (title)
-  const signY = p.y + 14;
-  const sx = p.x + p.w * 0.16;
-  const sw = p.w * 0.68;
-  brick3D(sx - 4, signY - 4, sw + 8, 42, "#ffffff", 18);
-  brick3D(sx, signY, sw, 34, pal.accent, 16);
-
-  ctx.save();
-  ctx.fillStyle = "rgba(0,0,0,0.92)";
-  ctx.font = "900 13px system-ui";
-  ctx.fillText(p.label, sx + 12, signY + 22);
-  ctx.restore();
-
-  // soon badge
-  if (p.status !== "open") {
-    brick3D(sx + sw * 0.60, signY + 38, sw * 0.36, 26, "#ffffff", 14);
-    ctx.save();
-    ctx.fillStyle = "rgba(0,0,0,0.86)";
-    ctx.font = "900 11px system-ui";
-    ctx.fillText("오픈준비중", sx + sw * 0.62, signY + 56);
-    ctx.restore();
-  }
-
-  // active glow border
-  ctx.save();
-  ctx.globalAlpha = (0.06 + 0.12 * pulse) * glow;
-  ctx.fillStyle = isActive ? "rgba(10,132,255,0.85)" : "rgba(255,149,0,0.65)";
-  roundRect(p.x + 10, p.y + 12, p.w - 20, p.h - 22, 22);
-  ctx.fill();
-  ctx.restore();
-}
-
 function drawPortalRoofLego(p, pal, t) {
   const x = p.x, y = p.y, w = p.w;
 
   if (p.type === "tower") {
-    // tall tower cap + flag
     brick3D(x + w * 0.38, y + 6, w * 0.24, 70, pal.roof, 18);
 
-    // flag
     const sway = Math.sin(t * 2.2 + hash01(p.key) * 10) * 8;
     ctx.save();
     ctx.strokeStyle = "rgba(0,0,0,0.25)";
@@ -1111,20 +963,17 @@ function drawPortalRoofLego(p, pal, t) {
   }
 
   if (p.type === "dojo") {
-    // curved-ish roof made by bricks
     brick3D(x + w * 0.18, y + 28, w * 0.64, 46, pal.roof, 22);
     brick3D(x + w * 0.26, y + 14, w * 0.48, 36, shadeHex(pal.roof, +12), 22);
     return;
   }
 
   if (p.type === "igloo") {
-    // igloo dome blocks
     const cx = x + w * 0.5;
     for (let i = 0; i < 5; i++) {
       const ww = w * (0.52 - i * 0.08);
       brick3D(cx - ww * 0.5, y + 18 + i * 12, ww, 22, pal.roof, 18);
     }
-    // snow puff
     const puff = 0.5 + 0.5 * Math.sin(t * 1.6 + hash01(p.key) * 10);
     ctx.save();
     ctx.globalAlpha = 0.20 + 0.18 * puff;
@@ -1134,11 +983,9 @@ function drawPortalRoofLego(p, pal, t) {
   }
 
   if (p.type === "cafe" || p.type === "gym") {
-    // flat roof + awning or logo
     brick3D(x + w * 0.18, y + 18, w * 0.64, 46, pal.roof, 18);
 
     if (p.type === "cafe") {
-      // awning stripes
       const sway = Math.sin(t * 2.0 + hash01(p.key) * 10) * 2;
       brick3D(x + w * 0.18, y + 68 + sway, w * 0.64, 26, "#ffffff", 14);
       ctx.save();
@@ -1149,7 +996,6 @@ function drawPortalRoofLego(p, pal, t) {
       }
       ctx.restore();
     } else {
-      // gym bolt icon
       const blink = Math.sin(t * 3.2 + hash01(p.key) * 10) > 0.2;
       ctx.save();
       ctx.globalAlpha = blink ? 0.95 : 0.55;
@@ -1168,10 +1014,8 @@ function drawPortalRoofLego(p, pal, t) {
     return;
   }
 
-  // arcade
   brick3D(x + w * 0.20, y + 28, w * 0.60, 50, pal.roof, 20);
 
-  // heart stud
   const beat = 0.9 + 0.15 * (0.5 + 0.5 * Math.sin(t * 3.0 + hash01(p.key) * 10));
   ctx.save();
   ctx.globalAlpha = 0.90;
@@ -1187,48 +1031,295 @@ function drawPortalRoofLego(p, pal, t) {
 }
 
 /** =========================
- *  집/상점(레고)
+ *  ✅ (3) Portal Theme Decorations
+ * ========================= */
+function drawPortalDecorations(p, t) {
+  const cx = p.x + p.w * 0.5;
+  const baseY = p.y + p.h + 18;
+  const pulse = 0.5 + 0.5 * Math.sin(t * 3.0 + hash01(p.key) * 12);
+
+  // small platform
+  ctx.save();
+  groundAO(cx, baseY + 18, 110, 18, 0.12);
+  brick3D(cx - 120, baseY, 240, 26, "#ffffff", 16);
+  ctx.restore();
+
+  if (p.key === "archery") {
+    // target + arrow
+    const tx = cx - 74, ty = baseY - 76;
+    brick3D(tx, ty, 148, 70, "#ffffff", 18);
+    // rings
+    const rings = ["#ff2d55", "#ffffff", "#0a84ff", "#ffffff", "#ffcc00"];
+    for (let i = 0; i < rings.length; i++) {
+      ctx.save();
+      ctx.globalAlpha = 0.95;
+      ctx.fillStyle = rings[i];
+      roundRect(tx + 12 + i * 10, ty + 10 + i * 6, 124 - i * 20, 50 - i * 12, 16);
+      ctx.fill();
+      ctx.restore();
+    }
+    // arrow
+    brick3D(cx + 62, baseY - 52, 70, 12, "#cfd5dd", 10);
+    brick3D(cx + 120, baseY - 56, 12, 20, "#ffcc00", 10);
+  }
+
+  if (p.key === "janggi") {
+    // janggi board + pieces
+    const bx = cx - 92, by = baseY - 70;
+    brick3D(bx, by, 184, 66, "#ffe9d6", 14);
+
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    ctx.strokeStyle = "rgba(0,0,0,0.65)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 8; i++) {
+      const x = bx + 16 + i * 19;
+      ctx.beginPath(); ctx.moveTo(x, by + 10); ctx.lineTo(x, by + 56); ctx.stroke();
+    }
+    for (let j = 0; j <= 4; j++) {
+      const y = by + 12 + j * 11;
+      ctx.beginPath(); ctx.moveTo(bx + 16, y); ctx.lineTo(bx + 168, y); ctx.stroke();
+    }
+    ctx.restore();
+
+    // pieces
+    const piece = (x, y, col) => {
+      brick3D(x - 12, y - 12, 24, 24, "#ffffff", 12);
+      brick3D(x - 10, y - 10, 20, 20, col, 12);
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,0.80)";
+      ctx.font = "900 10px system-ui";
+      ctx.fillText("將", x - 7, y + 4);
+      ctx.restore();
+    };
+    piece(cx - 52, baseY - 34, "#ff2d55");
+    piece(cx - 12, baseY - 46, "#0a84ff");
+    piece(cx + 30, baseY - 34, "#34c759");
+  }
+
+  if (p.key === "omok") {
+    // omok board + stones
+    const bx = cx - 92, by = baseY - 70;
+    brick3D(bx, by, 184, 66, "#d4a06a", 14);
+
+    ctx.save();
+    ctx.globalAlpha = 0.25;
+    ctx.strokeStyle = "rgba(0,0,0,0.70)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 9; i++) {
+      const x = bx + 18 + i * 17;
+      ctx.beginPath(); ctx.moveTo(x, by + 10); ctx.lineTo(x, by + 56); ctx.stroke();
+    }
+    for (let j = 0; j < 5; j++) {
+      const y = by + 12 + j * 11;
+      ctx.beginPath(); ctx.moveTo(bx + 16, y); ctx.lineTo(bx + 168, y); ctx.stroke();
+    }
+    ctx.restore();
+
+    const stone = (x, y, col) => {
+      groundAO(x, y + 10, 10, 4, 0.12);
+      brick3D(x - 10, y - 10, 20, 20, col, 12);
+      ctx.save();
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = studPattern;
+      ctx.fillRect(x - 10, y - 10, 20, 20);
+      ctx.restore();
+    };
+    stone(cx - 40, baseY - 40, "#111111");
+    stone(cx - 10, baseY - 30, "#ffffff");
+    stone(cx + 22, baseY - 42, "#111111");
+  }
+
+  if (p.key === "snow") {
+    // snowman + snowball
+    const sx = cx - 38, sy = baseY - 76;
+    brick3D(sx - 10, sy + 24, 56, 32, "#ffffff", 18);
+    brick3D(sx,      sy,      36, 30, "#ffffff", 18);
+
+    // face dots
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.75)";
+    ctx.beginPath();
+    ctx.arc(sx + 14, sy + 12, 1.6, 0, Math.PI * 2);
+    ctx.arc(sx + 22, sy + 12, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,0.75)";
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.arc(sx + 18, sy + 18, 5, 0, Math.PI * 0.9);
+    ctx.stroke();
+    ctx.restore();
+
+    brick3D(cx + 56, baseY - 34, 32, 32, "#ffffff", 16);
+    // sparkle
+    ctx.save();
+    ctx.globalAlpha = 0.10 + 0.12 * pulse;
+    ctx.fillStyle = "rgba(10,132,255,0.85)";
+    ctx.beginPath();
+    ctx.ellipse(cx + 72, baseY - 18, 32, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  if (p.key === "jump") {
+    // trampoline / jump pad
+    const px = cx - 92, py = baseY - 66;
+    brick3D(px, py, 184, 26, "#5856d6", 16);
+    brick3D(px + 10, py + 6, 164, 14, "#0a84ff", 14);
+
+    // springs
+    ctx.save();
+    ctx.globalAlpha = 0.85;
+    for (let i = 0; i < 6; i++) {
+      brick3D(px + 14 + i * 28, py + 30, 12, 10, "#ffcc00", 10);
+    }
+    ctx.restore();
+  }
+
+  if (p.key === "avoid") {
+    // cones + hurdles (obstacle course)
+    const ox = cx - 96, oy = baseY - 62;
+    const cone = (x, y) => {
+      brick3D(x, y, 22, 22, "#ff9500", 12);
+      brick3D(x + 4, y - 16, 14, 18, "#ffcc00", 10);
+    };
+    cone(ox + 10, oy + 24);
+    cone(ox + 52, oy + 14);
+    cone(ox + 96, oy + 22);
+
+    // hurdle
+    brick3D(cx + 40, baseY - 44, 80, 12, "#ffffff", 12);
+    brick3D(cx + 44, baseY - 64, 12, 32, "#cfd5dd", 10);
+    brick3D(cx + 104, baseY - 64, 12, 32, "#cfd5dd", 10);
+  }
+}
+
+/** =========================
+ *  portal building
+ * ========================= */
+function drawBuildingPortal(p, t) {
+  const pal = buildingPalette(p.type);
+  const isActive = (activePortal === p);
+  const pulse = 0.55 + 0.45 * Math.sin(t * 3.2 + hash01(p.key) * 6);
+  const glow = isActive ? 1.0 : 0.55;
+
+  groundAO(p.x + p.w * 0.5, p.y + p.h * 0.88, p.w * 0.40, p.h * 0.18, 0.25);
+
+  const zx = p.x + p.w * 0.5;
+  const zy = p.y + p.h * 0.86;
+  ctx.save();
+  ctx.globalAlpha = (isActive ? 0.30 : 0.16) + 0.10 * pulse * glow;
+  ctx.fillStyle = (p.status === "open") ? "rgba(10,132,255,0.92)" : "rgba(255,149,0,0.86)";
+  ctx.beginPath();
+  ctx.ellipse(zx, zy, 70, 22, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  const bodyX = p.x + 16;
+  const bodyY = p.y + 54;
+  const bodyW = p.w - 32;
+  const bodyH = p.h - 82;
+
+  const brickH = 18;
+  const rows = Math.max(4, Math.floor(bodyH / brickH));
+  for (let i = 0; i < rows; i++) {
+    const y = bodyY + i * brickH;
+    const col = (i % 2 === 0) ? pal.main : shadeHex(pal.main, -10);
+    brick3D(bodyX, y, bodyW, brickH + 2, col, 16);
+
+    ctx.save();
+    ctx.globalAlpha = 0.10;
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.fillRect(bodyX + 8, y + brickH - 2, bodyW - 16, 2);
+    ctx.restore();
+  }
+
+  drawPortalRoofLego(p, pal, t);
+
+  const winRowY = p.y + p.h * 0.54;
+  for (let i = 0; i < 4; i++) {
+    const wx = p.x + p.w * 0.18 + i * (p.w * 0.16);
+    windowLego(wx, winRowY, p.w * 0.12, p.h * 0.10);
+  }
+
+  const dx = p.x + p.w * 0.43;
+  const dy = p.y + p.h * 0.66;
+  const dw = p.w * 0.14;
+  const dh = p.h * 0.22;
+  brick3D(dx - 4, dy - 4, dw + 8, dh + 8, "#ffffff", 12);
+  brick3D(dx, dy, dw, dh, "#ffe9d6", 10);
+  windowLego(dx + dw * 0.16, dy + dh * 0.12, dw * 0.68, dh * 0.40);
+
+  ctx.save();
+  ctx.globalAlpha = 0.95;
+  ctx.fillStyle = "#ffcc00";
+  ctx.beginPath();
+  ctx.arc(dx + dw * 0.80, dy + dh * 0.56, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  const signY = p.y + 14;
+  const sx = p.x + p.w * 0.16;
+  const sw = p.w * 0.68;
+  brick3D(sx - 4, signY - 4, sw + 8, 42, "#ffffff", 18);
+  brick3D(sx, signY, sw, 34, pal.accent, 16);
+
+  ctx.save();
+  ctx.fillStyle = "rgba(0,0,0,0.92)";
+  ctx.font = "900 13px system-ui";
+  ctx.fillText(p.label, sx + 12, signY + 22);
+  ctx.restore();
+
+  if (p.status !== "open") {
+    brick3D(sx + sw * 0.60, signY + 38, sw * 0.36, 26, "#ffffff", 14);
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.86)";
+    ctx.font = "900 11px system-ui";
+    ctx.fillText("오픈준비중", sx + sw * 0.62, signY + 56);
+    ctx.restore();
+  }
+
+  ctx.save();
+  ctx.globalAlpha = (0.06 + 0.12 * pulse) * glow;
+  ctx.fillStyle = isActive ? "rgba(10,132,255,0.85)" : "rgba(255,149,0,0.65)";
+  roundRect(p.x + 10, p.y + 12, p.w - 20, p.h - 22, 22);
+  ctx.fill();
+  ctx.restore();
+
+  // ✅ (3) portal themed decorations
+  drawPortalDecorations(p, t);
+}
+
+/** =========================
+ *  props draw (house/shop/etc.)
  * ========================= */
 function drawHouse(o, t) {
   const x = o.x, y = o.y, s = o.s;
   const wob = Math.sin(t * 1.2 + x * 0.01) * 1.0;
-
   const w = 130 * s, h = 90 * s;
 
   groundAO(x, y + 72 * s, w * 0.55, 22 * s, 0.20);
+  ctx.save(); ctx.translate(0, wob);
 
-  ctx.save();
-  ctx.translate(0, wob);
-
-  // body
   brick3D(x - w * 0.5, y, w, h, o.color || "#ffcc00", 18);
-
-  // roof
   brick3D(x - w * 0.55, y - 42 * s, w * 1.10, 44 * s, "#5856d6", 18);
 
-  // windows
   windowLego(x - 40 * s, y + 26 * s, 28 * s, 22 * s);
   windowLego(x + 12 * s, y + 26 * s, 28 * s, 22 * s);
-
-  // door
   brick3D(x - 10 * s, y + 44 * s, 20 * s, 40 * s, "#ffffff", 12);
+
   ctx.restore();
 }
 
 function drawShop(o, t) {
   const x = o.x, y = o.y, s = o.s;
   const wob = Math.sin(t * 1.05 + x * 0.02) * 1.0;
-
   const w = 150 * s, h = 98 * s;
+
   groundAO(x, y + 78 * s, w * 0.60, 24 * s, 0.20);
+  ctx.save(); ctx.translate(0, wob);
 
-  ctx.save();
-  ctx.translate(0, wob);
-
-  // body
   brick3D(x - w * 0.5, y, w, h, o.color || "#0a84ff", 18);
-
-  // sign
   brick3D(x - w * 0.38, y - 30 * s, w * 0.76, 26 * s, "#ffffff", 14);
   brick3D(x - w * 0.36, y - 28 * s, w * 0.72, 22 * s, "#ff9500", 12);
   ctx.save();
@@ -1237,38 +1328,29 @@ function drawShop(o, t) {
   ctx.fillText("SHOP", x - 18 * s, y - 12 * s);
   ctx.restore();
 
-  // showcase window
   windowLego(x - w * 0.40, y + 30 * s, w * 0.80, 36 * s);
 
   ctx.restore();
 }
 
-/** =========================
- *  놀이공원(레고)
- * ========================= */
 function drawFerris(o, t) {
   const x = o.x, y = o.y, s = o.s;
   const rot = t * 0.35;
 
   groundAO(x, y + 122 * s, 170 * s, 32 * s, 0.18);
-
-  // supports
   brick3D(x - 86 * s, y + 46 * s, 28 * s, 90 * s, "#ffffff", 16);
   brick3D(x + 58 * s, y + 46 * s, 28 * s, 90 * s, "#ffffff", 16);
 
-  // wheel
   ctx.save();
   ctx.translate(x, y + 18 * s);
   ctx.rotate(rot);
 
-  // ring
   ctx.strokeStyle = "rgba(0,0,0,0.18)";
   ctx.lineWidth = 6 * s;
   ctx.beginPath();
   ctx.arc(0, 0, 92 * s, 0, Math.PI * 2);
   ctx.stroke();
 
-  // spokes
   ctx.globalAlpha = 0.70;
   ctx.strokeStyle = "#ffffff";
   ctx.lineWidth = 4 * s;
@@ -1280,7 +1362,6 @@ function drawFerris(o, t) {
     ctx.stroke();
   }
 
-  // cabins
   ctx.globalAlpha = 0.95;
   for (let i = 0; i < 12; i++) {
     const a = (i / 12) * Math.PI * 2;
@@ -1298,21 +1379,16 @@ function drawCarousel(o, t) {
   const bob = Math.sin(t * 2.0) * 2;
 
   groundAO(x, y + 76 * s, 150 * s, 26 * s, 0.18);
-
-  // base
   brick3D(x - 98 * s, y + 46 * s, 196 * s, 42 * s, "#ffffff", 18);
 
-  // roof pyramid made from bricks
   brick3D(x - 90 * s, y + 16 * s + bob, 180 * s, 30 * s, "#ff79b0", 18);
   brick3D(x - 70 * s, y - 10 * s + bob, 140 * s, 30 * s, "#ff2d55", 18);
 
-  // poles
   for (let i = 0; i < 6; i++) {
     const px = x - 72 * s + i * (28 * s);
     brick3D(px - 4 * s, y + 14 * s, 8 * s, 46 * s, "#ffffff", 10);
   }
 
-  // horses (blocky)
   ctx.save();
   ctx.globalAlpha = 0.92;
   for (let i = 0; i < 7; i++) {
@@ -1324,28 +1400,21 @@ function drawCarousel(o, t) {
   ctx.restore();
 }
 
-/** =========================
- *  소품(레고)
- * ========================= */
 function drawTree(o, t) {
   const x = o.x, y = o.y, s = o.s;
   const sway = Math.sin(t * 1.4 + (o.v || 0)) * (7.0 * s);
 
   groundAO(x, y + 24 * s, 30 * s, 10 * s, 0.20);
-
-  // trunk
   brick3D(x - 7 * s, y - 14 * s, 14 * s, 44 * s, "#8b5a2b", 10);
 
-  // leaf blocks
   const cx = x + sway;
   brick3D(cx - 42 * s, y - 52 * s, 48 * s, 34 * s, "#34c759", 18);
   brick3D(cx - 10 * s, y - 64 * s, 56 * s, 40 * s, "#2fe06f", 18);
   brick3D(cx + 26 * s, y - 48 * s, 44 * s, 32 * s, "#34c759", 18);
 
-  // extra leaf studs overlay
   ctx.save();
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = studPattern || "rgba(255,255,255,0.10)";
+  ctx.globalAlpha = 0.30;
+  ctx.fillStyle = studPattern;
   ctx.fillRect(cx - 52 * s, y - 74 * s, 132 * s, 86 * s);
   ctx.restore();
 }
@@ -1355,14 +1424,9 @@ function drawLamp(o, t) {
   const pulse = 0.5 + 0.5 * Math.sin(t * 3.0 + x * 0.01);
 
   groundAO(x, y + 18 * s, 18 * s, 10 * s, 0.16);
-
-  // pole
   brick3D(x - 6 * s, y - 40 * s, 12 * s, 72 * s, "#cfd5dd", 10);
-
-  // lamp head
   brick3D(x - 16 * s, y - 58 * s, 32 * s, 20 * s, "#ffffff", 12);
 
-  // glow
   ctx.save();
   ctx.globalAlpha = 0.10 + 0.25 * pulse;
   ctx.fillStyle = "rgba(255,204,0,0.90)";
@@ -1379,7 +1443,6 @@ function drawBench(o, t) {
   brick3D(x - 42 * s, y - 2 * s, 84 * s, 20 * s, "#ffffff", 12);
   brick3D(x - 36 * s, y + 8 * s, 72 * s, 6 * s, "#cfd5dd", 10);
 
-  // legs
   brick3D(x - 30 * s, y + 14 * s, 14 * s, 12 * s, "#cfd5dd", 8);
   brick3D(x + 16 * s, y + 14 * s, 14 * s, 12 * s, "#cfd5dd", 8);
 }
@@ -1389,16 +1452,11 @@ function drawFlower(o, t) {
   const wig = Math.sin(t * 2.2 + x * 0.02) * 2;
 
   groundAO(x, y + 10 * s, 12 * s, 4 * s, 0.14);
-
-  // stem
   brick3D(x - 2 * s, y - 14 * s, 4 * s, 22 * s, "#34c759", 6);
 
-  // petals blocks
   brick3D(x - 12 * s + wig, y - 24 * s, 10 * s, 10 * s, "#ff79b0", 8);
   brick3D(x + 2 * s + wig,  y - 24 * s, 10 * s, 10 * s, "#ff79b0", 8);
   brick3D(x - 5 * s + wig,  y - 32 * s, 10 * s, 10 * s, "#ff79b0", 8);
-
-  // center
   brick3D(x - 4 * s + wig, y - 25 * s, 8 * s, 8 * s, "#ffcc00", 8);
 }
 
@@ -1416,24 +1474,111 @@ function drawFence(o, t) {
 }
 
 /** =========================
- *  레고 미니피규어 캐릭터(AAA 디테일)
+ *  ✅ (2) Minifig face printing
  * ========================= */
+function drawMinifigFace(dir, mood, t) {
+  // face plane at (-12,-40) size 24x22 (head)
+  const fx = -12, fy = -40, fw = 24, fh = 22;
+
+  if (dir === "up") {
+    // back printing: neck line + hair seam
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    ctx.fillStyle = "rgba(0,0,0,0.65)";
+    roundRect(fx + 4, fy + 6, fw - 8, 6, 4);
+    ctx.fill();
+    ctx.globalAlpha = 0.14;
+    roundRect(fx + 6, fy + 14, fw - 12, 4, 4);
+    ctx.fill();
+    ctx.restore();
+    return;
+  }
+
+  if (dir === "left" || dir === "right") {
+    // side face: one eye + mouth line
+    const sgn = (dir === "right") ? 1 : -1;
+    const ex = sgn * 4;
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.85)";
+    ctx.beginPath();
+    ctx.arc(ex + 2, -31, 1.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(0,0,0,0.85)";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(ex - 2, -27);
+    ctx.lineTo(ex + 4, -26);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  // down: front face with moods
+  const sparkle = (mood === "spark") ? (0.5 + 0.5 * Math.sin(t * 6.0)) : 0;
+  const wow = (mood === "wow") ? 1 : 0;
+
+  ctx.save();
+  ctx.fillStyle = "rgba(0,0,0,0.85)";
+  // eyes
+  ctx.beginPath();
+  ctx.arc(-4, -31, 1.4 + wow * 0.5, 0, Math.PI * 2);
+  ctx.arc(4, -31, 1.4 + wow * 0.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // mouth
+  ctx.strokeStyle = "rgba(0,0,0,0.85)";
+  ctx.lineWidth = 1.6;
+  if (wow) {
+    ctx.beginPath();
+    ctx.arc(0, -25, 3.5, 0, Math.PI * 2);
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.arc(0, -27, 4, 0, Math.PI);
+    ctx.stroke();
+  }
+
+  // cheeks
+  ctx.globalAlpha = 0.30;
+  ctx.fillStyle = "#ff79b0";
+  ctx.beginPath();
+  ctx.arc(-8, -28, 2.2, 0, Math.PI * 2);
+  ctx.arc(8, -28, 2.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // sparkle in eyes near portal
+  if (mood === "spark") {
+    ctx.globalAlpha = 0.35 + 0.25 * sparkle;
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(-2.6, -32.2, 0.9, 0, Math.PI * 2);
+    ctx.arc(5.6, -32.2, 0.9, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
 function drawMinifig(x, y, t) {
   const bob = Math.sin(player.bobT) * (player.moving ? 1.0 : 1.4);
   const dir = player.dir;
   const swing = player.moving ? Math.sin(player.animT * 10) : 0;
   const arm = 4 * swing;
-  const leg = 5 * swing;
 
-  // shadow
   groundAO(x, y + 28, 20, 8, 0.22);
 
   ctx.save();
   ctx.translate(x, y + bob);
 
-  if (dir === "left") ctx.scale(-1, 1);
+  // flip for left to reuse drawing
+  let faceDir = dir;
+  if (dir === "left") {
+    ctx.scale(-1, 1);
+    faceDir = "right";
+  }
 
-  // === legs (blocky)
+  // legs
   brick3D(-10, 6, 9, 18, "#0a84ff", 8);
   brick3D(1, 6, 9, 18, "#0a84ff", 8);
 
@@ -1443,7 +1588,7 @@ function drawMinifig(x, y, t) {
   // torso
   brick3D(-14, -20, 28, 22, "#ffcc00", 12);
 
-  // straps (print-like)
+  // straps print
   ctx.save();
   ctx.globalAlpha = 0.9;
   ctx.fillStyle = "rgba(0,0,0,0.18)";
@@ -1455,50 +1600,19 @@ function drawMinifig(x, y, t) {
   brick3D(-22, -18, 8, 20, "#ffcc00", 8);
   brick3D(14, -18, 8, 20, "#ffcc00", 8);
 
-  // hand blocks
+  // hands
   brick3D(-23, -2 + arm, 10, 8, "#ffd1a4", 8);
   brick3D(13, -2 - arm, 10, 8, "#ffd1a4", 8);
 
-  // head
+  // head + hair
   brick3D(-12, -40, 24, 22, "#ffd1a4", 12);
-
-  // hair/hat
   brick3D(-14, -50, 28, 12, "#1a1a1a", 10);
   brick3D(-12, -54, 24, 8, "#1a1a1a", 10);
 
-  // face (eyes + smile)
-  ctx.save();
-  ctx.fillStyle = "rgba(0,0,0,0.85)";
-  ctx.beginPath();
-  ctx.arc(-4, -31, 1.4, 0, Math.PI * 2);
-  ctx.arc(4, -31, 1.4, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = "rgba(0,0,0,0.85)";
-  ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  ctx.arc(0, -27, 4, 0, Math.PI);
-  ctx.stroke();
+  // ✅ (2) face printing
+  drawMinifigFace(faceDir === "right" && dir === "left" ? "left" : dir, player.face.mood, t);
 
-  // cheeks
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = "#ff79b0";
-  ctx.beginPath();
-  ctx.arc(-8, -28, 2.2, 0, Math.PI * 2);
-  ctx.arc(8, -28, 2.2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  // directional face cue (back)
-  if (dir === "up") {
-    ctx.save();
-    ctx.globalAlpha = 0.22;
-    ctx.fillStyle = "rgba(0,0,0,0.60)";
-    roundRect(-8, -28, 16, 6, 4);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // little backpack when moving
+  // tiny backpack when moving
   if (player.moving) {
     ctx.save();
     ctx.globalAlpha = 0.92;
@@ -1510,7 +1624,7 @@ function drawMinifig(x, y, t) {
 }
 
 /** =========================
- *  커서/비네팅/타이틀
+ *  cursor/vignette/title
  * ========================= */
 function drawCursor(sx, sy, t) {
   ctx.save();
@@ -1560,7 +1674,6 @@ function drawWorldTitle() {
   ctx.fillStyle = "rgba(0,0,0,0.90)";
   ctx.fillText(text, x + padX, y + 27);
 
-  // stud dot
   ctx.globalAlpha = 0.95;
   ctx.fillStyle = "#0a84ff";
   ctx.beginPath();
@@ -1571,7 +1684,7 @@ function drawWorldTitle() {
 }
 
 /** =========================
- *  발자국/파티클
+ *  footprints/particles draw
  * ========================= */
 function drawFootprints() {
   ctx.save();
@@ -1579,7 +1692,6 @@ function drawFootprints() {
     const a = 0.16 * (1 - f.age / f.life);
     ctx.globalAlpha = a;
     ctx.fillStyle = "rgba(0,0,0,0.75)";
-    // tiny lego tiles
     roundRect(f.x - 6, f.y - 2, 10, 4, 3);
     ctx.fill();
   }
@@ -1592,7 +1704,6 @@ function drawParticles() {
     const k = 1 - (p.age / p.life);
     ctx.globalAlpha = p.a * k;
     ctx.fillStyle = "rgba(255,255,255,0.95)";
-    // sparkle stud
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.r * (0.8 + 0.7 * k), 0, Math.PI * 2);
     ctx.fill();
@@ -1613,7 +1724,6 @@ let lastT = performance.now();
 let acc = 0, framesCount = 0, fps = 0;
 
 function update(dt, t) {
-  // player move
   let ax = 0, ay = 0;
   if (!dragging) {
     if (keys.has("a") || keys.has("arrowleft")) ax -= 1;
@@ -1639,7 +1749,7 @@ function update(dt, t) {
   player.bobT += dt * 6.0;
   addFootprint(dt);
 
-  // cars move
+  // cars
   for (const c of cars) {
     c.bob += dt * 3.0;
     if (c.axis === "h") {
@@ -1655,7 +1765,7 @@ function update(dt, t) {
     }
   }
 
-  // clouds
+  // clouds/birds
   for (const c of clouds) {
     c.x += c.v * (c.layer === 0 ? 1.0 : 0.75) * dt;
     if (c.x > WORLD.w + 520) {
@@ -1666,8 +1776,6 @@ function update(dt, t) {
       c.layer = Math.random() < 0.5 ? 0 : 1;
     }
   }
-
-  // birds
   for (const b of birds) {
     b.x += b.v * dt;
     b.p += dt * 4.2;
@@ -1686,6 +1794,13 @@ function update(dt, t) {
     if (circleRectHit(player.x, player.y, player.r, z)) { activePortal = p; break; }
   }
 
+  // ✅ (2) mood control: near portal -> sparkle mood
+  if (player.face.moodT > 0) player.face.moodT -= dt;
+  if (player.face.moodT <= 0) {
+    if (activePortal && activePortal.status === "open") player.face.mood = "spark";
+    else player.face.mood = "smile";
+  }
+
   // toast
   if (activePortal) {
     toast.hidden = false;
@@ -1701,7 +1816,6 @@ function update(dt, t) {
   // particles
   for (const p of portals) spawnPortalParticles(p, t);
 
-  // particle life
   for (let i = particles.length - 1; i >= 0; i--) {
     const q = particles[i];
     q.age += dt;
@@ -1734,14 +1848,12 @@ function draw(t) {
   ctx.save();
   ctx.translate(-cam.x, -cam.y);
 
-  // background
   drawSkyWorld(t);
   drawCloudsWorld();
   drawGroundWorld();
   drawRoadsAndSidewalks(t);
   drawFootprints();
 
-  // depth items
   const items = [];
   for (const p of portals) items.push({ kind: "building", ref: p, footY: getFootY({ kind: "building", y: p.y, h: p.h }) });
   for (const c of cars) items.push({ kind: "car", ref: c, footY: getFootY(c) });
@@ -1768,10 +1880,8 @@ function draw(t) {
   }
 
   drawParticles();
-
   ctx.restore();
 
-  // UI overlays
   drawWorldTitle();
 
   if (!isTouchDevice() && pointer.active) {
