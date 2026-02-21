@@ -1,27 +1,18 @@
-/* HUN.JS - LEGO PREMIUM (single-file) v2.2 (FULL)
- * 반영된 수정사항
- * 1) 캐릭터 옆모습 자연스럽게(측면 실루엣/팔·다리 오클루전/얼굴/발)
- * 2) 병원/약국 등 건물 간판 글씨 크게 + 블록 스타일(촌스러운 테두리 제거)
- * 3) 맥도날드/병원/약국: 건물 앞 NPC 대신 로고(아이콘) 표시 + 간판에도 좌측 로고
- * 4) 가로등 30% 제거, 꽃 30% 제거, 나무가 건물 가리지 않도록(건물 주변 배치 금지)
- * 5) 건물이 차도로 위에 있지 않게(특히 양궁/눈굴리기) + 자동 회피 배치
- * 6) 맵 확장 + 도로 더 많이 + 신호등 추가
- * 7) 돌아다니는 NPC 약 20명 추가(랜덤 워킹)
- * 8) 모바일에서 오픈 URL 건물도 “입장” 모달이 항상 뜨도록(터치로도 확인/진입)
- * 9) 좌측 큰 흰 배경(토스트) 제거 → 중앙 상단에 글자만 블록 스타일
- * 10) 모바일 방향키 누름 시 드래그/선택되는 현상 방지(패시브 해제/선택 차단)
- * 11) 전체적으로 고급스러운 톤/섀도/하이라이트 개선
- *
- * 캐릭터 이미지를 쓰고 싶다면:
- * - 아래 SPRITE_SRC 에 PNG URL(또는 data:image/png;base64,...)을 넣으면 자동으로 스프라이트 사용
- * - 미지정이면 LEGO 미니피규어로 렌더링합니다.
+/* HUN.JS - LEGO PREMIUM (single-file) v2.3 (PATCHED)
+ * 반영:
+ * 1) 옆모습(측면) 자연스럽게: 몸통/다리 1개만 보이도록 + 걷는 애니메이션 개선
+ * 2) 포탈 안내 UI: PC에서 모자이크(블러)처럼 보이는 효과 제거 + 문구 중앙 배치/가독성 강화
+ * 3) 간판/글씨 크게(대부분 건물) + 전광판(LED/글로우) 느낌 제거 + 간판 자체도 확대
+ * 4) 우측 상단 미니맵(투명) 추가: 미니게임/건물 위치 + 플레이어 위치 표시
+ * 5) 모바일에서 뒤로가기 후 재진입 멈춤: bfcache/pageshow 복귀 시 entering/fade 상태 초기화
+ * 6) 전체 그래픽 톤/섀도/하이라이트 조금 더 고급스럽게
  */
 
 (() => {
   "use strict";
 
   /* ----------------------- CONFIG ----------------------- */
-  const SPRITE_SRC = ""; // 예: "https://example.com/character.png" 또는 "data:image/png;base64,...."
+  const SPRITE_SRC = ""; // "https://example.com/character.png" or data:image/png;base64,...
   const USE_SPRITE_IF_LOADED = true;
 
   /* ----------------------- Utilities ----------------------- */
@@ -48,7 +39,6 @@
     return (navigator.maxTouchPoints || 0) > 0;
   }
 
-  // deterministic RNG
   function mulberry32(seed) {
     let t = seed >>> 0;
     return function () {
@@ -83,13 +73,13 @@
     canvas.style.touchAction = "none";
     canvas.style.userSelect = "none";
     canvas.style.webkitUserSelect = "none";
-    canvas.style.imageRendering = "auto"; // ✅ 혹시라도 pixelated/crisp-edges 잡혀있으면 해제
+    canvas.style.imageRendering = "auto";
 
-    // ✅ 토스트: 좌측 큰 흰 배경 제거 -> 중앙 상단 글자 블록만
+    // ✅ 포탈 안내(토스트): 중앙쪽(상단-중앙) / 블러/백드롭 제거 / 가독성 크게
     const toast = ensureEl("toast", "div");
     toast.style.position = "fixed";
     toast.style.left = "50%";
-    toast.style.top = "18px";
+    toast.style.top = "96px";              // 중앙쪽에 가깝게
     toast.style.transform = "translateX(-50%)";
     toast.style.zIndex = "9999";
     toast.style.padding = "0";
@@ -97,21 +87,24 @@
     toast.style.background = "transparent";
     toast.style.border = "none";
     toast.style.boxShadow = "none";
-    toast.style.font = "1000 13px system-ui";
+    toast.style.filter = "none";
+    toast.style.backdropFilter = "none";
+    toast.style.webkitBackdropFilter = "none";
+    toast.style.font = "900 16px system-ui";
     toast.style.color = "rgba(10,18,30,0.92)";
-    toast.style.maxWidth = "min(520px, calc(100vw - 28px))";
+    toast.style.maxWidth = "min(720px, calc(100vw - 28px))";
     toast.style.textAlign = "center";
     toast.style.pointerEvents = "none";
     toast.hidden = true;
 
     const coord = ensureEl("coord", "div");
     coord.style.position = "fixed";
-    coord.style.left = "24px";
-    coord.style.top = "24px";
+    coord.style.left = "20px";
+    coord.style.top = "18px";
     coord.style.zIndex = "9999";
     coord.style.padding = "8px 10px";
     coord.style.borderRadius = "12px";
-    coord.style.background = "rgba(255,255,255,0.82)";
+    coord.style.background = "rgba(255,255,255,0.84)";
     coord.style.border = "1px solid rgba(0,0,0,0.10)";
     coord.style.font = "900 12px system-ui";
     coord.style.color = "rgba(10,18,30,0.80)";
@@ -119,12 +112,12 @@
 
     const fps = ensureEl("fps", "div");
     fps.style.position = "fixed";
-    fps.style.left = "140px";
-    fps.style.top = "24px";
+    fps.style.left = "136px";
+    fps.style.top = "18px";
     fps.style.zIndex = "9999";
     fps.style.padding = "8px 10px";
     fps.style.borderRadius = "12px";
-    fps.style.background = "rgba(255,255,255,0.82)";
+    fps.style.background = "rgba(255,255,255,0.84)";
     fps.style.border = "1px solid rgba(0,0,0,0.10)";
     fps.style.font = "900 12px system-ui";
     fps.style.color = "rgba(10,18,30,0.80)";
@@ -149,9 +142,11 @@
     modal.style.justifyContent = "center";
     modal.style.background = "transparent";
     modal.style.backdropFilter = "none";
+    modal.style.webkitBackdropFilter = "none";
+    modal.style.filter = "none";
 
     const modalInner = ensureEl("lego_modal_inner", "div", modal);
-    modalInner.style.width = "min(640px, calc(100vw - 40px))";
+    modalInner.style.width = "min(760px, calc(100vw - 40px))";
     modalInner.style.borderRadius = "0";
     modalInner.style.background = "transparent";
     modalInner.style.border = "none";
@@ -162,21 +157,22 @@
     modalInner.style.color = "rgba(10,18,30,0.92)";
     modalInner.style.userSelect = "none";
     modalInner.style.webkitUserSelect = "none";
+    modalInner.style.filter = "none";
 
     const modalTitle = ensureEl("lego_modal_title", "div", modalInner);
-    modalTitle.style.font = "1100 22px system-ui";
+    modalTitle.style.font = "1200 24px system-ui";
     modalTitle.style.marginBottom = "10px";
-    modalTitle.style.letterSpacing = "0.6px";
+    modalTitle.style.letterSpacing = "0.5px";
 
     const modalBody = ensureEl("lego_modal_body", "div", modalInner);
-    modalBody.style.font = "1100 18px system-ui";
-    modalBody.style.opacity = "0.92";
+    modalBody.style.font = "1100 20px system-ui";
+    modalBody.style.opacity = "0.94";
     modalBody.style.marginBottom = "10px";
     modalBody.style.lineHeight = "1.35";
-    modalBody.style.letterSpacing = "0.8px";
+    modalBody.style.letterSpacing = "0.6px";
 
     const modalHint = ensureEl("lego_modal_hint", "div", modalInner);
-    modalHint.style.font = "1000 13px system-ui";
+    modalHint.style.font = "900 13px system-ui";
     modalHint.style.opacity = "0.72";
 
     const style = ensureEl("lego_style_injected", "style", document.head);
@@ -246,7 +242,6 @@
 
     const vkeys = { up: false, down: false, left: false, right: false };
 
-    // ✅ 모바일 길게 누르면 드래그되는 현상 방지: passive:false + preventDefault + pointer capture
     function bindHold(btn, key) {
       const on = (e) => {
         e.preventDefault();
@@ -289,12 +284,7 @@
     function screenToWorld(sx, sy) { return { x: sx + cam.x, y: sy + cam.y }; }
 
     /* ----------------------- Optional character sprite ----------------------- */
-    const sprite = {
-      img: null,
-      loaded: false,
-      w: 1,
-      h: 1
-    };
+    const sprite = { img: null, loaded: false, w: 1, h: 1 };
     if (SPRITE_SRC && USE_SPRITE_IF_LOADED) {
       const im = new Image();
       im.crossOrigin = "anonymous";
@@ -304,10 +294,7 @@
         sprite.w = im.naturalWidth || 1;
         sprite.h = im.naturalHeight || 1;
       };
-      im.onerror = () => {
-        sprite.loaded = false;
-        sprite.img = null;
-      };
+      im.onerror = () => { sprite.loaded = false; sprite.img = null; };
       im.src = SPRITE_SRC;
     }
 
@@ -315,38 +302,34 @@
     const roads = [];
     const sidewalks = [];
     const crossings = [];
-    const signals = []; // traffic lights
+    const signals = [];
 
     /* ----------------------- Portals + Shops ----------------------- */
     const portals = [
-      // minigame
-      { key: "avoid", label: "미니게임 피하기", status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "archery", label: "미니게임 양궁", status: "open", url: "https://ttjdwls777-eng.github.io/XGP-MINI-GAME2/", type: "tower", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "janggi", label: "미니게임 장기", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "jump", label: "미니게임 점프하기", status: "soon", url: "", type: "gym", size: "S", x: 0, y: 0, w: 0, h: 0 },
-      { key: "snow", label: "미니게임 눈굴리기", status: "soon", url: "", type: "igloo", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "omok", label: "미니게임 오목", status: "soon", url: "", type: "cafe", size: "M", x: 0, y: 0, w: 0, h: 0 },
+      { key: "avoid",   label: "미니게임 피하기",   status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade",  size: "L", x: 0, y: 0, w: 0, h: 0 },
+      { key: "archery", label: "미니게임 양궁",     status: "open", url: "https://ttjdwls777-eng.github.io/XGP-MINI-GAME2/",     type: "tower",   size: "M", x: 0, y: 0, w: 0, h: 0 },
+      { key: "janggi",  label: "미니게임 장기",     status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/",   type: "dojo",    size: "L", x: 0, y: 0, w: 0, h: 0 },
+      { key: "jump",    label: "미니게임 점프하기", status: "soon", url: "",                                                     type: "gym",     size: "S", x: 0, y: 0, w: 0, h: 0 },
+      { key: "snow",    label: "미니게임 눈굴리기", status: "soon", url: "",                                                     type: "igloo",   size: "M", x: 0, y: 0, w: 0, h: 0 },
+      { key: "omok",    label: "미니게임 오목",     status: "soon", url: "",                                                     type: "cafe",    size: "M", x: 0, y: 0, w: 0, h: 0 },
 
-      // shops (new)
-      { key: "mcd", label: "맥도날드", status: "soon", url: "", type: "mcd", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "hospital", label: "병원", status: "soon", url: "", type: "hospital", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "pharmacy", label: "약국", status: "soon", url: "", type: "pharmacy", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "chicken", label: "치킨집", status: "soon", url: "", type: "chicken", size: "M", x: 0, y: 0, w: 0, h: 0 }
+      { key: "mcd",      label: "맥도날드", status: "soon", url: "", type: "mcd",      size: "M", x: 0, y: 0, w: 0, h: 0 },
+      { key: "hospital", label: "병원",     status: "soon", url: "", type: "hospital", size: "M", x: 0, y: 0, w: 0, h: 0 },
+      { key: "pharmacy", label: "약국",     status: "soon", url: "", type: "pharmacy", size: "M", x: 0, y: 0, w: 0, h: 0 },
+      { key: "chicken",  label: "치킨집",   status: "soon", url: "", type: "chicken",  size: "M", x: 0, y: 0, w: 0, h: 0 }
     ];
     const portalsByKey = (k) => portals.find((p) => p.key === k);
 
     /* ----------------------- Player ----------------------- */
     const player = {
-      x: 360,
-      y: 360,
-      r: 18,
+      x: 360, y: 360, r: 18,
       speed: 250,
       moving: false,
       animT: 0,
       bobT: 0,
-      dir: "down" // up/down/left/right
+      dir: "down"
     };
-    if (isTouchDevice()) player.speed = 175; // ✅ 모바일 더 느리게
+    if (isTouchDevice()) player.speed = 175;
 
     let activePortal = null;
     let entering = false;
@@ -444,25 +427,17 @@
         }
       };
 
-      // ✅ 도로가 많아졌으니 각 도로에 적당히 배치
       for (const r of roads) {
-        if (r.axis === "h") {
-          const n = 3 + ((Math.random() * 2) | 0);
-          for (let i = 0; i < n; i++) cars.push(makeCar(r, "h"));
-        } else {
-          const n = 2 + ((Math.random() * 2) | 0);
-          for (let i = 0; i < n; i++) cars.push(makeCar(r, "v"));
-        }
+        const n = r.axis === "h" ? 3 + ((Math.random() * 2) | 0) : 2 + ((Math.random() * 2) | 0);
+        for (let i = 0; i < n; i++) cars.push(makeCar(r, r.axis));
       }
     }
 
     /* ----------------------- Props / Signs / NPCs ----------------------- */
     const props = [];
     const signs = [];
-    let portalNPCs = [];   // fixed NPC near some minigames
-    let portalEmblems = []; // logo/emblem in front of every building
-
-    // roaming NPCs
+    let portalNPCs = [];
+    let portalEmblems = [];
     const roamers = [];
 
     function rectsOverlap(a, b, pad = 0) {
@@ -482,7 +457,6 @@
     }
 
     function isInsideBuildingBuffer(x, y) {
-      // ✅ 나무가 건물 가리지 않도록: 건물 주변 넓게 금지
       for (const p of portals) {
         const pad = 120;
         if (x >= p.x - pad && x <= p.x + p.w + pad && y >= p.y - pad && y <= p.y + p.h + pad) return true;
@@ -505,39 +479,30 @@
         if (isInsideBuildingBuffer(x, y)) continue;
 
         const r = Math.random();
-
-        // ✅ 나무/꽃/가로등 감소 (램프/꽃 30%↓)
-        // 분포를 재조정: lamp/flower 비율을 확실히 낮춤
         if (r < 0.26) props.push({ kind: "tree", x, y, s: 0.90 + Math.random() * 1.05 });
-        else if (r < 0.35) props.push({ kind: "lamp", x, y, s: 0.9 + Math.random() * 0.55 });   // 기존 대비 더 적게
+        else if (r < 0.35) props.push({ kind: "lamp", x, y, s: 0.9 + Math.random() * 0.55 });
         else if (r < 0.46) props.push({ kind: "bench", x, y, s: 0.9 + Math.random() * 0.35 });
-        else props.push({ kind: "flower", x, y, s: 0.85 + Math.random() * 0.95 });               // 기존 대비 더 적게
+        else props.push({ kind: "flower", x, y, s: 0.85 + Math.random() * 0.95 });
       }
 
-      // portal-side small decor (flowers) -> also reduced
       for (const p of portals) {
         if (Math.random() < 0.65) props.push({ kind: "flower", x: p.x + p.w * 0.20, y: p.y + p.h + 28, s: 1.1 });
         if (Math.random() < 0.65) props.push({ kind: "flower", x: p.x + p.w * 0.80, y: p.y + p.h + 18, s: 1.0 });
       }
 
-      // guide signs
       const arch = portalsByKey("archery");
       const jang = portalsByKey("janggi");
       if (arch) signs.push({ x: arch.x + arch.w * 0.5 - 10, y: arch.y + arch.h + 90, text: "양궁 →" });
       if (jang) signs.push({ x: jang.x + jang.w * 0.5 + 10, y: jang.y + jang.h + 90, text: "← 장기" });
 
-      // NPC + Emblems
       for (const p of portals) {
         const ex = p.x + p.w * 0.5;
         const ey = p.y + p.h * 0.92;
 
-        // ✅ 맥도/병원/약국: 피규어 대신 로고(=emblem만)
-        // ✅ 미니게임 일부만 NPC 고정 유지
         if (["archery", "janggi", "omok"].includes(p.key)) {
           portalNPCs.push({ kind: "npc", key: p.key, x: p.x + p.w + 42, y: p.y + p.h * 0.74 });
         }
 
-        // emblem object in front
         portalEmblems.push({ kind: "emblem", key: p.key, x: ex + 38, y: ey + 18 });
       }
     }
@@ -586,7 +551,6 @@
       for (const n of roamers) {
         n.t += dt;
 
-        // occasionally pick new target
         if (Math.hypot(n.tx - n.x, n.ty - n.y) < 12 || Math.random() < 0.004) {
           let nx = n.x, ny = n.y;
           for (let k = 0; k < 40; k++) {
@@ -605,11 +569,9 @@
         n.x += vx * dt;
         n.y += vy * dt;
 
-        // direction
         if (Math.abs(vy) >= Math.abs(vx)) n.dir = vy < 0 ? "up" : "down";
         else n.dir = vx < 0 ? "left" : "right";
 
-        // soft clamp
         n.x = clamp(n.x, WORLD.margin, WORLD.w - WORLD.margin);
         n.y = clamp(n.y, WORLD.margin, WORLD.h - WORLD.margin);
       }
@@ -628,7 +590,7 @@
           rx: 60 + rand() * 160,
           ry: 18 + rand() * 52,
           rot: (rand() - 0.5) * 0.7,
-          a: 0.30 + rand() * 0.14
+          a: 0.28 + rand() * 0.12
         });
       }
     }
@@ -679,37 +641,24 @@
 
     function buildPatterns() {
       grassPattern = makePattern(480, 480, (g, w, h) => {
-  g.fillStyle = "#39d975";
-  g.fillRect(0, 0, w, h);
+        g.fillStyle = "#39d975";
+        g.fillRect(0, 0, w, h);
 
-  // ✅ 약한 격자(타일감 최소)
-  g.globalAlpha = 0.05;
-  g.strokeStyle = "rgba(0,0,0,0.10)";
-  g.lineWidth = 1;
-  for (let x = 0; x <= w; x += 80) {
-    g.beginPath();
-    g.moveTo(x, 0);
-    g.lineTo(x, h);
-    g.stroke();
-  }
-  for (let y = 0; y <= h; y += 80) {
-    g.beginPath();
-    g.moveTo(0, y);
-    g.lineTo(w, y);
-    g.stroke();
-  }
+        g.globalAlpha = 0.05;
+        g.strokeStyle = "rgba(0,0,0,0.10)";
+        g.lineWidth = 1;
+        for (let x = 0; x <= w; x += 80) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+        for (let y = 0; y <= h; y += 80) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
 
-  // ✅ 점 텍스처(잔디 느낌)
-  g.globalAlpha = 0.10;
-  for (let i = 0; i < 140; i++) {
-    g.fillStyle = i % 3 === 0 ? "rgba(255,255,255,0.20)" : "rgba(0,0,0,0.10)";
-    g.beginPath();
-    g.arc(Math.random() * w, Math.random() * h, 0.8 + Math.random() * 1.6, 0, Math.PI * 2);
-    g.fill();
-  }
-
-  g.globalAlpha = 1;
-});
+        g.globalAlpha = 0.10;
+        for (let i = 0; i < 140; i++) {
+          g.fillStyle = i % 3 === 0 ? "rgba(255,255,255,0.20)" : "rgba(0,0,0,0.10)";
+          g.beginPath();
+          g.arc(Math.random() * w, Math.random() * h, 0.8 + Math.random() * 1.6, 0, Math.PI * 2);
+          g.fill();
+        }
+        g.globalAlpha = 1;
+      });
 
       dirtPattern = makePattern(240, 240, (g, w, h) => {
         g.fillStyle = "#c79a64";
@@ -727,9 +676,8 @@
       roadPattern = makePattern(240, 240, (g, w, h) => {
         g.fillStyle = "#262c37";
         g.fillRect(0, 0, w, h);
-
-        g.globalAlpha = 0.12;
-        g.strokeStyle = "rgba(255,255,255,0.14)";
+        g.globalAlpha = 0.10;
+        g.strokeStyle = "rgba(255,255,255,0.12)";
         g.lineWidth = 2;
         for (let y = 0; y <= h; y += 40) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
         g.globalAlpha = 1;
@@ -787,20 +735,27 @@
       ctx.restore();
     }
 
+    function softShadow(x, y, w, h, alpha = 0.10) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = "rgba(10,14,24,0.85)";
+      roundRect(x, y, w, h, 18);
+      ctx.fill();
+      ctx.restore();
+    }
+
     function legoBox3D(x, y, w, h, depth, baseColor) {
-      const edge = "rgba(0,0,0,0.18)";
+      const edge = "rgba(0,0,0,0.16)";
       ctx.save();
       ctx.strokeStyle = edge;
       ctx.lineWidth = 2;
 
-      // front
       ctx.fillStyle = baseColor;
       roundRect(x, y, w, h, 18);
       ctx.fill();
       ctx.stroke();
 
-      // top
-      ctx.fillStyle = shade(baseColor, +18);
+      ctx.fillStyle = shade(baseColor, +16);
       ctx.beginPath();
       ctx.moveTo(x, y);
       ctx.lineTo(x + depth, y - depth);
@@ -810,8 +765,7 @@
       ctx.fill();
       ctx.stroke();
 
-      // side
-      ctx.fillStyle = shade(baseColor, -20);
+      ctx.fillStyle = shade(baseColor, -18);
       ctx.beginPath();
       ctx.moveTo(x + w, y);
       ctx.lineTo(x + w + depth, y - depth);
@@ -825,7 +779,7 @@
       ctx.restore();
     }
 
-    /* ----------------------- World layout (bigger + more roads) ----------------------- */
+    /* ----------------------- World layout ----------------------- */
     function layoutRoadNetwork() {
       roads.length = 0;
       sidewalks.length = 0;
@@ -849,26 +803,24 @@
         return r;
       };
 
-      // ✅ 더 넓은 맵 + 도로 증가
-      const r1 = addRoadH(WORLD.h * 0.50, 0.86, 132);
-      const r2 = addRoadH(WORLD.h * 0.26, 0.78, 120);
-      const r3 = addRoadH(WORLD.h * 0.74, 0.78, 120);
+      addRoadH(WORLD.h * 0.50, 0.86, 132);
+      addRoadH(WORLD.h * 0.26, 0.78, 120);
+      addRoadH(WORLD.h * 0.74, 0.78, 120);
 
       const v1 = addRoadV(WORLD.w * 0.50 - 62, 0.84, 124);
-      const v2 = addRoadV(WORLD.w * 0.26 - 62, 0.72, 118);
-      const v3 = addRoadV(WORLD.w * 0.74 - 62, 0.72, 118);
+      addRoadV(WORLD.w * 0.26 - 62, 0.72, 118);
+      addRoadV(WORLD.w * 0.74 - 62, 0.72, 118);
 
-      // crossings (at intersections)
-      const makeCross = (vx, vy, vw, vh) => {
+      const makeCross = (vx, vy) => {
         crossings.push({ x: vx - 92, y: vy + 32, w: 184, h: 56 });
         crossings.push({ x: vx - 92, y: vy - 88, w: 184, h: 56 });
       };
 
-      makeCross(v1.x + v1.w * 0.5, r1.y, 0, 0);
-      makeCross(v1.x + v1.w * 0.5, r2.y, 0, 0);
-      makeCross(v1.x + v1.w * 0.5, r3.y, 0, 0);
+      // main vertical intersections
+      for (const ry of [WORLD.h * 0.50, WORLD.h * 0.26, WORLD.h * 0.74]) {
+        makeCross(v1.x + v1.w * 0.5, ry);
+      }
 
-      // ✅ 신호등 추가(교차로 주변)
       function addSignal(x, y, dir) { signals.push({ x, y, dir, phase: Math.random() * 10 }); }
       for (const c of crossings) {
         addSignal(c.x - 14, c.y + 8, "v");
@@ -877,21 +829,15 @@
     }
 
     function placePortalAvoidRoad(p, cx, cy) {
-      // desire center; try small spiral offsets to avoid roads
       const maxTry = 80;
       const step = 22;
-      let best = { x: cx, y: cy };
 
       const test = (centerX, centerY) => {
         const x = centerX - p.w / 2;
         const y = centerY - p.h / 2;
         const rect = { x, y, w: p.w, h: p.h };
-        for (const r of roads) {
-          if (rectsOverlap(rect, r, 8)) return null;
-        }
-        for (const s of sidewalks) {
-          if (rectsOverlap(rect, s, 4)) return null;
-        }
+        for (const r of roads) if (rectsOverlap(rect, r, 8)) return null;
+        for (const s of sidewalks) if (rectsOverlap(rect, s, 4)) return null;
         return rect;
       };
 
@@ -901,12 +847,10 @@
       for (let i = 1; i <= maxTry; i++) {
         const ang = i * 0.55;
         const rr = step * i * 0.35;
-        const nx = cx + Math.cos(ang) * rr;
-        const ny = cy + Math.sin(ang) * rr;
-        rect = test(nx, ny);
+        rect = test(cx + Math.cos(ang) * rr, cy + Math.sin(ang) * rr);
         if (rect) return rect;
       }
-      // fallback (clamp only)
+
       return {
         x: clamp(cx - p.w / 2, WORLD.margin, WORLD.w - WORLD.margin - p.w),
         y: clamp(cy - p.h / 2, WORLD.margin, WORLD.h - WORLD.margin - p.h),
@@ -915,11 +859,9 @@
     }
 
     function layoutWorld() {
-      // ✅ 맵 더 넓게
       WORLD.w = Math.max(4200, Math.floor(W * 4.4));
       WORLD.h = Math.max(3000, Math.floor(H * 3.8));
 
-      // portal sizes
       const base = 220;
       const mul = { S: 0.82, M: 1.0, L: 1.22 };
       for (const p of portals) {
@@ -931,15 +873,14 @@
       buildPatterns();
       layoutRoadNetwork();
 
-      // desired centers (updated to avoid roads esp archery/snow)
       const desired = {
         jump: { x: WORLD.w * 0.18, y: WORLD.h * 0.18 },
-        archery: { x: WORLD.w * 0.66, y: WORLD.h * 0.18 }, // ✅ 도로 중앙 피함
+        archery: { x: WORLD.w * 0.66, y: WORLD.h * 0.18 },
         omok: { x: WORLD.w * 0.82, y: WORLD.h * 0.30 },
 
         avoid: { x: WORLD.w * 0.18, y: WORLD.h * 0.60 },
         janggi: { x: WORLD.w * 0.82, y: WORLD.h * 0.60 },
-        snow: { x: WORLD.w * 0.34, y: WORLD.h * 0.84 },   // ✅ 도로/교차로 피함
+        snow: { x: WORLD.w * 0.34, y: WORLD.h * 0.84 },
 
         mcd: { x: WORLD.w * 0.12, y: WORLD.h * 0.36 },
         hospital: { x: WORLD.w * 0.88, y: WORLD.h * 0.40 },
@@ -977,9 +918,10 @@
 
       ctx.setTransform(DPR * VIEW.zoom, 0, 0, DPR * VIEW.zoom, 0, 0);
 
-      // ✅ 모자이크 방지 (항상 스무딩 + 고품질)
-ctx.imageSmoothingEnabled = true;
-ctx.imageSmoothingQuality = "high";
+      // ✅ 모자이크(거친 픽셀) 방지: 항상 스무딩 + 고품질
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
       layoutWorld();
     }
     window.addEventListener("resize", resize);
@@ -1021,27 +963,31 @@ ctx.imageSmoothingQuality = "high";
     /* ----------------------- Modal ----------------------- */
     const modalState = { open: false, portal: null };
 
+    // ✅ 블러/글로우 제거: 깔끔한 카드형 블록만
     function blockSpan(html, opt = {}) {
-      const bg = opt.bg || "rgba(10,14,24,0.84)";
+      const bg = opt.bg || "rgba(10,14,24,0.86)";
       const fg = opt.fg || "rgba(255,255,255,0.98)";
-      const glow = opt.glow || "rgba(126,200,255,0.45)";
+      const br = opt.br || "18px";
       return `
         <span style="
           display:inline-block;
-          padding:10px 14px;
-          border-radius:16px;
+          padding:12px 16px;
+          border-radius:${br};
           background:${bg};
           color:${fg};
           box-shadow: 0 18px 54px rgba(0,0,0,0.22);
-          text-shadow: 0 0 12px ${glow};
-          letter-spacing: 0.8px;
+          letter-spacing: 0.4px;
           border: 1px solid rgba(255,255,255,0.10);
+          filter:none;
+          backdrop-filter:none;
+          -webkit-backdrop-filter:none;
+          text-shadow:none;
         ">${html}</span>
       `;
     }
 
     function openModal(title, body, hint) {
-      UI.modalTitle.innerHTML = blockSpan(title, { bg: "rgba(255,255,255,0.88)", fg: "rgba(10,14,24,0.92)", glow: "rgba(0,0,0,0)" });
+      UI.modalTitle.innerHTML = blockSpan(title, { bg: "rgba(255,255,255,0.90)", fg: "rgba(10,14,24,0.92)", br: "20px" });
       UI.modalBody.innerHTML = blockSpan(body);
       UI.modalHint.textContent = hint || "";
       UI.modal.style.display = "flex";
@@ -1066,7 +1012,7 @@ ctx.imageSmoothingQuality = "high";
       modalState.portal = p;
       openModal(
         `🧱 ${p.label}`,
-        `입장하시겠습니까?<br/><span style="opacity:.9;font-size:20px;">Enter / E</span>`,
+        `입장하시겠습니까?<br/><span style="opacity:.95;font-size:22px;font-weight:1200;">Enter / E</span>`,
         isTouchDevice() ? "모바일: 화면 탭하면 입장" : "PC: Enter 또는 E"
       );
     }
@@ -1080,9 +1026,20 @@ ctx.imageSmoothingQuality = "high";
       setTimeout(() => (window.location.href = p.url), 260);
     }
 
-    // ✅ 모바일: 모달 떠있을 때 터치 업으로도 진입
     UI.modal.addEventListener("pointerup", () => {
       if (isTouchDevice() && modalState.open && modalState.portal) confirmEnter(modalState.portal);
+    });
+
+    // ✅ (5) 뒤로가기(bfcache)로 돌아왔을 때 entering/fade가 남아 재진입 막는 현상 방지
+    function resetEnterState() {
+      entering = false;
+      UI.fade.classList.remove("on");
+      // 혹시 모달이 이상하게 남아있으면 닫기
+      if (modalState.open) closeModal();
+    }
+    window.addEventListener("pageshow", () => resetEnterState());
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") resetEnterState();
     });
 
     /* ----------------------- Rendering: background ----------------------- */
@@ -1095,7 +1052,7 @@ ctx.imageSmoothingQuality = "high";
       ctx.fillRect(0, 0, WORLD.w, WORLD.h);
 
       ctx.save();
-      ctx.globalAlpha = 0.22;
+      ctx.globalAlpha = 0.20;
       ctx.fillStyle = "rgba(255,255,255,0.55)";
       ctx.beginPath();
       ctx.ellipse(WORLD.w * 0.22, WORLD.h * 0.18, 520, 240, 0, 0, Math.PI * 2);
@@ -1104,8 +1061,8 @@ ctx.imageSmoothingQuality = "high";
       ctx.restore();
 
       ctx.save();
-      ctx.globalAlpha = 0.28;
-      ctx.strokeStyle = "rgba(10,14,24,0.55)";
+      ctx.globalAlpha = 0.26;
+      ctx.strokeStyle = "rgba(10,14,24,0.52)";
       ctx.lineWidth = 2;
       for (const b of birds) {
         const yy = b.y + Math.sin(b.p) * 6;
@@ -1120,7 +1077,7 @@ ctx.imageSmoothingQuality = "high";
 
     function drawCloudsWorld() {
       for (const c of clouds) {
-        const a = 0.13 + 0.05 * (c.layer === 0 ? 1.0 : 0.75);
+        const a = 0.12 + 0.05 * (c.layer === 0 ? 1.0 : 0.75);
         ctx.save();
         ctx.globalAlpha = a;
         ctx.fillStyle = "rgba(255,255,255,0.95)";
@@ -1147,7 +1104,6 @@ ctx.imageSmoothingQuality = "high";
       ctx.fillRect(0, WORLD.h * 0.30, WORLD.w, WORLD.h * 0.70);
       ctx.restore();
 
-      // stable patches
       ctx.save();
       ctx.fillStyle = dirtPattern || "#c79a64";
       for (const p of groundPatches) {
@@ -1157,8 +1113,7 @@ ctx.imageSmoothingQuality = "high";
         ctx.fill();
       }
 
-      // path in front of portals
-      ctx.globalAlpha = 0.52;
+      ctx.globalAlpha = 0.50;
       for (const po of portals) {
         const cx = po.x + po.w * 0.5;
         const cy = po.y + po.h * 0.90;
@@ -1174,8 +1129,8 @@ ctx.imageSmoothingQuality = "high";
         groundAO(r.x, r.y + r.h - 18, r.w, 26, 0.18);
 
         ctx.save();
-        ctx.globalAlpha = 0.16;
-        ctx.fillStyle = "rgba(255,255,255,0.32)";
+        ctx.globalAlpha = 0.14;
+        ctx.fillStyle = "rgba(255,255,255,0.30)";
         roundRect(r.x - 6, r.y - 6, r.w + 12, r.h + 12, 44);
         ctx.fill();
 
@@ -1184,13 +1139,12 @@ ctx.imageSmoothingQuality = "high";
         roundRect(r.x, r.y, r.w, r.h, 40);
         ctx.fill();
 
-        ctx.globalAlpha = 0.14;
-        ctx.fillStyle = "rgba(255,255,255,0.30)";
+        ctx.globalAlpha = 0.12;
+        ctx.fillStyle = "rgba(255,255,255,0.26)";
         roundRect(r.x + 10, r.y + 10, r.w - 20, r.h * 0.26, 30);
         ctx.fill();
 
-        // lane
-        ctx.globalAlpha = 0.42;
+        ctx.globalAlpha = 0.40;
         ctx.strokeStyle = "rgba(255,255,255,0.88)";
         ctx.lineWidth = 4;
         ctx.setLineDash([18, 16]);
@@ -1223,8 +1177,8 @@ ctx.imageSmoothingQuality = "high";
 
       for (const c of crossings) {
         ctx.save();
-        ctx.globalAlpha = 0.18;
-        ctx.fillStyle = "rgba(255,255,255,0.22)";
+        ctx.globalAlpha = 0.16;
+        ctx.fillStyle = "rgba(255,255,255,0.20)";
         roundRect(c.x, c.y, c.w, c.h, 14);
         ctx.fill();
 
@@ -1240,7 +1194,6 @@ ctx.imageSmoothingQuality = "high";
 
     /* ----------------------- Traffic lights ----------------------- */
     function drawSignal(s, t) {
-      // simple 3-light with phase
       const phase = (t + s.phase) % 6;
       const greenOn = phase < 2.4;
       const yellowOn = phase >= 2.4 && phase < 3.2;
@@ -1267,7 +1220,7 @@ ctx.imageSmoothingQuality = "high";
         ctx.arc(0, yy, 4.6, 0, Math.PI * 2);
         ctx.fill();
         if (on) {
-          ctx.globalAlpha = 0.22;
+          ctx.globalAlpha = 0.18;
           ctx.fillStyle = col;
           ctx.beginPath();
           ctx.arc(0, yy, 10, 0, Math.PI * 2);
@@ -1308,7 +1261,7 @@ ctx.imageSmoothingQuality = "high";
       roundRect(-size * 0.62, -size * 0.52, size * 1.24, size * 1.04, size * 0.32);
       ctx.fill();
 
-      ctx.globalAlpha = 0.22;
+      ctx.globalAlpha = 0.18;
       ctx.fillStyle = accent;
       roundRect(-size * 0.72, -size * 0.62, size * 1.44, size * 1.24, size * 0.36);
       ctx.fill();
@@ -1349,7 +1302,6 @@ ctx.imageSmoothingQuality = "high";
         ctx.ellipse(size * 0.20, size * 0.10, size * 0.14, size * 0.10, 0.2, 0, Math.PI * 2);
         ctx.fill();
       } else {
-        // generic dot
         ctx.fillStyle = "rgba(255,255,255,0.98)";
         ctx.beginPath();
         ctx.arc(0, 0, size * 0.18, 0, Math.PI * 2);
@@ -1359,7 +1311,7 @@ ctx.imageSmoothingQuality = "high";
       ctx.restore();
     }
 
-    /* ----------------------- Building (premium + bigger text) ----------------------- */
+    /* ----------------------- Building (sign bigger / no LED look) ----------------------- */
     function drawPortalBuilding(p, t) {
       const pal = buildingPalette(p.type);
       const isActive = activePortal === p;
@@ -1368,72 +1320,49 @@ ctx.imageSmoothingQuality = "high";
       groundAO(p.x + 12, p.y + p.h - 18, p.w - 24, 28, 0.24);
 
       ctx.save();
-      ctx.globalAlpha = 0.12 + (isActive ? 0.12 * pulse : 0);
-      ctx.fillStyle = isActive ? "rgba(10,132,255,0.92)" : "rgba(255,255,255,0.22)";
+      ctx.globalAlpha = 0.10 + (isActive ? 0.10 * pulse : 0);
+      ctx.fillStyle = isActive ? "rgba(10,132,255,0.92)" : "rgba(255,255,255,0.18)";
       ctx.beginPath();
       ctx.ellipse(p.x + p.w * 0.5, p.y + p.h * 0.90, 78, 24, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
       const depth = Math.max(12, Math.min(28, p.w * 0.06));
-      const bx = p.x + 16, by = p.y + 56, bw = p.w - 32, bh = p.h - 86;
+      const bx = p.x + 16, by = p.y + 72, bw = p.w - 32, bh = p.h - 104; // ✅ 간판 키우면서 본체 시작 y 살짝 내림
 
       legoBox3D(bx, by, bw, bh, depth, pal.main);
 
-      // premium front panel
+      // front inner panel
       ctx.save();
-      ctx.globalAlpha = 0.16;
-      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      ctx.globalAlpha = 0.14;
+      ctx.fillStyle = "rgba(255,255,255,0.32)";
       roundRect(bx + 10, by + 10, bw - 20, bh - 20, 16);
       ctx.fill();
-
-      ctx.globalAlpha = 0.10;
-      ctx.fillStyle = "rgba(10,14,24,0.75)";
-      roundRect(bx + 14, by + 14, bw - 28, 10, 8);
-      ctx.fill();
-      ctx.restore();
-
-      // seam lines
-      ctx.save();
-      ctx.globalAlpha = 0.16;
-      ctx.strokeStyle = "rgba(0,0,0,0.18)";
-      ctx.lineWidth = 2;
-      for (let yy = by + 22; yy < by + bh - 12; yy += 22) {
-        ctx.beginPath();
-        ctx.moveTo(bx + 14, yy);
-        ctx.lineTo(bx + bw - 14, yy);
-        ctx.stroke();
-      }
       ctx.restore();
 
       // roof plate
-      const rx = p.x + p.w * 0.16, ry = p.y + 16, rw = p.w * 0.68, rh = 46;
+      const rx = p.x + p.w * 0.12, ry = p.y + 18, rw = p.w * 0.76, rh = 54; // ✅ 더 큰 간판 영역 확보
       ctx.save();
-      ctx.fillStyle = shade(pal.main, +22);
-      roundRect(rx, ry, rw, rh, 18);
+      ctx.fillStyle = shade(pal.main, +18);
+      roundRect(rx, ry, rw, rh, 20);
       ctx.fill();
-      glossyHighlight(rx, ry, rw, rh, 0.12);
-
-      ctx.globalAlpha = 0.18;
-      ctx.fillStyle = "rgba(10,14,24,0.55)";
-      roundRect(rx + 10, ry + rh - 12, rw - 20, 8, 8);
-      ctx.fill();
+      glossyHighlight(rx, ry, rw, rh, 0.10);
       ctx.restore();
 
       // door
-      const dx = p.x + p.w * 0.44, dy = p.y + p.h * 0.68, dw = p.w * 0.12, dh = p.h * 0.18;
+      const dx = p.x + p.w * 0.44, dy = p.y + p.h * 0.70, dw = p.w * 0.12, dh = p.h * 0.18;
       ctx.save();
-      ctx.fillStyle = "rgba(10,14,24,0.22)";
+      ctx.fillStyle = "rgba(10,14,24,0.20)";
       roundRect(dx, dy, dw, dh, 12);
       ctx.fill();
-      ctx.fillStyle = shade(pal.accent, +10);
+      ctx.fillStyle = shade(pal.accent, +8);
       roundRect(dx + 4, dy + 4, dw - 8, dh - 8, 10);
       ctx.fill();
-      glossyHighlight(dx, dy, dw, dh, 0.12);
+      glossyHighlight(dx, dy, dw, dh, 0.10);
       ctx.restore();
 
       // windows
-      const winY = p.y + p.h * 0.54;
+      const winY = p.y + p.h * 0.56;
       const cols = 5;
       for (let i = 0; i < cols; i++) {
         const wx = p.x + p.w * 0.18 + i * (p.w * 0.13);
@@ -1441,7 +1370,7 @@ ctx.imageSmoothingQuality = "high";
         const ww = p.w * 0.10, wh = p.h * 0.11;
 
         ctx.save();
-        ctx.fillStyle = "rgba(0,0,0,0.24)";
+        ctx.fillStyle = "rgba(0,0,0,0.22)";
         roundRect(wx, wy, ww, wh, 10);
         ctx.fill();
 
@@ -1452,8 +1381,8 @@ ctx.imageSmoothingQuality = "high";
         roundRect(wx + 3, wy + 3, ww - 6, wh - 6, 8);
         ctx.fill();
 
-        ctx.globalAlpha = 0.20;
-        ctx.strokeStyle = "rgba(255,255,255,0.75)";
+        ctx.globalAlpha = 0.18;
+        ctx.strokeStyle = "rgba(255,255,255,0.70)";
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(wx + ww / 2, wy + 5);
@@ -1466,65 +1395,61 @@ ctx.imageSmoothingQuality = "high";
         ctx.restore();
       }
 
-      // ✅ LED sign: 글씨 크게 + 블록 느낌, 촌스러운 테두리 제거
-      const sy = p.y + 8;
-      const sx = p.x + p.w * 0.16, sw = p.w * 0.68;
+      // ✅ (3) 간판: 전광판 느낌 제거(그라데이션/글로우/LED) + 크게 + 글자 크게
+      const sx = p.x + p.w * 0.10;
+      const sy = p.y + 10;
+      const sw = p.w * 0.80;
+      const sh = 56; // ✅ 높이 크게
+
+      // subtle shadow
+      softShadow(sx + 2, sy + 5, sw, sh, 0.10);
 
       ctx.save();
+      // sign base
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.strokeStyle = "rgba(0,0,0,0.10)";
+      ctx.lineWidth = 2;
+      roundRect(sx, sy, sw, sh, 20);
+      ctx.fill();
+      ctx.stroke();
+
+      // inner strip
+      ctx.globalAlpha = 0.10;
+      ctx.fillStyle = "rgba(10,14,24,0.85)";
+      roundRect(sx + 10, sy + sh - 14, sw - 20, 8, 8);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // left icon
+      const iconSize = 16;
+      drawLogoIcon(p.type, sx + 26, sy + sh / 2, iconSize, pal.accent);
+
+      // label
+      const fontSize =
+        (p.type === "hospital" || p.type === "pharmacy") ? 24 :
+        (p.size === "L") ? 22 : 20;
+
       ctx.fillStyle = "rgba(10,14,24,0.92)";
-      roundRect(sx, sy, sw, 38, 16);
-      ctx.fill();
-
-      const led = ctx.createLinearGradient(sx, sy, sx + sw, sy + 38);
-      led.addColorStop(0, shade(pal.accent, +26));
-      led.addColorStop(1, shade(pal.accent, -6));
-      ctx.globalAlpha = 0.90;
-      ctx.fillStyle = led;
-      roundRect(sx + 3, sy + 3, sw - 6, 32, 14);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-
-      // subtle glow (not boxy)
-      ctx.globalAlpha = 0.18;
-      ctx.fillStyle = pal.accent;
-      roundRect(sx - 10, sy - 10, sw + 20, 58, 20);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-
-      // ✅ 로고(글씨 왼쪽)
-      const iconSize = 14;
-      const iconX = sx + 18;
-      const iconY = sy + 19;
-      drawLogoIcon(p.type, iconX, iconY, iconSize, pal.accent);
-
-      // label text (bigger especially hospital/pharmacy)
-      const big = (p.type === "hospital" || p.type === "pharmacy") ? 18 : 15;
-      ctx.fillStyle = "rgba(255,255,255,0.995)";
-      ctx.shadowColor = "rgba(255,255,255,0.55)";
-      ctx.shadowBlur = 10;
-      ctx.font = `1200 ${big}px system-ui`;
+      ctx.font = `1200 ${fontSize}px system-ui`;
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
-      ctx.fillText(p.label, sx + 38, sy + 19);
-      ctx.shadowBlur = 0;
+      ctx.fillText(p.label, sx + 52, sy + sh / 2);
 
+      // status badge for soon
       if (p.status !== "open" || !p.url) {
-        // "오픈 준비중" badge
         ctx.save();
-        ctx.globalAlpha = 0.92;
-        ctx.fillStyle = "rgba(255,255,255,0.92)";
-        roundRect(sx + sw * 0.5 - 62, sy + 46, 124, 24, 12);
+        ctx.globalAlpha = 0.95;
+        ctx.fillStyle = "rgba(10,14,24,0.88)";
+        roundRect(sx + sw - 138, sy + 14, 122, 28, 14);
         ctx.fill();
-        ctx.fillStyle = "rgba(10,14,24,0.90)";
-        ctx.font = "1100 11px system-ui";
+        ctx.fillStyle = "rgba(255,255,255,0.98)";
+        ctx.font = "1100 12px system-ui";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("오픈 준비중", sx + sw * 0.5, sy + 58);
+        ctx.fillText("오픈 준비중", sx + sw - 77, sy + 28);
         ctx.restore();
       }
 
-      ctx.textAlign = "start";
-      ctx.textBaseline = "alphabetic";
       ctx.restore();
     }
 
@@ -1558,14 +1483,14 @@ ctx.imageSmoothingQuality = "high";
       blob(x + 30 * s, y - 44 * s, 26 * s, 22 * s);
       blob(x + 2 * s, y - 40 * s, 34 * s, 24 * s);
 
-      ctx.globalAlpha = 0.18;
+      ctx.globalAlpha = 0.16;
       ctx.fillStyle = dark;
       ctx.beginPath();
       ctx.ellipse(x + 8 * s, y - 44 * s, 30 * s, 22 * s, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalAlpha = 1;
 
-      ctx.globalAlpha = 0.12;
+      ctx.globalAlpha = 0.10;
       ctx.fillStyle = "rgba(255,255,255,0.92)";
       ctx.beginPath();
       ctx.ellipse(x - 6 * s, y - 66 * s, 18 * s, 12 * s, 0, 0, Math.PI * 2);
@@ -1591,7 +1516,7 @@ ctx.imageSmoothingQuality = "high";
       ctx.fill();
       glossyHighlight(x - 16 * s, y - 54 * s, 32 * s, 22 * s, 0.18);
 
-      ctx.globalAlpha = 0.08 + 0.22 * pulse;
+      ctx.globalAlpha = 0.06 + 0.18 * pulse;
       ctx.fillStyle = "#ffd66b";
       ctx.beginPath();
       ctx.ellipse(x, y - 10 * s, 34 * s, 54 * s, 0, 0, Math.PI * 2);
@@ -1609,7 +1534,7 @@ ctx.imageSmoothingQuality = "high";
       ctx.fill();
       glossyHighlight(x - 42 * s, y - 2 * s, 84 * s, 18 * s, 0.12);
 
-      ctx.fillStyle = "rgba(0,0,0,0.25)";
+      ctx.fillStyle = "rgba(0,0,0,0.22)";
       roundRect(x - 34 * s, y + 14 * s, 14 * s, 10 * s, 5 * s);
       ctx.fill();
       roundRect(x + 20 * s, y + 14 * s, 14 * s, 10 * s, 5 * s);
@@ -1656,32 +1581,25 @@ ctx.imageSmoothingQuality = "high";
       roundRect(-4, -10, 8, 38, 6);
       ctx.fill();
 
+      softShadow(-72, -62, 144, 44, 0.10);
+
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.strokeStyle = "rgba(0,0,0,0.10)";
+      ctx.lineWidth = 2;
+      roundRect(-72, -62, 144, 44, 18);
+      ctx.fill();
+      ctx.stroke();
+
       ctx.fillStyle = "rgba(10,14,24,0.92)";
-      roundRect(-64, -56, 128, 36, 14);
-      ctx.fill();
-
-      const led = ctx.createLinearGradient(-64, -56, 64, -20);
-      led.addColorStop(0, "rgba(126,200,255,0.98)");
-      led.addColorStop(1, "rgba(255,204,0,0.94)");
-      ctx.globalAlpha = 0.90;
-      ctx.fillStyle = led;
-      roundRect(-61, -53, 122, 30, 12);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-
-      ctx.fillStyle = "rgba(255,255,255,0.995)";
-      ctx.shadowColor = "rgba(255,255,255,0.55)";
-      ctx.shadowBlur = 10;
-      ctx.font = "1200 14px system-ui";
+      ctx.font = "1200 18px system-ui";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(s.text, 0, -38);
-      ctx.shadowBlur = 0;
+      ctx.fillText(s.text, 0, -40);
 
       ctx.restore();
     }
 
-    /* ----------------------- Emblems (front of buildings) ----------------------- */
+    /* ----------------------- Emblems ----------------------- */
     function drawEmblem(e) {
       const x = e.x, y = e.y;
       const p = portalsByKey(e.key);
@@ -1691,7 +1609,6 @@ ctx.imageSmoothingQuality = "high";
       ctx.save();
       ctx.translate(x, y);
 
-      // pedestal
       ctx.fillStyle = "rgba(255,255,255,0.92)";
       ctx.strokeStyle = "rgba(0,0,0,0.12)";
       ctx.lineWidth = 2;
@@ -1699,7 +1616,6 @@ ctx.imageSmoothingQuality = "high";
       ctx.fill();
       ctx.stroke();
 
-      // icon plate
       drawLogoIcon(p ? p.type : "arcade", 0, -18, 14, pal.accent);
 
       ctx.restore();
@@ -1715,7 +1631,7 @@ ctx.imageSmoothingQuality = "high";
       const base = c.color;
 
       ctx.save();
-      ctx.globalAlpha = 0.22;
+      ctx.globalAlpha = 0.20;
       ctx.fillStyle = "rgba(10,14,24,0.40)";
       ctx.beginPath();
       ctx.ellipse(0, h * 0.58, w * 0.56, h * 0.34, 0, 0, Math.PI * 2);
@@ -1728,12 +1644,11 @@ ctx.imageSmoothingQuality = "high";
         ctx.fillStyle = base;
         roundRect(-w * 0.52, -h * 0.40, w * 1.04, h * 0.80, 12);
         ctx.fill();
-        glossyHighlight(-w * 0.52, -h * 0.40, w * 1.04, h * 0.80, 0.12);
+        glossyHighlight(-w * 0.52, -h * 0.40, w * 1.04, h * 0.80, 0.10);
 
         ctx.fillStyle = shade(base, +16);
         roundRect(-w * 0.20, -h * 0.58, w * 0.40, h * 0.28, 10);
         ctx.fill();
-        glossyHighlight(-w * 0.20, -h * 0.58, w * 0.40, h * 0.28, 0.14);
 
         const g = ctx.createLinearGradient(-w * 0.12, -h * 0.50, w * 0.20, -h * 0.18);
         g.addColorStop(0, "rgba(210,250,255,0.92)");
@@ -1742,7 +1657,7 @@ ctx.imageSmoothingQuality = "high";
         roundRect(-w * 0.18, -h * 0.34, w * 0.36, h * 0.26, 8);
         ctx.fill();
 
-        ctx.fillStyle = "rgba(10,14,24,0.18)";
+        ctx.fillStyle = "rgba(10,14,24,0.16)";
         roundRect(-w * 0.54, h * 0.14, w * 1.08, h * 0.18, 10);
         ctx.fill();
 
@@ -1768,7 +1683,7 @@ ctx.imageSmoothingQuality = "high";
       ctx.fillStyle = base;
       roundRect(-w * 0.55, -h * 0.50, w * 1.10, h * 1.00, 12);
       ctx.fill();
-      glossyHighlight(-w * 0.55, -h * 0.50, w * 1.10, h * 1.00, 0.12);
+      glossyHighlight(-w * 0.55, -h * 0.50, w * 1.10, h * 1.00, 0.10);
 
       ctx.fillStyle = shade(base, +16);
       roundRect(-w * 0.34, -h * 0.62, w * 0.68, h * 0.26, 10);
@@ -1781,7 +1696,7 @@ ctx.imageSmoothingQuality = "high";
       roundRect(-w * 0.32, -h * 0.30, w * 0.64, h * 0.52, 10);
       ctx.fill();
 
-      ctx.fillStyle = "rgba(10,14,24,0.18)";
+      ctx.fillStyle = "rgba(10,14,24,0.16)";
       roundRect(-w * 0.56, h * 0.32, w * 1.12, h * 0.16, 10);
       ctx.fill();
 
@@ -1810,7 +1725,7 @@ ctx.imageSmoothingQuality = "high";
     function drawFootprints() {
       ctx.save();
       for (const f of footprints) {
-        const a = 0.20 * (1 - f.age / f.life);
+        const a = 0.18 * (1 - f.age / f.life);
         ctx.globalAlpha = a;
         ctx.fillStyle = "rgba(10,14,24,0.65)";
         ctx.beginPath();
@@ -1829,7 +1744,7 @@ ctx.imageSmoothingQuality = "high";
       roundRect(-14, -20, 28, 15, 9);
       ctx.fill();
 
-      ctx.globalAlpha = 0.16;
+      ctx.globalAlpha = 0.14;
       ctx.fillStyle = "rgba(255,255,255,0.95)";
       roundRect(-10, -17, 20, 5, 6);
       ctx.fill();
@@ -1843,7 +1758,7 @@ ctx.imageSmoothingQuality = "high";
       ctx.closePath();
       ctx.fill();
 
-      ctx.globalAlpha = 0.18;
+      ctx.globalAlpha = 0.16;
       ctx.fillStyle = "rgba(10,14,24,0.55)";
       roundRect(-12, -6, 24, 4, 3);
       ctx.fill();
@@ -1853,15 +1768,14 @@ ctx.imageSmoothingQuality = "high";
     }
 
     function drawSpriteCharacter(x, y) {
-      // anchored with feet at y+40 approx
       if (!sprite.loaded || !sprite.img) return false;
 
       const bob = player.moving ? Math.sin(player.bobT) * 0.35 : 0;
-      const baseW = 88; // sprite render size
+      const baseW = 88;
       const baseH = 96;
 
       ctx.save();
-      ctx.globalAlpha = 0.26;
+      ctx.globalAlpha = 0.24;
       ctx.fillStyle = "rgba(10,14,24,0.42)";
       ctx.beginPath();
       ctx.ellipse(x, y + 28, 22, 8, 0, 0, Math.PI * 2);
@@ -1870,28 +1784,28 @@ ctx.imageSmoothingQuality = "high";
 
       ctx.save();
       ctx.translate(x, y + bob);
-
-      // direction flip for left
       if (player.dir === "left") ctx.scale(-1, 1);
 
-      // slight squash while moving
       const s = player.moving ? (0.98 + 0.02 * Math.sin(player.animT * 10)) : 1;
       ctx.scale(s, 1);
 
       ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
       ctx.drawImage(sprite.img, -baseW / 2, -72, baseW, baseH);
 
       ctx.restore();
       return true;
     }
 
+    // ✅ (1) 옆모습: "몸통+다리 하나만" 보이게 + 걷는 모션
     function drawMinifig(x, y, opts = null) {
-      const bob = (opts?.moving ?? player.moving) ? Math.sin((opts?.bobT ?? player.bobT)) * 0.14 : 0;
+      const moving = opts?.moving ?? player.moving;
+      const bob = moving ? Math.sin((opts?.bobT ?? player.bobT)) * 0.14 : 0;
       const dir = opts?.dir ?? player.dir;
-      const swing = (opts?.moving ?? player.moving) ? Math.sin((opts?.animT ?? player.animT) * 10) : 0;
+      const swing = moving ? Math.sin((opts?.animT ?? player.animT) * 10) : 0;
 
       ctx.save();
-      ctx.globalAlpha = 0.26;
+      ctx.globalAlpha = 0.24;
       ctx.fillStyle = "rgba(10,14,24,0.42)";
       ctx.beginPath();
       ctx.ellipse(x, y + 28, 20, 7, 0, 0, Math.PI * 2);
@@ -1947,7 +1861,6 @@ ctx.imageSmoothingQuality = "high";
         ctx.fill();
         ctx.globalAlpha = 1;
       } else {
-        // side face more natural
         ctx.fillStyle = "rgba(10,14,24,0.72)";
         ctx.beginPath();
         ctx.arc(7, -22, 2.1, 0, Math.PI * 2);
@@ -1959,8 +1872,7 @@ ctx.imageSmoothingQuality = "high";
         ctx.arc(9, -18, 6, -0.25, Math.PI - 0.55);
         ctx.stroke();
 
-        // nose highlight
-        ctx.globalAlpha = 0.16;
+        ctx.globalAlpha = 0.14;
         ctx.fillStyle = "rgba(10,14,24,0.20)";
         ctx.beginPath();
         ctx.ellipse(14.5, -18.5, 2.6, 1.9, 0, 0, Math.PI * 2);
@@ -1973,7 +1885,6 @@ ctx.imageSmoothingQuality = "high";
       const legSwing = 3.0 * swing;
 
       if (!side) {
-        // front/back
         ctx.fillStyle = torso;
         roundRect(-14, -4, 28, 28, 12);
         ctx.fill();
@@ -2003,67 +1914,44 @@ ctx.imageSmoothingQuality = "high";
         ctx.ellipse(6, 40 - legSwing, 6, 3, 0, 0, Math.PI * 2);
         ctx.fill();
       } else {
-        // ✅ side profile 개선(부자연스러움 개선): 팔/다리 오클루전 + 힙/발 방향
-        // torso
+        // ✅ 핵심: 측면은 "다리 1개만" + 슬림 실루엣
+        // torso (slimmer)
         ctx.fillStyle = torso;
-        roundRect(-10, -4, 20, 28, 12);
+        roundRect(-9, -4, 18, 28, 12);
         ctx.fill();
-        glossyHighlight(-10, -4, 20, 28, 0.10);
+        glossyHighlight(-9, -4, 18, 28, 0.10);
 
-        // back arm (partial, behind torso)
+        // back arm(아주 살짝만 힌트)
         ctx.save();
-        ctx.globalAlpha = 0.48;
+        ctx.globalAlpha = 0.22;
         ctx.fillStyle = shade(torso, -10);
-        roundRect(-18, 3, 9, 16, 8);
-        ctx.fill();
-        ctx.fillStyle = shade(skin, -6);
-        roundRect(-18, 15 - armSwing * 0.5, 9, 7, 6);
+        roundRect(-16, 4, 8, 14, 8);
         ctx.fill();
         ctx.restore();
 
         // front arm
         ctx.fillStyle = torso;
-        roundRect(10, 2, 10, 18, 8);
+        roundRect(9, 3, 10, 18, 8);
         ctx.fill();
         ctx.fillStyle = skin;
-        roundRect(10, 15 + armSwing, 10, 8, 6);
+        roundRect(9, 15 + armSwing, 10, 8, 6);
         ctx.fill();
 
-        // hips seam
-        ctx.globalAlpha = 0.16;
-        ctx.fillStyle = "rgba(255,255,255,0.92)";
-        roundRect(-8, 20, 20, 4, 3);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-
-        // far leg (behind)
-        ctx.save();
-        ctx.globalAlpha = 0.50;
-        ctx.fillStyle = shade(pants, -14);
-        roundRect(-7, 22, 9, 16, 6);
-        ctx.fill();
-        // far foot
-        ctx.fillStyle = "rgba(10,14,24,0.68)";
-        ctx.beginPath();
-        ctx.ellipse(-2, 40 - legSwing * 0.7, 5.0, 2.6, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-
-        // near leg
+        // only ONE leg
         ctx.fillStyle = pants;
-        roundRect(3, 22, 12, 16, 6);
+        roundRect(2, 22, 12, 16, 6);
         ctx.fill();
 
-        // near foot (slightly forward)
+        // foot
         ctx.fillStyle = "rgba(10,14,24,0.72)";
         ctx.beginPath();
-        ctx.ellipse(10, 40 + legSwing, 6.2, 3.0, 0, 0, Math.PI * 2);
+        ctx.ellipse(9, 40 + legSwing, 6.2, 3.0, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // subtle outline at torso front edge
-        ctx.globalAlpha = 0.10;
+        // subtle front edge
+        ctx.globalAlpha = 0.08;
         ctx.fillStyle = "rgba(10,14,24,0.75)";
-        roundRect(8, -2, 3, 24, 2);
+        roundRect(7, -2, 3, 24, 2);
         ctx.fill();
         ctx.globalAlpha = 1;
       }
@@ -2079,12 +1967,8 @@ ctx.imageSmoothingQuality = "high";
           omok: { torso: "#ffffff", pants: "#3b4251", hat: "#0a84ff", acc: "stone2" }
         }[key] || { torso: "#ffffff", pants: "#3b4251", hat: "#ff3b30", acc: "none" };
 
-      drawMinifig(x, y, {
-        moving: false, dir: "right",
-        torso: theme.torso, pants: theme.pants, hat: theme.hat
-      });
+      drawMinifig(x, y, { moving: false, dir: "right", torso: theme.torso, pants: theme.pants, hat: theme.hat });
 
-      // accessory
       ctx.save();
       ctx.translate(x, y);
       ctx.scale(-1, 1);
@@ -2158,6 +2042,107 @@ ctx.imageSmoothingQuality = "high";
       ctx.restore();
     }
 
+    /* ----------------------- (4) MiniMap ----------------------- */
+    function drawMiniMap() {
+      const pad = 16;
+      const mw = 220;
+      const mh = 160;
+      const x = VIEW.w - mw - pad;
+      const y = 16;
+
+      // background
+      ctx.save();
+      ctx.globalAlpha = 0.92;
+      ctx.fillStyle = "rgba(255,255,255,0.78)";
+      ctx.strokeStyle = "rgba(0,0,0,0.10)";
+      ctx.lineWidth = 2;
+      roundRect(x, y, mw, mh, 18);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.globalAlpha = 0.10;
+      ctx.fillStyle = "rgba(10,14,24,0.85)";
+      roundRect(x + 10, y + mh - 16, mw - 20, 8, 8);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // inner clip
+      const ix = x + 10, iy = y + 10, iw = mw - 20, ih = mh - 20;
+      ctx.save();
+      roundRect(ix, iy, iw, ih, 14);
+      ctx.clip();
+
+      // map transform
+      const sx = iw / WORLD.w;
+      const sy = ih / WORLD.h;
+      const s = Math.min(sx, sy);
+      const ox = ix + (iw - WORLD.w * s) * 0.5;
+      const oy = iy + (ih - WORLD.h * s) * 0.5;
+
+      function mx(wx) { return ox + wx * s; }
+      function my(wy) { return oy + wy * s; }
+
+      // roads
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = "rgba(38,44,55,0.85)";
+      for (const r of roads) {
+        roundRect(mx(r.x), my(r.y), r.w * s, r.h * s, 8);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // portals markers
+      for (const p of portals) {
+        const pal = buildingPalette(p.type);
+        const cx = mx(p.x + p.w * 0.5);
+        const cy = my(p.y + p.h * 0.5);
+
+        ctx.save();
+        ctx.fillStyle = pal.accent;
+        ctx.globalAlpha = 0.95;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 4.6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // label tiny
+        ctx.globalAlpha = 0.80;
+        ctx.fillStyle = "rgba(10,14,24,0.85)";
+        ctx.font = "900 9px system-ui";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        const short =
+          p.key === "avoid" ? "피" :
+          p.key === "archery" ? "양" :
+          p.key === "janggi" ? "장" :
+          p.key === "omok" ? "오" :
+          p.key === "jump" ? "점" :
+          p.key === "snow" ? "눈" :
+          p.key === "mcd" ? "맥" :
+          p.key === "hospital" ? "병" :
+          p.key === "pharmacy" ? "약" :
+          p.key === "chicken" ? "치" : "•";
+        ctx.fillText(short, cx + 6, cy);
+        ctx.restore();
+      }
+
+      // player marker
+      const px = mx(player.x);
+      const py = my(player.y);
+      ctx.save();
+      ctx.fillStyle = "rgba(10,132,255,0.98)";
+      ctx.beginPath();
+      ctx.arc(px, py, 5.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.22;
+      ctx.beginPath();
+      ctx.arc(px, py, 11, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.restore(); // clip
+      ctx.restore(); // card
+    }
+
     /* ----------------------- Depth sorting ----------------------- */
     function getFootY(entity) {
       if (entity.kind === "building") return entity.y + entity.h;
@@ -2214,7 +2199,6 @@ ctx.imageSmoothingQuality = "high";
       player.bobT += dt * 6.0;
       addFootprint(dt);
 
-      // cars
       for (const c of cars) {
         c.bob += dt * 3.0;
         const r = roads.find((rr) => rr._id === c.roadId) || roads[0];
@@ -2231,7 +2215,6 @@ ctx.imageSmoothingQuality = "high";
         }
       }
 
-      // clouds / birds
       for (const c of clouds) {
         c.x += c.v * (c.layer === 0 ? 1.0 : 0.75) * dt;
         if (c.x > WORLD.w + 420) {
@@ -2253,14 +2236,12 @@ ctx.imageSmoothingQuality = "high";
         }
       }
 
-      // detect portal
       activePortal = null;
       for (const p of portals) {
         const z = portalEnterZone(p);
         if (circleRectHit(player.x, player.y, player.r, z)) { activePortal = p; break; }
       }
 
-      // ✅ 모바일: 포탈 존에 들어가면 항상 모달이 뜨도록(오픈/오픈준비중 둘 다)
       if (isTouchDevice() && activePortal && !modalState.open) {
         if (lastMobileZoneKey !== activePortal.key) {
           lastMobileZoneKey = activePortal.key;
@@ -2269,30 +2250,30 @@ ctx.imageSmoothingQuality = "high";
       }
       if (!activePortal) lastMobileZoneKey = "";
 
-      // toast (central block)
+      // ✅ (2) 안내 문구: 중앙쪽 + "포탈 앞이에요. Enter를 입력해주세요" 가독성 강화
       if (!modalState.open && activePortal) {
         UI.toast.hidden = false;
         const p = activePortal;
         if (p.status === "open" && p.url) {
-          UI.toast.innerHTML = `
-            ${blockSpan(`🧱 <b>${p.label}</b><br/>포탈 앞이에요. <b>Enter/E</b> 또는 <b>클릭/터치</b>`, { bg: "rgba(10,14,24,0.82)" })}
-          `;
+          UI.toast.innerHTML = blockSpan(
+            `🧱 <b>${p.label}</b><br/>포탈 앞이에요. <b>Enter</b>를 입력해주세요 (또는 <b>E</b>)`,
+            { bg: "rgba(10,14,24,0.86)" }
+          );
         } else {
-          UI.toast.innerHTML = `
-            ${blockSpan(`🧱 <b>${p.label}</b><br/>오픈 준비중입니다`, { bg: "rgba(10,14,24,0.78)" })}
-          `;
+          UI.toast.innerHTML = blockSpan(
+            `🧱 <b>${p.label}</b><br/>오픈 준비중입니다`,
+            { bg: "rgba(10,14,24,0.82)" }
+          );
         }
       } else if (!modalState.open) {
         UI.toast.hidden = true;
       }
 
-      // footprints decay
       for (let i = footprints.length - 1; i >= 0; i--) {
         footprints[i].age += dt;
         if (footprints[i].age >= footprints[i].life) footprints.splice(i, 1);
       }
 
-      // roamers
       const roamerPalette = stepRoamers(dt);
 
       updateCamera(dt);
@@ -2348,7 +2329,6 @@ ctx.imageSmoothingQuality = "high";
         else if (it.kind === "signal") drawSignal(it.ref, t);
         else if (it.kind === "roamer") drawRoamer(it.ref, roamerPalette);
         else if (it.kind === "player") {
-          // sprite first
           if (!(SPRITE_SRC && USE_SPRITE_IF_LOADED && drawSpriteCharacter(player.x, player.y))) {
             drawMinifig(player.x, player.y);
           }
@@ -2356,10 +2336,24 @@ ctx.imageSmoothingQuality = "high";
       }
 
       ctx.restore();
+
+      // overlay UI
       drawWorldTitle();
+      drawMiniMap(); // ✅ (4)
+
+      // subtle vignette for premium look
+      ctx.save();
+      const vg = ctx.createRadialGradient(VIEW.w * 0.5, VIEW.h * 0.45, Math.min(VIEW.w, VIEW.h) * 0.25, VIEW.w * 0.5, VIEW.h * 0.5, Math.max(VIEW.w, VIEW.h) * 0.72);
+      vg.addColorStop(0, "rgba(10,14,24,0.00)");
+      vg.addColorStop(1, "rgba(10,14,24,0.06)");
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, VIEW.w, VIEW.h);
+      ctx.restore();
     }
 
     /* ----------------------- Loop ----------------------- */
+    let lastMobileTap = 0;
+
     function loop(now) {
       const t = now / 1000;
       const dt = Math.min(0.033, (now - lastT) / 1000);
@@ -2381,6 +2375,7 @@ ctx.imageSmoothingQuality = "high";
     canvas.addEventListener(
       "pointerdown",
       (e) => {
+        // PC: 포탈 존 클릭하면 모달
         const p = getPointer(e);
         const w = screenToWorld(p.x, p.y);
         if (activePortal && !modalState.open) {
@@ -2388,6 +2383,13 @@ ctx.imageSmoothingQuality = "high";
           if (w.x >= z.x - 20 && w.x <= z.x + z.w + 20 && w.y >= z.y - 20 && w.y <= z.y + z.h + 20) {
             openPortalUI(activePortal);
           }
+        }
+
+        // mobile double tap on canvas while modal open -> enter
+        if (isTouchDevice() && modalState.open && modalState.portal) {
+          const now = performance.now();
+          if (now - lastMobileTap < 320) confirmEnter(modalState.portal);
+          lastMobileTap = now;
         }
       },
       { passive: true }
