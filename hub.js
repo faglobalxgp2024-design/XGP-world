@@ -1066,7 +1066,7 @@ ctx.imageSmoothingQuality = "high";
       modalState.portal = p;
       openModal(
         `🧱 ${p.label}`,
-        `입장하시겠습니까?<br/><span style="opacity:.9;font-size:14px;">Enter / E</span>`,
+        `입장하시겠습니까?<br/><span style="opacity:.9;font-size:20px;">Enter / E</span>`,
         isTouchDevice() ? "모바일: 화면 탭하면 입장" : "PC: Enter 또는 E"
       );
     }
