@@ -1,11 +1,8 @@
-/* HUN.JS - LEGO PREMIUM (single-file) v2.3 (PATCHED)
+/* HUN.JS - LEGO PREMIUM (single-file) v2.4 (PATCHED)
  * 반영:
- * 1) 옆모습(측면) 자연스럽게: 몸통/다리 1개만 보이도록 + 걷는 애니메이션 개선
- * 2) 포탈 안내 UI: PC에서 모자이크(블러)처럼 보이는 효과 제거 + 문구 중앙 배치/가독성 강화
- * 3) 간판/글씨 크게(대부분 건물) + 전광판(LED/글로우) 느낌 제거 + 간판 자체도 확대
- * 4) 우측 상단 미니맵(투명) 추가: 미니게임/건물 위치 + 플레이어 위치 표시
- * 5) 모바일에서 뒤로가기 후 재진입 멈춤: bfcache/pageshow 복귀 시 entering/fade 상태 초기화
- * 6) 전체 그래픽 톤/섀도/하이라이트 조금 더 고급스럽게
+ * 1) 스프라이트 캐릭터 바닥 정렬(공중 떠 보임 해결) + 크기 업
+ * 2) 옆/뒤 방향에서는 미니피겨로 렌더(옆/뒤모습+걷는 모션 자연스럽게)
+ * 3) "오픈 준비중" 배지 -> 간판 아래로 이동 (간판 글씨 안 가림)
  */
 
 (() => {
@@ -79,7 +76,7 @@
     const toast = ensureEl("toast", "div");
     toast.style.position = "fixed";
     toast.style.left = "50%";
-    toast.style.top = "96px";              // 중앙쪽에 가깝게
+    toast.style.top = "96px";
     toast.style.transform = "translateX(-50%)";
     toast.style.zIndex = "9999";
     toast.style.padding = "0";
@@ -816,7 +813,6 @@
         crossings.push({ x: vx - 92, y: vy - 88, w: 184, h: 56 });
       };
 
-      // main vertical intersections
       for (const ry of [WORLD.h * 0.50, WORLD.h * 0.26, WORLD.h * 0.74]) {
         makeCross(v1.x + v1.w * 0.5, ry);
       }
@@ -918,7 +914,7 @@
 
       ctx.setTransform(DPR * VIEW.zoom, 0, 0, DPR * VIEW.zoom, 0, 0);
 
-      // ✅ 모자이크(거친 픽셀) 방지: 항상 스무딩 + 고품질
+      // ✅ 모자이크(거친 픽셀) 방지
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
 
@@ -963,30 +959,28 @@
     /* ----------------------- Modal ----------------------- */
     const modalState = { open: false, portal: null };
 
-    // ✅ 블러/글로우 제거: 깔끔한 카드형 블록만
     function blockSpan(html, opt = {}) {
-  const bg = opt.bg || "rgba(10,14,24,0.86)";
-  const fg = opt.fg || "#ffffff";   // 🔥 완전 흰색
-  const br = opt.br || "18px";
+      const bg = opt.bg || "rgba(10,14,24,0.86)";
+      const fg = opt.fg || "#ffffff";
+      const br = opt.br || "18px";
 
-  return `
-    <span style="
-      display:inline-block;
-      padding:12px 16px;
-      border-radius:${br};
-      background:${bg};
-      color:${fg};
-      box-shadow: 0 18px 54px rgba(0,0,0,0.22);
-      letter-spacing: 0.4px;
-      border: 1px solid rgba(255,255,255,0.10);
-      filter:none;
-      backdrop-filter:none;
-      -webkit-backdrop-filter:none;
-
-      text-shadow: 0 2px 6px rgba(0,0,0,0.85);  /* ⭐ 가독성 핵심 */
-    ">${html}</span>
-  `;
-}
+      return `
+        <span style="
+          display:inline-block;
+          padding:12px 16px;
+          border-radius:${br};
+          background:${bg};
+          color:${fg};
+          box-shadow: 0 18px 54px rgba(0,0,0,0.22);
+          letter-spacing: 0.4px;
+          border: 1px solid rgba(255,255,255,0.10);
+          filter:none;
+          backdrop-filter:none;
+          -webkit-backdrop-filter:none;
+          text-shadow: 0 2px 6px rgba(0,0,0,0.85);
+        ">${html}</span>
+      `;
+    }
 
     function openModal(title, body, hint) {
       UI.modalTitle.innerHTML = blockSpan(title, { bg: "rgba(255,255,255,0.90)", fg: "rgba(10,14,24,0.92)", br: "20px" });
@@ -1032,11 +1026,9 @@
       if (isTouchDevice() && modalState.open && modalState.portal) confirmEnter(modalState.portal);
     });
 
-    // ✅ (5) 뒤로가기(bfcache)로 돌아왔을 때 entering/fade가 남아 재진입 막는 현상 방지
     function resetEnterState() {
       entering = false;
       UI.fade.classList.remove("on");
-      // 혹시 모달이 이상하게 남아있으면 닫기
       if (modalState.open) closeModal();
     }
     window.addEventListener("pageshow", () => resetEnterState());
@@ -1330,11 +1322,11 @@
       ctx.restore();
 
       const depth = Math.max(12, Math.min(28, p.w * 0.06));
-      const bx = p.x + 16, by = p.y + 72, bw = p.w - 32, bh = p.h - 104; // ✅ 간판 키우면서 본체 시작 y 살짝 내림
 
+      // ✅ 간판 아래 배지 공간 확보: 본체 시작을 살짝 더 내림
+      const bx = p.x + 16, by = p.y + 82, bw = p.w - 32, bh = p.h - 114;
       legoBox3D(bx, by, bw, bh, depth, pal.main);
 
-      // front inner panel
       ctx.save();
       ctx.globalAlpha = 0.14;
       ctx.fillStyle = "rgba(255,255,255,0.32)";
@@ -1343,7 +1335,7 @@
       ctx.restore();
 
       // roof plate
-      const rx = p.x + p.w * 0.12, ry = p.y + 18, rw = p.w * 0.76, rh = 54; // ✅ 더 큰 간판 영역 확보
+      const rx = p.x + p.w * 0.12, ry = p.y + 18, rw = p.w * 0.76, rh = 54;
       ctx.save();
       ctx.fillStyle = shade(pal.main, +18);
       roundRect(rx, ry, rw, rh, 20);
@@ -1397,17 +1389,15 @@
         ctx.restore();
       }
 
-      // ✅ (3) 간판: 전광판 느낌 제거(그라데이션/글로우/LED) + 크게 + 글자 크게
+      // ✅ 간판
       const sx = p.x + p.w * 0.10;
       const sy = p.y + 10;
       const sw = p.w * 0.80;
-      const sh = 56; // ✅ 높이 크게
+      const sh = 56;
 
-      // subtle shadow
       softShadow(sx + 2, sy + 5, sw, sh, 0.10);
 
       ctx.save();
-      // sign base
       ctx.fillStyle = "rgba(255,255,255,0.92)";
       ctx.strokeStyle = "rgba(0,0,0,0.10)";
       ctx.lineWidth = 2;
@@ -1415,18 +1405,15 @@
       ctx.fill();
       ctx.stroke();
 
-      // inner strip
       ctx.globalAlpha = 0.10;
       ctx.fillStyle = "rgba(10,14,24,0.85)";
       roundRect(sx + 10, sy + sh - 14, sw - 20, 8, 8);
       ctx.fill();
       ctx.globalAlpha = 1;
 
-      // left icon
       const iconSize = 16;
       drawLogoIcon(p.type, sx + 26, sy + sh / 2, iconSize, pal.accent);
 
-      // label
       const fontSize =
         (p.type === "hospital" || p.type === "pharmacy") ? 24 :
         (p.size === "L") ? 22 : 20;
@@ -1437,22 +1424,27 @@
       ctx.textBaseline = "middle";
       ctx.fillText(p.label, sx + 52, sy + sh / 2);
 
-      // status badge for soon
+      ctx.restore();
+
+      // ✅ (3) "오픈 준비중" 배지: 간판 아래로 이동 (간판 텍스트 절대 안 가림)
       if (p.status !== "open" || !p.url) {
+        const bx2 = sx + (sw - 154) * 0.5;
+        const by2 = sy + sh + 10; // ✅ 간판 아래
         ctx.save();
-        ctx.globalAlpha = 0.95;
+        softShadow(bx2 + 1, by2 + 3, 154, 30, 0.10);
+
+        ctx.globalAlpha = 0.94;
         ctx.fillStyle = "rgba(10,14,24,0.88)";
-        roundRect(sx + sw - 138, sy + 14, 122, 28, 14);
+        roundRect(bx2, by2, 154, 30, 15);
         ctx.fill();
+
         ctx.fillStyle = "rgba(255,255,255,0.98)";
         ctx.font = "1100 12px system-ui";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("오픈 준비중", sx + sw - 77, sy + 28);
+        ctx.fillText("오픈 준비중", bx2 + 77, by2 + 15);
         ctx.restore();
       }
-
-      ctx.restore();
     }
 
     /* ----------------------- Tree / Lamp / Bench / Flower ----------------------- */
@@ -1640,6 +1632,7 @@
       ctx.fill();
       ctx.restore();
 
+      // (car code unchanged)
       if (c.axis === "h") {
         if (c.dir < 0) ctx.scale(-1, 1);
 
@@ -1769,42 +1762,62 @@
       ctx.restore();
     }
 
+    // ✅ (1) 스프라이트 공중 떠보임 해결 + 크기 업
+    // ✅ (2) 스프라이트는 "앞(Down)"일 때만 사용 (좌/우/위는 미니피겨로 자연스럽게)
     function drawSpriteCharacter(x, y) {
       if (!sprite.loaded || !sprite.img) return false;
 
-      const bob = player.moving ? Math.sin(player.bobT) * 0.35 : 0;
-      const baseW = 88;
-      const baseH = 96;
+      // 스프라이트 사용 조건: DOWN 방향(앞모습)에서만
+      if (player.dir !== "down") return false;
+
+      const moving = player.moving;
+      const bob = moving ? Math.sin(player.bobT) * 0.45 : 0;
+
+      // 크기 조금 키움
+      const baseW = 104;
+      const baseH = 116;
+
+      // 바닥 기준 정렬: 캐릭터 발이 y+28 근처로 오도록
+      // (그림자도 같이 맞춤)
+      const footY = y + 28;
 
       ctx.save();
       ctx.globalAlpha = 0.24;
       ctx.fillStyle = "rgba(10,14,24,0.42)";
       ctx.beginPath();
-      ctx.ellipse(x, y + 28, 22, 8, 0, 0, Math.PI * 2);
+      ctx.ellipse(x, footY, 23, 8.2, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
       ctx.save();
       ctx.translate(x, y + bob);
-      if (player.dir === "left") ctx.scale(-1, 1);
 
-      const s = player.moving ? (0.98 + 0.02 * Math.sin(player.animT * 10)) : 1;
+      // 걷는 느낌: 살짝 스케일 펄스
+      const s = moving ? (1.00 + 0.03 * Math.sin(player.animT * 10)) : 1.03;
       ctx.scale(s, 1);
 
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
-      ctx.drawImage(sprite.img, -baseW / 2, -72, baseW, baseH);
+
+      // drawImage 위치(핵심): baseH 하단이 footY에 오도록
+      const topY = (footY - (y + bob)) - baseH; // local space 기준
+      ctx.drawImage(sprite.img, -baseW / 2, topY, baseW, baseH);
 
       ctx.restore();
       return true;
     }
 
-    // ✅ (1) 옆모습: "몸통+다리 하나만" 보이게 + 걷는 모션
+    // ✅ (2) 옆/뒤 걷기 모션 개선 (팔/다리 스윙 더 자연스럽게)
     function drawMinifig(x, y, opts = null) {
       const moving = opts?.moving ?? player.moving;
-      const bob = moving ? Math.sin((opts?.bobT ?? player.bobT)) * 0.14 : 0;
+      const bob = moving ? Math.sin((opts?.bobT ?? player.bobT)) * 0.16 : 0;
       const dir = opts?.dir ?? player.dir;
-      const swing = moving ? Math.sin((opts?.animT ?? player.animT) * 10) : 0;
+
+      // 스윙(보폭) 조금 더 크게 + 부드럽게
+      const swingRaw = moving ? Math.sin((opts?.animT ?? player.animT) * 10) : 0;
+      const swing = swingRaw * 1.05;
+      const armSwing = 3.0 * swing;
+      const legSwing = 3.6 * swing;
 
       ctx.save();
       ctx.globalAlpha = 0.24;
@@ -1857,7 +1870,8 @@
         ctx.arc(0, -18, 6, 0, Math.PI);
         ctx.stroke();
       } else if (dir === "up") {
-        ctx.globalAlpha = 0.22;
+        // 뒤통수 느낌(얼굴 거의 안 보이게)
+        ctx.globalAlpha = 0.20;
         ctx.fillStyle = "rgba(10,14,24,0.78)";
         roundRect(-9, -26, 18, 10, 6);
         ctx.fill();
@@ -1883,55 +1897,56 @@
       }
       ctx.restore();
 
-      const armSwing = 2.2 * swing;
-      const legSwing = 3.0 * swing;
-
       if (!side) {
+        // torso
         ctx.fillStyle = torso;
         roundRect(-14, -4, 28, 28, 12);
         ctx.fill();
         glossyHighlight(-14, -4, 28, 28, 0.10);
 
+        // arms
         ctx.fillStyle = torso;
         roundRect(-22, 2, 10, 18, 8);
         ctx.fill();
         roundRect(12, 2, 10, 18, 8);
         ctx.fill();
 
+        // hands with swing
         ctx.fillStyle = skin;
         roundRect(-22, 16 + armSwing, 10, 8, 6);
         ctx.fill();
         roundRect(12, 16 - armSwing, 10, 8, 6);
         ctx.fill();
 
+        // legs with slight alternating lift
         ctx.fillStyle = pants;
-        roundRect(-12, 22, 11, 16, 6);
+        roundRect(-12, 22 + (legSwing * 0.20), 11, 16, 6);
         ctx.fill();
-        roundRect(1, 22, 11, 16, 6);
+        roundRect(1, 22 - (legSwing * 0.20), 11, 16, 6);
         ctx.fill();
 
+        // feet (more visible motion)
         ctx.fillStyle = "rgba(10,14,24,0.72)";
         ctx.beginPath();
-        ctx.ellipse(-6, 40 + legSwing, 6, 3, 0, 0, Math.PI * 2);
-        ctx.ellipse(6, 40 - legSwing, 6, 3, 0, 0, Math.PI * 2);
+        ctx.ellipse(-6, 40 + legSwing, 6.4, 3.1, 0, 0, Math.PI * 2);
+        ctx.ellipse(6, 40 - legSwing, 6.4, 3.1, 0, 0, Math.PI * 2);
         ctx.fill();
       } else {
-        // ✅ 핵심: 측면은 "다리 1개만" + 슬림 실루엣
-        // torso (slimmer)
+        // side silhouette + motion
         ctx.fillStyle = torso;
         roundRect(-9, -4, 18, 28, 12);
         ctx.fill();
         glossyHighlight(-9, -4, 18, 28, 0.10);
 
-        // back arm(아주 살짝만 힌트)
+        // back arm hint (움직임 살짝)
         ctx.save();
         ctx.globalAlpha = 0.22;
         ctx.fillStyle = shade(torso, -10);
-        roundRect(-16, 4, 8, 14, 8);
+        roundRect(-16, 4 - armSwing * 0.25, 8, 14, 8);
         ctx.fill();
         ctx.restore();
 
-        // front arm
+        // front arm (움직임 확실히)
         ctx.fillStyle = torso;
         roundRect(9, 3, 10, 18, 8);
         ctx.fill();
@@ -1939,15 +1954,15 @@
         roundRect(9, 15 + armSwing, 10, 8, 6);
         ctx.fill();
 
-        // only ONE leg
+        // only ONE leg but with lift/step feel
         ctx.fillStyle = pants;
-        roundRect(2, 22, 12, 16, 6);
+        roundRect(2, 22 + (legSwing * 0.18), 12, 16, 6);
         ctx.fill();
 
-        // foot
+        // foot swing
         ctx.fillStyle = "rgba(10,14,24,0.72)";
         ctx.beginPath();
-        ctx.ellipse(9, 40 + legSwing, 6.2, 3.0, 0, 0, Math.PI * 2);
+        ctx.ellipse(9, 40 + legSwing, 6.6, 3.1, 0, 0, Math.PI * 2);
         ctx.fill();
 
         // subtle front edge
@@ -2052,7 +2067,6 @@
       const x = VIEW.w - mw - pad;
       const y = 16;
 
-      // background
       ctx.save();
       ctx.globalAlpha = 0.92;
       ctx.fillStyle = "rgba(255,255,255,0.78)";
@@ -2068,13 +2082,11 @@
       ctx.fill();
       ctx.globalAlpha = 1;
 
-      // inner clip
       const ix = x + 10, iy = y + 10, iw = mw - 20, ih = mh - 20;
       ctx.save();
       roundRect(ix, iy, iw, ih, 14);
       ctx.clip();
 
-      // map transform
       const sx = iw / WORLD.w;
       const sy = ih / WORLD.h;
       const s = Math.min(sx, sy);
@@ -2084,7 +2096,6 @@
       function mx(wx) { return ox + wx * s; }
       function my(wy) { return oy + wy * s; }
 
-      // roads
       ctx.globalAlpha = 0.55;
       ctx.fillStyle = "rgba(38,44,55,0.85)";
       for (const r of roads) {
@@ -2093,7 +2104,6 @@
       }
       ctx.globalAlpha = 1;
 
-      // portals markers
       for (const p of portals) {
         const pal = buildingPalette(p.type);
         const cx = mx(p.x + p.w * 0.5);
@@ -2106,7 +2116,6 @@
         ctx.arc(cx, cy, 4.6, 0, Math.PI * 2);
         ctx.fill();
 
-        // label tiny
         ctx.globalAlpha = 0.80;
         ctx.fillStyle = "rgba(10,14,24,0.85)";
         ctx.font = "900 9px system-ui";
@@ -2127,7 +2136,6 @@
         ctx.restore();
       }
 
-      // player marker
       const px = mx(player.x);
       const py = my(player.y);
       ctx.save();
@@ -2141,8 +2149,8 @@
       ctx.fill();
       ctx.restore();
 
-      ctx.restore(); // clip
-      ctx.restore(); // card
+      ctx.restore();
+      ctx.restore();
     }
 
     /* ----------------------- Depth sorting ----------------------- */
@@ -2252,7 +2260,6 @@
       }
       if (!activePortal) lastMobileZoneKey = "";
 
-      // ✅ (2) 안내 문구: 중앙쪽 + "포탈 앞이에요. Enter를 입력해주세요" 가독성 강화
       if (!modalState.open && activePortal) {
         UI.toast.hidden = false;
         const p = activePortal;
@@ -2331,6 +2338,7 @@
         else if (it.kind === "signal") drawSignal(it.ref, t);
         else if (it.kind === "roamer") drawRoamer(it.ref, roamerPalette);
         else if (it.kind === "player") {
+          // ✅ 스프라이트는 "앞(Down)"일 때만 -> 좌/우/위는 미니피겨로 자연스러운 옆/뒤 모션
           if (!(SPRITE_SRC && USE_SPRITE_IF_LOADED && drawSpriteCharacter(player.x, player.y))) {
             drawMinifig(player.x, player.y);
           }
@@ -2339,13 +2347,16 @@
 
       ctx.restore();
 
-      // overlay UI
       drawWorldTitle();
-      drawMiniMap(); // ✅ (4)
+      drawMiniMap();
 
-      // subtle vignette for premium look
       ctx.save();
-      const vg = ctx.createRadialGradient(VIEW.w * 0.5, VIEW.h * 0.45, Math.min(VIEW.w, VIEW.h) * 0.25, VIEW.w * 0.5, VIEW.h * 0.5, Math.max(VIEW.w, VIEW.h) * 0.72);
+      const vg = ctx.createRadialGradient(
+        VIEW.w * 0.5, VIEW.h * 0.45,
+        Math.min(VIEW.w, VIEW.h) * 0.25,
+        VIEW.w * 0.5, VIEW.h * 0.5,
+        Math.max(VIEW.w, VIEW.h) * 0.72
+      );
       vg.addColorStop(0, "rgba(10,14,24,0.00)");
       vg.addColorStop(1, "rgba(10,14,24,0.06)");
       ctx.fillStyle = vg;
@@ -2377,7 +2388,6 @@
     canvas.addEventListener(
       "pointerdown",
       (e) => {
-        // PC: 포탈 존 클릭하면 모달
         const p = getPointer(e);
         const w = screenToWorld(p.x, p.y);
         if (activePortal && !modalState.open) {
@@ -2387,7 +2397,6 @@
           }
         }
 
-        // mobile double tap on canvas while modal open -> enter
         if (isTouchDevice() && modalState.open && modalState.portal) {
           const now = performance.now();
           if (now - lastMobileTap < 320) confirmEnter(modalState.portal);
