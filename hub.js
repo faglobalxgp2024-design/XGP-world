@@ -1,13 +1,15 @@
-/* HUN.JS - LEGO PREMIUM (single-file)
- * - HTML/CSS 수정 없이 동작(필수 DOM 없으면 자동 생성)
- * - 레고/블록 느낌 + 고급 3D
- * - 포탈: soon=오픈 준비중입니다 / open=입장하시겠습니까? (Enter/E)
- * - 캐릭터: 캡모자 + 방향별(앞/뒤/옆) 몸통까지 정확히
- * - 나무: 흔들림 제거 + 자연스러운 둥근 캐노피 + 잔디와 대비 강화
- * - 바닥: 과한 동그란 점(스터드) 제거, 블록 타일 느낌 중심
- * - 건물: 스터드(점) 줄이고 블록 고급 느낌 + 창문 추가 + LED 간판(중앙정렬)
- * - NPC: 오목/장기/양궁 포탈 입구 우측에 테마 피규어
- * - 모바일: 캐릭터 터치 드래그 제거 + 화면 D-Pad로 이동 + 속도 조금 느리게
+/* HUN.JS - LEGO PREMIUM (single-file) v2.1
+ * 적용사항(요청 반영)
+ * - 미니피규어 옆모습: 한쪽 팔만 보이게 + 다리도 옆 방향 형태(전/후 가려짐 포함)
+ * - 캡모자: 머리에 “정확히” 씌운 형태(브림/크라운 위치 고정, 둥둥 뜸 제거)
+ * - 간판 텍스트: 명도/대비 강화(가독성↑) + LED 글로우
+ * - 초록 바닥의 나무 그림자 “빤짝거림” 제거: 랜덤 패치 고정(시드) + AO 안정화
+ * - 나무 수 30% 감소
+ * - 건물 더 고급: 전면 패널/코너/프레임/창문/간판 프레임 강화
+ * - 포탈 앞 테마 오브젝트(양궁=활/과녁, 장기=장기알, 오목=오목돌) + NPC도 유지
+ * - 상점 추가: 맥도날드/병원/치킨집 (status: soon 기본, 원하면 url 넣기)
+ * - 포탈/상점 입장 UI: 좌측 큰 흰 박스 제거 → 중앙에 글자만(블록 느낌)
+ * - 모바일: D-Pad 유지, 드래그 이동 금지, 속도 느리게
  */
 
 (() => {
@@ -32,6 +34,20 @@
   }
   function isTouchDevice() {
     return (navigator.maxTouchPoints || 0) > 0;
+  }
+
+  // deterministic RNG (for stable patches/shadows)
+  function mulberry32(seed) {
+    let t = seed >>> 0;
+    return function () {
+      t += 0x6D2B79F5;
+      let r = Math.imul(t ^ (t >>> 15), 1 | t);
+      r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+      return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function seedFromWorld(w, h) {
+    return ((w * 73856093) ^ (h * 19349663)) >>> 0;
   }
 
   /* ----------------------- Safe DOM (no HTML edits) ----------------------- */
@@ -102,7 +118,7 @@
     fade.style.transition = "opacity 240ms ease";
     fade.style.background = "#ffffff";
 
-    // modal overlay (center text, no big white box)
+    // modal overlay (center text only)
     const modal = ensureEl("lego_modal", "div");
     modal.style.position = "fixed";
     modal.style.inset = "0";
@@ -114,42 +130,43 @@
     modal.style.backdropFilter = "none";
 
     const modalInner = ensureEl("lego_modal_inner", "div", modal);
-    modalInner.style.width = "min(520px, calc(100vw - 48px))";
+    modalInner.style.width = "min(620px, calc(100vw - 40px))";
     modalInner.style.borderRadius = "0";
     modalInner.style.background = "transparent";
     modalInner.style.border = "none";
     modalInner.style.boxShadow = "none";
     modalInner.style.padding = "0";
     modalInner.style.textAlign = "center";
-    modalInner.style.font = "1100 16px system-ui";
+    modalInner.style.font = "1100 18px system-ui";
     modalInner.style.color = "rgba(10,18,30,0.92)";
+    modalInner.style.userSelect = "none";
 
     const modalTitle = ensureEl("lego_modal_title", "div", modalInner);
-    modalTitle.style.font = "1100 20px system-ui";
-    modalTitle.style.marginBottom = "8px";
-    modalTitle.style.letterSpacing = "0.3px";
+    modalTitle.style.font = "1100 22px system-ui";
+    modalTitle.style.marginBottom = "10px";
+    modalTitle.style.letterSpacing = "0.6px";
 
     const modalBody = ensureEl("lego_modal_body", "div", modalInner);
-    modalBody.style.font = "1100 16px system-ui";
+    modalBody.style.font = "1100 18px system-ui";
     modalBody.style.opacity = "0.92";
     modalBody.style.marginBottom = "10px";
     modalBody.style.lineHeight = "1.35";
-    modalBody.style.letterSpacing = "0.6px";
+    modalBody.style.letterSpacing = "0.8px";
 
     const modalHint = ensureEl("lego_modal_hint", "div", modalInner);
     modalHint.style.font = "1000 13px system-ui";
-    modalHint.style.opacity = "0.65";
+    modalHint.style.opacity = "0.70";
 
     const style = ensureEl("lego_style_injected", "style", document.head);
     style.textContent = `
       #fade.on { opacity: 1; }
       #lego_modal { animation: legoPop 160ms ease both; }
-      @keyframes legoPop { from{opacity:0; transform: translateY(6px);} to{opacity:1; transform: translateY(0);} }
+      @keyframes legoPop { from{opacity:0; transform: translateY(8px);} to{opacity:1; transform: translateY(0);} }
       * { -webkit-tap-highlight-color: transparent; }
       #dpad button:active { transform: translateY(1px) scale(0.98); }
     `;
 
-    // --- Mobile D-Pad (no HTML edits) ---
+    // Mobile D-Pad
     const dpad = ensureEl("dpad", "div");
     dpad.style.position = "fixed";
     dpad.style.right = "18px";
@@ -240,14 +257,20 @@
       return { x: sx + cam.x, y: sy + cam.y };
     }
 
-    /* ----------------------- Portals ----------------------- */
+    /* ----------------------- Portals + Shops ----------------------- */
     const portals = [
+      // minigame
       { key: "avoid", label: "미니게임 피하기", status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "archery", label: "미니게임 양궁", status: "open", url: "https://ttjdwls777-eng.github.io/XGP-MINI-GAME2/", type: "tower", size: "M", x: 0, y: 0, w: 0, h: 0 },
       { key: "janggi", label: "미니게임 장기", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "jump", label: "미니게임 점프하기", status: "soon", url: "", type: "gym", size: "S", x: 0, y: 0, w: 0, h: 0 },
       { key: "snow", label: "미니게임 눈굴리기", status: "soon", url: "", type: "igloo", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "omok", label: "미니게임 오목", status: "soon", url: "", type: "cafe", size: "M", x: 0, y: 0, w: 0, h: 0 }
+      { key: "omok", label: "미니게임 오목", status: "soon", url: "", type: "cafe", size: "M", x: 0, y: 0, w: 0, h: 0 },
+
+      // shops (new)
+      { key: "mcd", label: "맥도날드", status: "soon", url: "", type: "mcd", size: "M", x: 0, y: 0, w: 0, h: 0 },
+      { key: "hospital", label: "병원", status: "soon", url: "", type: "hospital", size: "M", x: 0, y: 0, w: 0, h: 0 },
+      { key: "chicken", label: "치킨집", status: "soon", url: "", type: "chicken", size: "M", x: 0, y: 0, w: 0, h: 0 }
     ];
     const portalsByKey = (k) => portals.find((p) => p.key === k);
 
@@ -262,8 +285,7 @@
       bobT: 0,
       dir: "down" // up/down/left/right
     };
-
-    if (isTouchDevice()) player.speed = 190; // mobile slower
+    if (isTouchDevice()) player.speed = 185;
 
     let activePortal = null;
     let entering = false;
@@ -272,34 +294,27 @@
     const keys = new Set();
     let dragging = false;
     let dragOffset = { x: 0, y: 0 };
-    let pointer = { x: 0, y: 0, active: false, lastMoveAt: 0 };
 
     window.addEventListener("keydown", (e) => {
       const k = e.key.toLowerCase();
       keys.add(k);
 
       if (k === "enter" || k === "e") {
-        if (modalState.open && modalState.portal) {
-          confirmEnter(modalState.portal);
-        } else if (activePortal) {
-          openPortalUI(activePortal);
-        }
+        if (modalState.open && modalState.portal) confirmEnter(modalState.portal);
+        else if (activePortal) openPortalUI(activePortal);
       }
       if (k === "escape") closeModal();
     });
     window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
-
-    canvas.addEventListener("pointerenter", () => (pointer.active = true));
-    canvas.addEventListener("pointerleave", () => (pointer.active = false));
 
     function getPointer(e) {
       const r = canvas.getBoundingClientRect();
       return { x: (e.clientX - r.left) / VIEW.zoom, y: (e.clientY - r.top) / VIEW.zoom };
     }
 
-    // drag player (PC only). Mobile uses D-Pad.
+    // drag player (PC only)
     canvas.addEventListener("pointerdown", (e) => {
-      if (isTouchDevice()) return; // ✅ 모바일 드래그 이동 금지
+      if (isTouchDevice()) return;
       const p = getPointer(e);
       const w = screenToWorld(p.x, p.y);
       const dx = w.x - player.x,
@@ -313,12 +328,8 @@
     });
 
     canvas.addEventListener("pointermove", (e) => {
-      const p = getPointer(e);
-      pointer.x = p.x;
-      pointer.y = p.y;
-      pointer.lastMoveAt = performance.now();
-
       if (!dragging) return;
+      const p = getPointer(e);
       const prev = { x: player.x, y: player.y };
       const w = screenToWorld(p.x, p.y);
       player.x = w.x + dragOffset.x;
@@ -360,33 +371,11 @@
         if (axis === "h") {
           const lane = Math.random() < 0.5 ? 0 : 1;
           const dir = Math.random() < 0.5 ? 1 : -1;
-          return {
-            kind: "car",
-            axis: "h",
-            dir,
-            color: col,
-            speed,
-            w: 56 + Math.random() * 18,
-            h: 26 + Math.random() * 7,
-            x: hr.x + Math.random() * hr.w,
-            y: hr.y + (lane === 0 ? hr.h * 0.38 : hr.h * 0.66),
-            bob: Math.random() * 10
-          };
+          return { kind: "car", axis: "h", dir, color: col, speed, w: 56 + Math.random() * 18, h: 26 + Math.random() * 7, x: hr.x + Math.random() * hr.w, y: hr.y + (lane === 0 ? hr.h * 0.38 : hr.h * 0.66), bob: Math.random() * 10 };
         } else {
           const lane = Math.random() < 0.5 ? 0 : 1;
           const dir = Math.random() < 0.5 ? 1 : -1;
-          return {
-            kind: "car",
-            axis: "v",
-            dir,
-            color: col,
-            speed,
-            w: 26 + Math.random() * 7,
-            h: 60 + Math.random() * 18,
-            x: vr.x + (lane === 0 ? vr.w * 0.38 : vr.w * 0.66),
-            y: vr.y + Math.random() * vr.h,
-            bob: Math.random() * 10
-          };
+          return { kind: "car", axis: "v", dir, color: col, speed, w: 26 + Math.random() * 7, h: 60 + Math.random() * 18, x: vr.x + (lane === 0 ? vr.w * 0.38 : vr.w * 0.66), y: vr.y + Math.random() * vr.h, bob: Math.random() * 10 };
         }
       };
 
@@ -398,11 +387,13 @@
     const props = [];
     const signs = [];
     let portalNPCs = [];
+    let portalEmblems = [];
 
     function seedProps() {
       props.length = 0;
       signs.length = 0;
       portalNPCs = [];
+      portalEmblems = [];
 
       const tries = 240;
       const isOnRoadLike = (x, y) => {
@@ -418,15 +409,16 @@
         if (isOnRoadLike(x, y)) continue;
 
         const r = Math.random();
-        if (r < 0.42) props.push({ kind: "tree", x, y, s: 0.90 + Math.random() * 1.05 });
-        else if (r < 0.56) props.push({ kind: "lamp", x, y, s: 0.9 + Math.random() * 0.55 });
-        else if (r < 0.66) props.push({ kind: "bench", x, y, s: 0.9 + Math.random() * 0.35 });
+        // ✅ 나무 30% 감소(기존 대비 더 적게)
+        if (r < 0.29) props.push({ kind: "tree", x, y, s: 0.90 + Math.random() * 1.05 });
+        else if (r < 0.45) props.push({ kind: "lamp", x, y, s: 0.9 + Math.random() * 0.55 });
+        else if (r < 0.56) props.push({ kind: "bench", x, y, s: 0.9 + Math.random() * 0.35 });
         else props.push({ kind: "flower", x, y, s: 0.9 + Math.random() * 1.1 });
       }
 
       for (const p of portals) {
-        props.push({ kind: "flower", x: p.x + p.w * 0.20, y: p.y + p.h + 28, s: 1.4 });
-        props.push({ kind: "flower", x: p.x + p.w * 0.80, y: p.y + p.h + 18, s: 1.2 });
+        props.push({ kind: "flower", x: p.x + p.w * 0.20, y: p.y + p.h + 28, s: 1.2 });
+        props.push({ kind: "flower", x: p.x + p.w * 0.80, y: p.y + p.h + 18, s: 1.1 });
       }
 
       const arch = portalsByKey("archery");
@@ -434,16 +426,39 @@
       if (arch) signs.push({ x: arch.x + arch.w * 0.5 - 10, y: arch.y + arch.h + 90, text: "양궁 →" });
       if (jang) signs.push({ x: jang.x + jang.w * 0.5 + 10, y: jang.y + jang.h + 90, text: "← 장기" });
 
-      // NPC figures (right of entrances)
+      // NPC + Emblems
       for (const p of portals) {
-        if (p.key === "archery" || p.key === "janggi" || p.key === "omok") {
-          portalNPCs.push({
-            kind: "npc",
-            key: p.key,
-            x: p.x + p.w + 36,
-            y: p.y + p.h * 0.74
-          });
+        const ex = p.x + p.w * 0.5;
+        const ey = p.y + p.h * 0.92;
+
+        if (["archery", "janggi", "omok"].includes(p.key)) {
+          portalNPCs.push({ kind: "npc", key: p.key, x: p.x + p.w + 36, y: p.y + p.h * 0.74 });
         }
+
+        // emblem object right in front
+        portalEmblems.push({
+          kind: "emblem",
+          key: p.key,
+          x: ex + 38,
+          y: ey + 18
+        });
+      }
+    }
+
+    /* ----------------------- Stable ground patches (no flicker) ----------------------- */
+    let groundPatches = [];
+    function buildGroundPatches() {
+      const rand = mulberry32(seedFromWorld(WORLD.w, WORLD.h) ^ 0xA13F0C55);
+      groundPatches = [];
+      for (let i = 0; i < 14; i++) {
+        groundPatches.push({
+          x: WORLD.w * 0.12 + rand() * WORLD.w * 0.76,
+          y: WORLD.h * 0.38 + rand() * WORLD.h * 0.54,
+          rx: 60 + rand() * 130,
+          ry: 20 + rand() * 44,
+          rot: (rand() - 0.5) * 0.6,
+          a: 0.34 + rand() * 0.12
+        });
       }
     }
 
@@ -466,28 +481,12 @@
       else if (player.dir === "left") ox = 8;
       else if (player.dir === "right") ox = -8;
 
-      footprints.push({
-        x: player.x + ox + (Math.random() - 0.5) * 2,
-        y: player.y + 30 + oy + (Math.random() - 0.5) * 2,
-        life: 1.2,
-        age: 0
-      });
+      footprints.push({ x: player.x + ox + (Math.random() - 0.5) * 2, y: player.y + 30 + oy + (Math.random() - 0.5) * 2, life: 1.2, age: 0 });
     }
 
     /* ----------------------- Background layers ----------------------- */
-    const clouds = Array.from({ length: 10 }, () => ({
-      x: Math.random() * 3200,
-      y: 40 + Math.random() * 230,
-      s: 0.7 + Math.random() * 1.2,
-      v: 9 + Math.random() * 16,
-      layer: Math.random() < 0.5 ? 0 : 1
-    }));
-    const birds = Array.from({ length: 6 }, () => ({
-      x: 0,
-      y: 0,
-      p: Math.random() * 10,
-      v: 22 + Math.random() * 20
-    }));
+    const clouds = Array.from({ length: 10 }, () => ({ x: Math.random() * 3200, y: 40 + Math.random() * 230, s: 0.7 + Math.random() * 1.2, v: 9 + Math.random() * 16, layer: Math.random() < 0.5 ? 0 : 1 }));
+    const birds = Array.from({ length: 6 }, () => ({ x: 0, y: 0, p: Math.random() * 10, v: 22 + Math.random() * 20 }));
 
     /* ----------------------- Patterns ----------------------- */
     let grassPattern = null,
@@ -505,12 +504,11 @@
     }
 
     function buildPatterns() {
-      // grass: block tile 느낌 (과한 원형 점 제거)
       grassPattern = makePattern(240, 240, (g, w, h) => {
         g.fillStyle = "#39d975";
         g.fillRect(0, 0, w, h);
 
-        g.globalAlpha = 0.18;
+        g.globalAlpha = 0.16;
         g.strokeStyle = "rgba(0,0,0,0.16)";
         g.lineWidth = 2;
         for (let x = 0; x <= w; x += 48) {
@@ -527,30 +525,28 @@
         }
 
         g.globalAlpha = 0.10;
-        for (let i = 0; i < 90; i++) {
+        for (let i = 0; i < 70; i++) {
           g.fillStyle = i % 3 === 0 ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.12)";
           g.beginPath();
-          g.arc(Math.random() * w, Math.random() * h, 0.8 + Math.random() * 1.6, 0, Math.PI * 2);
+          g.arc(Math.random() * w, Math.random() * h, 0.8 + Math.random() * 1.5, 0, Math.PI * 2);
           g.fill();
         }
         g.globalAlpha = 1;
       });
 
-      // dirt
       dirtPattern = makePattern(240, 240, (g, w, h) => {
         g.fillStyle = "#c79a64";
         g.fillRect(0, 0, w, h);
-        g.globalAlpha = 0.22;
-        for (let i = 0; i < 220; i++) {
+        g.globalAlpha = 0.20;
+        for (let i = 0; i < 200; i++) {
           g.fillStyle = i % 2 === 0 ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.12)";
           g.beginPath();
-          g.arc(Math.random() * w, Math.random() * h, 0.8 + Math.random() * 2.6, 0, Math.PI * 2);
+          g.arc(Math.random() * w, Math.random() * h, 0.8 + Math.random() * 2.4, 0, Math.PI * 2);
           g.fill();
         }
         g.globalAlpha = 1;
       });
 
-      // road
       roadPattern = makePattern(240, 240, (g, w, h) => {
         g.fillStyle = "#2a2f3b";
         g.fillRect(0, 0, w, h);
@@ -568,13 +564,10 @@
 
         g.globalAlpha = 0.22;
         g.fillStyle = "rgba(255,255,255,0.75)";
-        for (let x = 0; x < w; x += 40) {
-          g.fillRect(x + 12, h / 2 - 2, 14, 4);
-        }
+        for (let x = 0; x < w; x += 40) g.fillRect(x + 12, h / 2 - 2, 14, 4);
         g.globalAlpha = 1;
       });
 
-      // sidewalk
       sidewalkPattern = makePattern(240, 240, (g, w, h) => {
         g.fillStyle = "#f6efe6";
         g.fillRect(0, 0, w, h);
@@ -621,6 +614,7 @@
       ctx.restore();
     }
     function groundAO(x, y, w, h, alpha = 0.22) {
+      // ✅ flicker 방지: 랜덤/시간 사용 없이 고정 그라데이션만
       ctx.save();
       const g = ctx.createRadialGradient(x + w * 0.5, y + h * 0.8, 10, x + w * 0.5, y + h * 0.8, Math.max(w, h) * 0.9);
       g.addColorStop(0, `rgba(10,14,24,${alpha})`);
@@ -674,25 +668,37 @@
 
       const base = 220;
       const mul = { S: 0.82, M: 1.0, L: 1.22 };
+
       for (const p of portals) {
         const m = mul[p.size] || 1;
         p.w = base * 1.22 * m;
         p.h = base * 0.92 * m;
       }
 
+      // original 6
       portalsByKey("jump").x = WORLD.w * 0.22;
       portalsByKey("jump").y = WORLD.h * 0.22;
-      portalsByKey("archery").x = WORLD.w * 0.5;
+      portalsByKey("archery").x = WORLD.w * 0.50;
       portalsByKey("archery").y = WORLD.h * 0.18;
       portalsByKey("omok").x = WORLD.w * 0.78;
       portalsByKey("omok").y = WORLD.h * 0.24;
 
-      portalsByKey("avoid").x = WORLD.w * 0.2;
+      portalsByKey("avoid").x = WORLD.w * 0.20;
       portalsByKey("avoid").y = WORLD.h * 0.62;
       portalsByKey("janggi").x = WORLD.w * 0.78;
       portalsByKey("janggi").y = WORLD.h * 0.62;
-      portalsByKey("snow").x = WORLD.w * 0.5;
-      portalsByKey("snow").y = WORLD.h * 0.8;
+      portalsByKey("snow").x = WORLD.w * 0.50;
+      portalsByKey("snow").y = WORLD.h * 0.80;
+
+      // new shops
+      portalsByKey("mcd").x = WORLD.w * 0.12;
+      portalsByKey("mcd").y = WORLD.h * 0.36;
+
+      portalsByKey("hospital").x = WORLD.w * 0.88;
+      portalsByKey("hospital").y = WORLD.h * 0.40;
+
+      portalsByKey("chicken").x = WORLD.w * 0.12;
+      portalsByKey("chicken").y = WORLD.h * 0.78;
 
       for (const p of portals) {
         p.x -= p.w / 2;
@@ -705,21 +711,19 @@
       sidewalks.length = 0;
       crossings.length = 0;
 
-      // main road (h)
-      roads.push({ x: WORLD.w * 0.1, y: WORLD.h * 0.48, w: WORLD.w * 0.8, h: 132 });
-      sidewalks.push({ x: WORLD.w * 0.1, y: WORLD.h * 0.48 - 48, w: WORLD.w * 0.8, h: 38 });
-      sidewalks.push({ x: WORLD.w * 0.1, y: WORLD.h * 0.48 + 142, w: WORLD.w * 0.8, h: 38 });
+      roads.push({ x: WORLD.w * 0.10, y: WORLD.h * 0.48, w: WORLD.w * 0.80, h: 132 });
+      sidewalks.push({ x: WORLD.w * 0.10, y: WORLD.h * 0.48 - 48, w: WORLD.w * 0.80, h: 38 });
+      sidewalks.push({ x: WORLD.w * 0.10, y: WORLD.h * 0.48 + 142, w: WORLD.w * 0.80, h: 38 });
 
-      // vertical road
-      roads.push({ x: WORLD.w * 0.5 - 64, y: WORLD.h * 0.1, w: 128, h: WORLD.h * 0.82 });
-      sidewalks.push({ x: WORLD.w * 0.5 - 64 - 46, y: WORLD.h * 0.1, w: 34, h: WORLD.h * 0.82 });
-      sidewalks.push({ x: WORLD.w * 0.5 + 64 + 12, y: WORLD.h * 0.1, w: 34, h: WORLD.h * 0.82 });
+      roads.push({ x: WORLD.w * 0.50 - 64, y: WORLD.h * 0.10, w: 128, h: WORLD.h * 0.82 });
+      sidewalks.push({ x: WORLD.w * 0.50 - 64 - 46, y: WORLD.h * 0.10, w: 34, h: WORLD.h * 0.82 });
+      sidewalks.push({ x: WORLD.w * 0.50 + 64 + 12, y: WORLD.h * 0.10, w: 34, h: WORLD.h * 0.82 });
 
-      // crossings
-      crossings.push({ x: WORLD.w * 0.5 - 92, y: WORLD.h * 0.48 + 32, w: 184, h: 58 });
-      crossings.push({ x: WORLD.w * 0.5 - 92, y: WORLD.h * 0.48 - 88, w: 184, h: 58 });
+      crossings.push({ x: WORLD.w * 0.50 - 92, y: WORLD.h * 0.48 + 32, w: 184, h: 58 });
+      crossings.push({ x: WORLD.w * 0.50 - 92, y: WORLD.h * 0.48 - 88, w: 184, h: 58 });
 
       buildPatterns();
+      buildGroundPatches(); // ✅ stable
       seedCars();
       seedProps();
 
@@ -767,7 +771,7 @@
 
     /* ----------------------- Portal zones ----------------------- */
     function portalEnterZone(p) {
-      const zx = p.x + p.w * 0.5 - 28;
+      const zx = p.x + p.w * 0.50 - 28;
       const zy = p.y + p.h * 0.76;
       return { x: zx, y: zy, w: 56, h: 44 };
     }
@@ -779,11 +783,30 @@
       return dx * dx + dy * dy <= r * r;
     }
 
-    /* ----------------------- Modal (minimal center text) ----------------------- */
+    /* ----------------------- Modal ----------------------- */
     const modalState = { open: false, portal: null };
     function openModal(title, body, hint) {
-      UI.modalTitle.textContent = title;
-      UI.modalBody.innerHTML = body;
+      // ✅ “블록 느낌 글자만” + 글로우
+      UI.modalTitle.innerHTML = `<span style="
+        padding:8px 14px;
+        border-radius:14px;
+        border:1px solid rgba(0,0,0,0.12);
+        background: rgba(255,255,255,0.88);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+        display:inline-block;
+      ">${title}</span>`;
+      UI.modalBody.innerHTML = `<span style="
+        display:inline-block;
+        margin-top:10px;
+        padding:10px 14px;
+        border-radius:14px;
+        border:1px solid rgba(0,0,0,0.10);
+        background: rgba(10,14,24,0.82);
+        color: rgba(255,255,255,0.98);
+        text-shadow: 0 0 10px rgba(126,200,255,0.55);
+        box-shadow: 0 18px 48px rgba(0,0,0,0.22);
+        letter-spacing:1px;
+      ">${body}</span>`;
       UI.modalHint.textContent = hint || "";
       UI.modal.style.display = "flex";
       modalState.open = true;
@@ -801,16 +824,13 @@
       if (!p) return;
 
       if (p.status !== "open") {
-        UI.toast.hidden = false;
-        UI.toast.innerHTML = `🧱 <b>${p.label}</b><br/><span style="letter-spacing:0.6px;">오픈 준비중입니다</span>`;
-        setTimeout(() => {
-          if (activePortal !== p) UI.toast.hidden = true;
-        }, 1300);
+        openModal(`🧱 ${p.label}`, `오픈 준비중입니다`, isTouchDevice() ? "모바일: 닫으려면 바깥 탭" : "ESC로 닫기");
+        modalState.portal = null;
         return;
       }
 
       modalState.portal = p;
-      openModal(`🧱 ${p.label}`, `<span style="letter-spacing:0.6px;">입장하시겠습니까?</span>`, isTouchDevice() ? "모바일: 화면 탭(또는 손 떼기) / 이동: 오른쪽 방향버튼" : "PC: Enter 또는 E");
+      openModal(`🧱 ${p.label}`, `입장하시겠습니까?<br/><span style="opacity:.9;font-size:14px;">Enter / E</span>`, isTouchDevice() ? "모바일: 화면 탭(또는 손 떼기)" : "PC: Enter 또는 E");
     }
 
     function confirmEnter(p) {
@@ -825,7 +845,6 @@
       setTimeout(() => (window.location.href = p.url), 260);
     }
 
-    // mobile: tap/pointerup inside modal confirms
     UI.modal.addEventListener("pointerup", () => {
       if (isTouchDevice() && modalState.open && modalState.portal) confirmEnter(modalState.portal);
     });
@@ -839,7 +858,6 @@
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, WORLD.w, WORLD.h);
 
-      // soft fog blobs
       ctx.save();
       ctx.globalAlpha = 0.22;
       ctx.fillStyle = "rgba(255,255,255,0.55)";
@@ -849,7 +867,6 @@
       ctx.fill();
       ctx.restore();
 
-      // birds
       ctx.save();
       ctx.globalAlpha = 0.30;
       ctx.strokeStyle = "rgba(10,14,24,0.55)";
@@ -881,13 +898,11 @@
     }
 
     function drawGroundWorld() {
-      // grass
       ctx.save();
       ctx.fillStyle = grassPattern || "#39d975";
       ctx.fillRect(0, WORLD.h * 0.34, WORLD.w, WORLD.h * 0.66);
       ctx.restore();
 
-      // depth shade
       ctx.save();
       const sh = ctx.createLinearGradient(0, WORLD.h * 0.34, 0, WORLD.h);
       sh.addColorStop(0, "rgba(10,14,24,0.00)");
@@ -896,21 +911,21 @@
       ctx.fillRect(0, WORLD.h * 0.34, WORLD.w, WORLD.h * 0.66);
       ctx.restore();
 
-      // dirt patches
+      // ✅ stable patches (no per-frame random -> no flicker)
       ctx.save();
-      ctx.globalAlpha = 0.40;
       ctx.fillStyle = dirtPattern || "#c79a64";
-      for (let i = 0; i < 14; i++) {
-        const x = WORLD.w * 0.12 + Math.random() * WORLD.w * 0.76;
-        const y = WORLD.h * 0.38 + Math.random() * WORLD.h * 0.54;
+      for (const p of groundPatches) {
+        ctx.globalAlpha = p.a;
         ctx.beginPath();
-        ctx.ellipse(x, y, 60 + Math.random() * 130, 20 + Math.random() * 44, Math.random() * 0.6, 0, Math.PI * 2);
+        ctx.ellipse(p.x, p.y, p.rx, p.ry, p.rot, 0, Math.PI * 2);
         ctx.fill();
       }
+
+      // path in front of portals
       ctx.globalAlpha = 0.52;
-      for (const p of portals) {
-        const cx = p.x + p.w * 0.5;
-        const cy = p.y + p.h * 0.90;
+      for (const po of portals) {
+        const cx = po.x + po.w * 0.5;
+        const cy = po.y + po.h * 0.90;
         ctx.beginPath();
         ctx.ellipse(cx, cy + 34, 74, 30, 0, 0, Math.PI * 2);
         ctx.fill();
@@ -919,7 +934,6 @@
     }
 
     function drawRoadsAndSidewalks() {
-      // roads
       for (const r of roads) {
         groundAO(r.x, r.y + r.h - 18, r.w, 26, 0.20);
 
@@ -940,7 +954,7 @@
         ctx.fill();
 
         ctx.globalAlpha = 0.45;
-        ctx.strokeStyle = "rgba(255,255,255,0.85)";
+        ctx.strokeStyle = "rgba(255,255,255,0.90)";
         ctx.lineWidth = 4;
         ctx.setLineDash([18, 16]);
         ctx.beginPath();
@@ -951,7 +965,6 @@
         ctx.restore();
       }
 
-      // sidewalks
       for (const s of sidewalks) {
         groundAO(s.x, s.y + s.h - 10, s.w, 20, 0.14);
         ctx.save();
@@ -966,7 +979,6 @@
         ctx.restore();
       }
 
-      // crossings
       for (const c of crossings) {
         ctx.save();
         ctx.globalAlpha = 0.22;
@@ -984,7 +996,7 @@
       }
     }
 
-    /* ----------------------- LEGO palettes ----------------------- */
+    /* ----------------------- Palettes ----------------------- */
     function buildingPalette(type) {
       const pal = {
         arcade: { main: "#ff5aa5", accent: "#0a84ff" },
@@ -992,12 +1004,16 @@
         dojo: { main: "#42e7a5", accent: "#ff3b30" },
         gym: { main: "#ffd66b", accent: "#0a84ff" },
         igloo: { main: "#bfe9ff", accent: "#34c759" },
-        cafe: { main: "#b889ff", accent: "#ffcc00" }
+        cafe: { main: "#b889ff", accent: "#ffcc00" },
+
+        mcd: { main: "#ff3b30", accent: "#ffcc00" },
+        hospital: { main: "#ffffff", accent: "#0a84ff" },
+        chicken: { main: "#ffd66b", accent: "#ff2d55" }
       };
       return pal[type] || pal.arcade;
     }
 
-    /* ----------------------- Draw: portal building ----------------------- */
+    /* ----------------------- Building (premium upgrade) ----------------------- */
     function drawPortalBuilding(p, t) {
       const pal = buildingPalette(p.type);
       const isActive = activePortal === p;
@@ -1005,7 +1021,6 @@
 
       groundAO(p.x + 12, p.y + p.h - 18, p.w - 24, 28, 0.24);
 
-      // base plate glow
       ctx.save();
       ctx.globalAlpha = 0.14 + (isActive ? 0.12 * pulse : 0);
       ctx.fillStyle = isActive ? "rgba(10,132,255,0.95)" : "rgba(255,255,255,0.26)";
@@ -1014,20 +1029,36 @@
       ctx.fill();
       ctx.restore();
 
-      // body
-      const depth = Math.max(12, Math.min(26, p.w * 0.06));
-      const bx = p.x + 18,
-        by = p.y + 54,
-        bw = p.w - 36,
-        bh = p.h - 80;
+      const depth = Math.max(12, Math.min(28, p.w * 0.06));
+      const bx = p.x + 16,
+        by = p.y + 56,
+        bw = p.w - 32,
+        bh = p.h - 86;
+
+      // base body
       legoBox3D(bx, by, bw, bh, depth, pal.main);
 
-      // block seam lines (premium)
+      // premium front panel + corner trims
+      ctx.save();
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      roundRect(bx + 10, by + 10, bw - 20, bh - 20, 16);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.save();
+      ctx.globalAlpha = 0.14;
+      ctx.fillStyle = "rgba(10,14,24,0.65)";
+      roundRect(bx + 14, by + 14, bw - 28, 10, 8);
+      ctx.fill();
+      ctx.restore();
+
+      // seam lines
       ctx.save();
       ctx.globalAlpha = 0.18;
       ctx.strokeStyle = "rgba(0,0,0,0.18)";
       ctx.lineWidth = 2;
-      for (let yy = by + 18; yy < by + bh - 10; yy += 22) {
+      for (let yy = by + 22; yy < by + bh - 12; yy += 22) {
         ctx.beginPath();
         ctx.moveTo(bx + 14, yy);
         ctx.lineTo(bx + bw - 14, yy);
@@ -1035,16 +1066,23 @@
       }
       ctx.restore();
 
-      // roof plate (no studs)
-      const rx = p.x + p.w * 0.18,
+      // roof plate
+      const rx = p.x + p.w * 0.16,
         ry = p.y + 16,
-        rw = p.w * 0.64,
-        rh = 44;
+        rw = p.w * 0.68,
+        rh = 46;
       ctx.save();
       ctx.fillStyle = shade(pal.main, +22);
       roundRect(rx, ry, rw, rh, 18);
       ctx.fill();
       glossyHighlight(rx, ry, rw, rh, 0.12);
+
+      // small roof edge
+      ctx.globalAlpha = 0.20;
+      ctx.fillStyle = "rgba(10,14,24,0.55)";
+      roundRect(rx + 10, ry + rh - 12, rw - 20, 8, 8);
+      ctx.fill();
+      ctx.globalAlpha = 1;
       ctx.restore();
 
       // door
@@ -1062,7 +1100,7 @@
       glossyHighlight(dx, dy, dw, dh, 0.12);
       ctx.restore();
 
-      // windows (more)
+      // windows (more premium)
       const winY = p.y + p.h * 0.54;
       const cols = 5;
       for (let i = 0; i < cols; i++) {
@@ -1072,62 +1110,74 @@
           wh = p.h * 0.11;
 
         ctx.save();
-        ctx.fillStyle = "rgba(0,0,0,0.22)";
+        ctx.fillStyle = "rgba(0,0,0,0.24)";
         roundRect(wx, wy, ww, wh, 10);
         ctx.fill();
 
         const g = ctx.createLinearGradient(wx, wy, wx + ww, wy + wh);
-        g.addColorStop(0, "rgba(200,250,255,0.96)");
-        g.addColorStop(1, "rgba(10,14,24,0.12)");
+        g.addColorStop(0, "rgba(220,255,255,0.98)");
+        g.addColorStop(1, "rgba(10,14,24,0.14)");
         ctx.fillStyle = g;
         roundRect(wx + 3, wy + 3, ww - 6, wh - 6, 8);
         ctx.fill();
 
-        ctx.globalAlpha = 0.18;
-        ctx.fillStyle = "rgba(255,255,255,0.95)";
-        roundRect(wx + 5, wy + 5, ww * 0.55, 7, 6);
-        ctx.fill();
+        // window frames
+        ctx.globalAlpha = 0.22;
+        ctx.strokeStyle = "rgba(255,255,255,0.75)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(wx + ww / 2, wy + 5);
+        ctx.lineTo(wx + ww / 2, wy + wh - 5);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(wx + 5, wy + wh / 2);
+        ctx.lineTo(wx + ww - 5, wy + wh / 2);
+        ctx.stroke();
         ctx.restore();
       }
 
-      // sign (LED board) - centered text
-      const sy = p.y + 6;
-      const sx = p.x + p.w * 0.18,
-        sw = p.w * 0.64;
+      // LED sign (text brighter)
+      const sy = p.y + 8;
+      const sx = p.x + p.w * 0.16,
+        sw = p.w * 0.68;
 
       ctx.save();
-      ctx.fillStyle = "rgba(10,14,24,0.85)";
-      roundRect(sx, sy, sw, 34, 14);
+      ctx.fillStyle = "rgba(10,14,24,0.92)";
+      roundRect(sx, sy, sw, 36, 14);
       ctx.fill();
 
+      const led = ctx.createLinearGradient(sx, sy, sx + sw, sy + 36);
+      led.addColorStop(0, shade(pal.accent, +26));
+      led.addColorStop(1, shade(pal.accent, -4));
       ctx.globalAlpha = 0.92;
-      const led = ctx.createLinearGradient(sx, sy, sx + sw, sy + 34);
-      led.addColorStop(0, shade(pal.accent, +22));
-      led.addColorStop(1, shade(pal.accent, -6));
       ctx.fillStyle = led;
-      roundRect(sx + 3, sy + 3, sw - 6, 28, 12);
-      ctx.fill();
-
-      ctx.globalAlpha = 0.20;
-      ctx.fillStyle = pal.accent;
-      roundRect(sx - 6, sy - 6, sw + 12, 46, 18);
+      roundRect(sx + 3, sy + 3, sw - 6, 30, 12);
       ctx.fill();
       ctx.globalAlpha = 1;
 
-      ctx.fillStyle = "rgba(255,255,255,0.96)";
-      ctx.font = "1100 13px system-ui";
+      // outer glow
+      ctx.globalAlpha = 0.24;
+      ctx.fillStyle = pal.accent;
+      roundRect(sx - 8, sy - 8, sw + 16, 52, 18);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = "rgba(255,255,255,0.995)"; // ✅ brighter
+      ctx.shadowColor = "rgba(255,255,255,0.55)";
+      ctx.shadowBlur = 10;
+      ctx.font = "1200 14px system-ui";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(p.label, sx + sw * 0.5, sy + 17);
+      ctx.fillText(p.label, sx + sw * 0.5, sy + 18);
+      ctx.shadowBlur = 0;
 
       if (p.status !== "open") {
-        ctx.textAlign = "center";
-        ctx.fillStyle = "rgba(255,255,255,0.94)";
-        roundRect(sx + sw * 0.5 - 56, sy + 40, 112, 24, 12);
+        ctx.fillStyle = "rgba(255,255,255,0.96)";
+        roundRect(sx + sw * 0.5 - 60, sy + 44, 120, 24, 12);
         ctx.fill();
-        ctx.fillStyle = "rgba(10,14,24,0.86)";
+        ctx.fillStyle = "rgba(10,14,24,0.90)";
         ctx.font = "1100 11px system-ui";
-        ctx.fillText("오픈 준비중", sx + sw * 0.5, sy + 52);
+        ctx.fillText("오픈 준비중", sx + sw * 0.5, sy + 56);
       }
 
       ctx.textAlign = "start";
@@ -1135,26 +1185,25 @@
       ctx.restore();
     }
 
-    /* ----------------------- Draw: props ----------------------- */
+    /* ----------------------- Tree / Lamp / Bench / Flower ----------------------- */
     function drawTree(o) {
       const x = o.x,
         y = o.y,
         s = o.s;
 
-      groundAO(x - 34 * s, y + 20 * s, 68 * s, 20 * s, 0.20);
+      // ✅ AO alpha 낮춰서 “갈색 깜빡임” 느낌 최소화
+      groundAO(x - 34 * s, y + 20 * s, 68 * s, 20 * s, 0.14);
 
       ctx.save();
 
-      // trunk
       ctx.fillStyle = "#a55a22";
       roundRect(x - 10 * s, y - 22 * s, 20 * s, 48 * s, 10 * s);
       ctx.fill();
       glossyHighlight(x - 10 * s, y - 22 * s, 20 * s, 48 * s, 0.10);
 
-      // canopy (darker than grass + outline for separation)
+      // canopy darker & outlined -> grass 대비
       const base = "#1fb462";
       const dark = "#168a4a";
-      const light = "#2fe07e";
 
       ctx.lineWidth = 2;
       ctx.strokeStyle = "rgba(0,0,0,0.16)";
@@ -1172,38 +1221,18 @@
       blob(x + 30 * s, y - 44 * s, 26 * s, 22 * s);
       blob(x + 2 * s, y - 40 * s, 34 * s, 24 * s);
 
-      // inner shadow
-      ctx.globalAlpha = 0.22;
+      ctx.globalAlpha = 0.20;
       ctx.fillStyle = dark;
       ctx.beginPath();
       ctx.ellipse(x + 8 * s, y - 44 * s, 30 * s, 22 * s, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalAlpha = 1;
 
-      // highlight
-      ctx.globalAlpha = 0.16;
+      ctx.globalAlpha = 0.14;
       ctx.fillStyle = "rgba(255,255,255,0.92)";
       ctx.beginPath();
       ctx.ellipse(x - 6 * s, y - 66 * s, 18 * s, 12 * s, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.globalAlpha = 1;
-
-      // subtle leaf bits
-      ctx.globalAlpha = 0.10;
-      ctx.fillStyle = light;
-      for (let i = 0; i < 12; i++) {
-        ctx.beginPath();
-        ctx.ellipse(
-          x + (-26 + Math.random() * 52) * s,
-          y + (-74 + Math.random() * 44) * s,
-          (2.4 + Math.random() * 4.4) * s,
-          (1.8 + Math.random() * 3.6) * s,
-          Math.random(),
-          0,
-          Math.PI * 2
-        );
-        ctx.fill();
-      }
       ctx.globalAlpha = 1;
 
       ctx.restore();
@@ -1215,7 +1244,7 @@
         s = o.s;
       const pulse = 0.5 + 0.5 * Math.sin(t * 3.0 + x * 0.01);
 
-      groundAO(x - 18 * s, y + 18 * s, 36 * s, 18 * s, 0.14);
+      groundAO(x - 18 * s, y + 18 * s, 36 * s, 18 * s, 0.12);
 
       ctx.save();
       ctx.fillStyle = "#404756";
@@ -1239,7 +1268,7 @@
       const x = o.x,
         y = o.y,
         s = o.s;
-      groundAO(x - 40 * s, y + 12 * s, 80 * s, 18 * s, 0.12);
+      groundAO(x - 40 * s, y + 12 * s, 80 * s, 18 * s, 0.10);
 
       ctx.save();
       ctx.fillStyle = "#ffcc00";
@@ -1259,10 +1288,10 @@
       const x = o.x,
         y = o.y,
         s = o.s;
-      const wig = Math.sin(t * 2.1 + x * 0.02) * 1.3;
+      const wig = Math.sin(t * 2.1 + x * 0.02) * 1.0;
 
       ctx.save();
-      groundAO(x - 10 * s, y + 10 * s, 20 * s, 10 * s, 0.10);
+      groundAO(x - 10 * s, y + 10 * s, 20 * s, 10 * s, 0.08);
 
       ctx.strokeStyle = "#2dbf6b";
       ctx.lineWidth = 4 * s;
@@ -1290,38 +1319,161 @@
       ctx.save();
       ctx.translate(s.x, s.y);
 
-      groundAO(-28, 18, 56, 16, 0.12);
+      groundAO(-28, 18, 56, 16, 0.10);
 
       ctx.fillStyle = "#404756";
       roundRect(-4, -10, 8, 38, 6);
       ctx.fill();
 
-      // LED sign style
-      ctx.fillStyle = "rgba(10,14,24,0.86)";
+      ctx.fillStyle = "rgba(10,14,24,0.92)";
       roundRect(-64, -56, 128, 36, 14);
       ctx.fill();
+
       const led = ctx.createLinearGradient(-64, -56, 64, -20);
-      led.addColorStop(0, "rgba(126,200,255,0.95)");
-      led.addColorStop(1, "rgba(255,204,0,0.88)");
-      ctx.globalAlpha = 0.88;
+      led.addColorStop(0, "rgba(126,200,255,0.98)");
+      led.addColorStop(1, "rgba(255,204,0,0.94)");
+      ctx.globalAlpha = 0.92;
       ctx.fillStyle = led;
       roundRect(-61, -53, 122, 30, 12);
       ctx.fill();
       ctx.globalAlpha = 1;
 
-      ctx.fillStyle = "rgba(255,255,255,0.96)";
-      ctx.font = "1100 14px system-ui";
+      ctx.fillStyle = "rgba(255,255,255,0.995)";
+      ctx.shadowColor = "rgba(255,255,255,0.55)";
+      ctx.shadowBlur = 10;
+      ctx.font = "1200 14px system-ui";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(s.text, 0, -38);
+      ctx.shadowBlur = 0;
 
-      ctx.textAlign = "start";
-      ctx.textBaseline = "alphabetic";
       ctx.restore();
     }
 
-    /* ----------------------- Draw: car ----------------------- */
-    function drawCar(c, t) {
+    /* ----------------------- Emblems (front of buildings) ----------------------- */
+    function drawEmblem(e) {
+      const x = e.x,
+        y = e.y;
+      const k = e.key;
+
+      // small base shadow
+      groundAO(x - 22, y + 6, 44, 18, 0.10);
+
+      ctx.save();
+      ctx.translate(x, y);
+
+      // pedestal
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.strokeStyle = "rgba(0,0,0,0.12)";
+      ctx.lineWidth = 2;
+      roundRect(-20, -6, 40, 18, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      // icon plate
+      ctx.fillStyle = "rgba(10,14,24,0.90)";
+      roundRect(-18, -30, 36, 24, 10);
+      ctx.fill();
+
+      ctx.globalAlpha = 0.22;
+      ctx.fillStyle = "rgba(126,200,255,0.9)";
+      roundRect(-22, -34, 44, 32, 12);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.save();
+      ctx.translate(0, -18);
+
+      if (k === "archery") {
+        // target + bow
+        ctx.fillStyle = "rgba(255,255,255,0.98)";
+        ctx.beginPath();
+        ctx.arc(0, 0, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 0.55;
+        ctx.strokeStyle = "rgba(255,255,255,0.95)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 11, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        ctx.strokeStyle = "rgba(255,204,0,0.98)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(12, 0, 9, -1.2, 1.2);
+        ctx.stroke();
+        ctx.strokeStyle = "rgba(255,255,255,0.85)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(3, 0);
+        ctx.lineTo(21, 0);
+        ctx.stroke();
+      } else if (k === "janggi") {
+        // janggi stone
+        ctx.fillStyle = "rgba(255,255,255,0.98)";
+        ctx.beginPath();
+        ctx.arc(0, 0, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(0,0,0,0.14)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 10, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = "rgba(255,59,48,0.95)";
+        ctx.font = "1200 10px system-ui";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("將", 0, 1);
+      } else if (k === "omok") {
+        // omok stones
+        ctx.fillStyle = "rgba(255,255,255,0.98)";
+        ctx.beginPath();
+        ctx.arc(-6, 0, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(10,14,24,0.92)";
+        ctx.beginPath();
+        ctx.arc(7, 0, 7, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (k === "mcd") {
+        // golden arches
+        ctx.strokeStyle = "rgba(255,204,0,0.98)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(-5, 2, 7, Math.PI, 0);
+        ctx.arc(5, 2, 7, Math.PI, 0);
+        ctx.stroke();
+      } else if (k === "hospital") {
+        // plus
+        ctx.fillStyle = "rgba(10,132,255,0.98)";
+        roundRect(-3, -10, 6, 20, 3);
+        ctx.fill();
+        roundRect(-10, -3, 20, 6, 3);
+        ctx.fill();
+      } else if (k === "chicken") {
+        // drumstick-ish
+        ctx.fillStyle = "rgba(255,255,255,0.98)";
+        ctx.beginPath();
+        ctx.ellipse(-2, 0, 9, 7, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,59,48,0.95)";
+        ctx.beginPath();
+        ctx.ellipse(8, 3, 5, 3.5, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // default dot
+        ctx.fillStyle = "rgba(255,255,255,0.98)";
+        ctx.beginPath();
+        ctx.arc(0, 0, 7, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+      ctx.restore();
+    }
+
+    /* ----------------------- Cars ----------------------- */
+    function drawCar(c) {
       const bounce = Math.sin(c.bob) * 0.35;
       ctx.save();
       ctx.translate(c.x, c.y + bounce);
@@ -1330,7 +1482,6 @@
         h = c.h;
       const base = c.color;
 
-      // shadow
       ctx.save();
       ctx.globalAlpha = 0.22;
       ctx.fillStyle = "rgba(10,14,24,0.40)";
@@ -1347,13 +1498,11 @@
         ctx.fill();
         glossyHighlight(-w * 0.52, -h * 0.40, w * 1.04, h * 0.80, 0.12);
 
-        // roof
         ctx.fillStyle = shade(base, +16);
         roundRect(-w * 0.20, -h * 0.58, w * 0.40, h * 0.28, 10);
         ctx.fill();
         glossyHighlight(-w * 0.20, -h * 0.58, w * 0.40, h * 0.28, 0.14);
 
-        // glass
         const g = ctx.createLinearGradient(-w * 0.12, -h * 0.50, w * 0.20, -h * 0.18);
         g.addColorStop(0, "rgba(210,250,255,0.92)");
         g.addColorStop(1, "rgba(10,14,24,0.10)");
@@ -1361,19 +1510,16 @@
         roundRect(-w * 0.18, -h * 0.34, w * 0.36, h * 0.26, 8);
         ctx.fill();
 
-        // bumper
         ctx.fillStyle = "rgba(10,14,24,0.18)";
         roundRect(-w * 0.54, h * 0.14, w * 1.08, h * 0.18, 10);
         ctx.fill();
 
-        // wheels
         ctx.fillStyle = "rgba(10,14,24,0.72)";
         ctx.beginPath();
         ctx.arc(-w * 0.30, h * 0.38, h * 0.16, 0, Math.PI * 2);
         ctx.arc(w * 0.30, h * 0.38, h * 0.16, 0, Math.PI * 2);
         ctx.fill();
 
-        // headlight
         ctx.globalAlpha = 0.85;
         ctx.fillStyle = "#ffffff";
         ctx.beginPath();
@@ -1385,7 +1531,6 @@
         return;
       }
 
-      // vertical
       const goingDown = c.dir > 0;
 
       ctx.fillStyle = base;
@@ -1393,12 +1538,10 @@
       ctx.fill();
       glossyHighlight(-w * 0.55, -h * 0.50, w * 1.10, h * 1.00, 0.12);
 
-      // roof
       ctx.fillStyle = shade(base, +16);
       roundRect(-w * 0.34, -h * 0.62, w * 0.68, h * 0.26, 10);
       ctx.fill();
 
-      // glass
       const gg = ctx.createLinearGradient(0, -h * 0.40, 0, h * 0.20);
       gg.addColorStop(0, "rgba(210,250,255,0.92)");
       gg.addColorStop(1, "rgba(10,14,24,0.10)");
@@ -1406,12 +1549,10 @@
       roundRect(-w * 0.32, -h * 0.30, w * 0.64, h * 0.52, 10);
       ctx.fill();
 
-      // bumper
       ctx.fillStyle = "rgba(10,14,24,0.18)";
       roundRect(-w * 0.56, h * 0.32, w * 1.12, h * 0.16, 10);
       ctx.fill();
 
-      // lights
       if (goingDown) {
         ctx.globalAlpha = 0.85;
         ctx.fillStyle = "#ffffff";
@@ -1433,7 +1574,7 @@
       ctx.restore();
     }
 
-    /* ----------------------- Draw: footprints ----------------------- */
+    /* ----------------------- Footprints ----------------------- */
     function drawFootprints() {
       ctx.save();
       for (const f of footprints) {
@@ -1447,13 +1588,49 @@
       ctx.restore();
     }
 
-    /* ----------------------- Draw: MINIFIG (cap + correct side body) ----------------------- */
+    /* ----------------------- MINIFIG (side refined) ----------------------- */
+    function drawCapOnHead(hatColor) {
+      // assumes origin at head center, head radius 16, head center y=-20
+      // ✅ cap sits ON head: crown overlaps head, brim attached
+      ctx.save();
+      ctx.translate(0, -20);
+
+      // crown
+      ctx.fillStyle = hatColor;
+      roundRect(-14, -20, 28, 15, 9); // moved down onto head
+      ctx.fill();
+
+      // top highlight
+      ctx.globalAlpha = 0.16;
+      ctx.fillStyle = "rgba(255,255,255,0.95)";
+      roundRect(-10, -17, 20, 5, 6);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // brim
+      ctx.fillStyle = shade(hatColor, -10);
+      ctx.beginPath();
+      ctx.moveTo(-16, -8);
+      ctx.quadraticCurveTo(0, -2, 16, -8);
+      ctx.quadraticCurveTo(0, -12, -16, -8);
+      ctx.closePath();
+      ctx.fill();
+
+      // shadow under brim (touching head)
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = "rgba(10,14,24,0.55)";
+      roundRect(-12, -6, 24, 4, 3);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.restore();
+    }
+
     function drawMinifig(x, y) {
-      const bob = player.moving ? Math.sin(player.bobT) * 0.20 : 0;
+      const bob = player.moving ? Math.sin(player.bobT) * 0.18 : 0; // less float
       const dir = player.dir;
       const swing = player.moving ? Math.sin(player.animT * 10) : 0;
 
-      // grounded shadow
       ctx.save();
       ctx.globalAlpha = 0.26;
       ctx.fillStyle = "rgba(10,14,24,0.42)";
@@ -1490,26 +1667,10 @@
       ctx.arc(0, -20, 16, 0, Math.PI * 2);
       ctx.stroke();
 
-      // CAP (cap-like)
-      ctx.fillStyle = hat;
-      roundRect(-14, -54, 28, 16, 9);
-      ctx.fill();
-      ctx.globalAlpha = 0.18;
-      ctx.fillStyle = "rgba(255,255,255,0.9)";
-      roundRect(-10, -50, 20, 6, 6);
-      ctx.fill();
-      ctx.globalAlpha = 1;
+      // CAP (fixed)
+      drawCapOnHead(hat);
 
-      ctx.fillStyle = shade(hat, -8);
-      ctx.beginPath();
-      ctx.moveTo(-16, -40);
-      ctx.quadraticCurveTo(0, -34, 16, -40);
-      ctx.quadraticCurveTo(0, -44, -16, -40);
-      ctx.closePath();
-      ctx.fill();
-      glossyHighlight(-14, -54, 28, 16, 0.14);
-
-      // face by dir
+      // face
       if (dir === "down") {
         ctx.fillStyle = "rgba(10,14,24,0.72)";
         ctx.beginPath();
@@ -1530,21 +1691,21 @@
       } else {
         ctx.fillStyle = "rgba(10,14,24,0.72)";
         ctx.beginPath();
-        ctx.arc(6, -22, 2.2, 0, Math.PI * 2);
+        ctx.arc(7, -22, 2.2, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = "rgba(10,14,24,0.62)";
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(8, -18, 6, -0.15, Math.PI - 0.35);
+        ctx.arc(9, -18, 6, -0.18, Math.PI - 0.45);
         ctx.stroke();
         ctx.fillStyle = "rgba(10,14,24,0.18)";
         ctx.beginPath();
-        ctx.ellipse(14, -18, 2.8, 2.0, 0, 0, Math.PI * 2);
+        ctx.ellipse(14.5, -18, 2.8, 2.0, 0, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
 
-      const armSwing = 2.6 * swing;
+      const armSwing = 2.4 * swing;
       const legSwing = 3.6 * swing;
 
       if (!side) {
@@ -1578,47 +1739,47 @@
         ctx.ellipse(6, 40 - legSwing, 6, 3, 0, 0, Math.PI * 2);
         ctx.fill();
       } else {
-        // side profile (몸도 옆모습)
+        // ✅ side profile: one arm visible, legs side + occlusion
+        // torso side slab
         ctx.fillStyle = torso;
-        roundRect(-10, -4, 20, 28, 12);
+        roundRect(-9, -4, 18, 28, 12);
         ctx.fill();
-        ctx.fillStyle = "rgba(255,255,255,0.10)";
-        roundRect(-8, -2, 12, 8, 7);
-        ctx.fill();
+        glossyHighlight(-9, -4, 18, 28, 0.10);
 
-        // back arm
-        ctx.globalAlpha = 0.70;
-        ctx.fillStyle = shade(torso, -12);
-        roundRect(-18, 3, 9, 16, 8);
-        ctx.fill();
-        ctx.fillStyle = shade(skin, -6);
-        roundRect(-18, 16 - armSwing, 9, 8, 6);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-
-        // front arm
+        // only FRONT arm visible
         ctx.fillStyle = torso;
-        roundRect(10, 2, 10, 18, 8);
+        roundRect(9, 2, 10, 18, 8);
         ctx.fill();
         ctx.fillStyle = skin;
-        roundRect(10, 16 + armSwing, 10, 8, 6);
+        roundRect(9, 16 + armSwing, 10, 8, 6);
         ctx.fill();
 
-        // legs
-        ctx.fillStyle = pants;
-        ctx.globalAlpha = 0.78;
-        roundRect(-8, 22, 10, 16, 6);
+        // legs: near leg big, far leg thin & behind
+        // far leg (behind)
+        ctx.globalAlpha = 0.55;
+        ctx.fillStyle = shade(pants, -12);
+        roundRect(-6, 22, 9, 16, 6);
         ctx.fill();
         ctx.globalAlpha = 1;
-        roundRect(2, 22, 11, 16, 6);
+
+        // near leg
+        ctx.fillStyle = pants;
+        roundRect(2, 22, 12, 16, 6);
         ctx.fill();
 
-        // feet
+        // feet side
         ctx.fillStyle = "rgba(10,14,24,0.72)";
         ctx.beginPath();
-        ctx.ellipse(6, 40 + legSwing, 6, 3, 0, 0, Math.PI * 2);
-        ctx.globalAlpha = 0.70;
-        ctx.ellipse(-2, 40 - legSwing, 5.4, 2.8, 0, 0, Math.PI * 2);
+        ctx.ellipse(9, 40 + legSwing, 6, 3, 0, 0, Math.PI * 2);
+        ctx.globalAlpha = 0.60;
+        ctx.ellipse(-1, 40 - legSwing, 5.2, 2.7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // hip joint seam
+        ctx.globalAlpha = 0.18;
+        ctx.fillStyle = "rgba(255,255,255,0.95)";
+        roundRect(-7, 20, 18, 4, 3);
         ctx.fill();
         ctx.globalAlpha = 1;
       }
@@ -1626,21 +1787,19 @@
       ctx.restore();
     }
 
-    /* ----------------------- NPC figures ----------------------- */
+    /* ----------------------- NPC ----------------------- */
     function drawNPC(key, x, y) {
       const theme =
         {
           archery: { torso: "#34c759", pants: "#3b4251", hat: "#ffcc00", acc: "bow" },
           janggi: { torso: "#b889ff", pants: "#2a2f3b", hat: "#ff3b30", acc: "stone" },
-          omok: { torso: "#ffffff", pants: "#3b4251", hat: "#0a84ff", acc: "cup" }
+          omok: { torso: "#ffffff", pants: "#3b4251", hat: "#0a84ff", acc: "stone2" }
         }[key] || { torso: "#ffffff", pants: "#3b4251", hat: "#ff3b30", acc: "none" };
 
       ctx.save();
       ctx.translate(x, y);
-      // facing entrance (left)
       ctx.scale(-1, 1);
 
-      // shadow
       ctx.globalAlpha = 0.22;
       ctx.fillStyle = "rgba(10,14,24,0.40)";
       ctx.beginPath();
@@ -1651,7 +1810,6 @@
       const skin = "#ffd66b";
       const outline = "rgba(0,0,0,0.18)";
 
-      // head
       const headG = ctx.createRadialGradient(-6, -24, 6, 0, -18, 22);
       headG.addColorStop(0, "rgba(255,255,255,0.95)");
       headG.addColorStop(0.48, skin);
@@ -1666,63 +1824,39 @@
       ctx.arc(0, -20, 16, 0, Math.PI * 2);
       ctx.stroke();
 
-      // cap
-      ctx.fillStyle = theme.hat;
-      roundRect(-14, -54, 28, 16, 9);
-      ctx.fill();
-      ctx.fillStyle = shade(theme.hat, -8);
-      ctx.beginPath();
-      ctx.moveTo(-16, -40);
-      ctx.quadraticCurveTo(0, -34, 16, -40);
-      ctx.quadraticCurveTo(0, -44, -16, -40);
-      ctx.closePath();
-      ctx.fill();
+      drawCapOnHead(theme.hat);
 
-      // side face
       ctx.fillStyle = "rgba(10,14,24,0.72)";
       ctx.beginPath();
-      ctx.arc(6, -22, 2.2, 0, Math.PI * 2);
+      ctx.arc(7, -22, 2.2, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = "rgba(10,14,24,0.62)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(8, -18, 6, -0.15, Math.PI - 0.35);
+      ctx.arc(9, -18, 6, -0.18, Math.PI - 0.45);
       ctx.stroke();
 
       // torso side
       ctx.fillStyle = theme.torso;
-      roundRect(-10, -4, 20, 28, 12);
+      roundRect(-9, -4, 18, 28, 12);
       ctx.fill();
-      ctx.globalAlpha = 0.12;
-      ctx.fillStyle = "rgba(255,255,255,0.95)";
-      roundRect(-8, -2, 12, 8, 7);
-      ctx.fill();
-      ctx.globalAlpha = 1;
 
-      // arms
-      ctx.globalAlpha = 0.70;
-      ctx.fillStyle = shade(theme.torso, -12);
-      roundRect(-18, 3, 9, 16, 8);
-      ctx.fill();
-      ctx.globalAlpha = 1;
+      // one arm
       ctx.fillStyle = theme.torso;
-      roundRect(10, 2, 10, 18, 8);
+      roundRect(9, 2, 10, 18, 8);
       ctx.fill();
-
-      // hands
       ctx.fillStyle = skin;
-      roundRect(-18, 16, 9, 8, 6);
-      ctx.fill();
-      roundRect(10, 16, 10, 8, 6);
+      roundRect(9, 16, 10, 8, 6);
       ctx.fill();
 
-      // legs
-      ctx.fillStyle = theme.pants;
-      ctx.globalAlpha = 0.78;
-      roundRect(-8, 22, 10, 16, 6);
+      // legs side
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = shade(theme.pants, -12);
+      roundRect(-6, 22, 9, 16, 6);
       ctx.fill();
       ctx.globalAlpha = 1;
-      roundRect(2, 22, 11, 16, 6);
+      ctx.fillStyle = theme.pants;
+      roundRect(2, 22, 12, 16, 6);
       ctx.fill();
 
       // accessory
@@ -1730,11 +1864,11 @@
         ctx.strokeStyle = "rgba(10,14,24,0.55)";
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.arc(20, 12, 12, -1.2, 1.2);
+        ctx.arc(22, 12, 12, -1.2, 1.2);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(10, 12);
-        ctx.lineTo(30, 12);
+        ctx.moveTo(12, 12);
+        ctx.lineTo(32, 12);
         ctx.stroke();
       } else if (theme.acc === "stone") {
         ctx.fillStyle = "rgba(10,14,24,0.20)";
@@ -1743,21 +1877,21 @@
         ctx.fillStyle = "#ffffff";
         roundRect(18, 20, 10, 6, 4);
         ctx.fill();
-      } else if (theme.acc === "cup") {
-        ctx.fillStyle = "rgba(10,14,24,0.20)";
-        roundRect(18, 16, 10, 12, 5);
-        ctx.fill();
-        ctx.strokeStyle = "rgba(10,14,24,0.35)";
-        ctx.lineWidth = 2;
+      } else if (theme.acc === "stone2") {
+        ctx.fillStyle = "rgba(255,255,255,0.98)";
         ctx.beginPath();
-        ctx.arc(28, 20, 4, -0.6, 0.6);
-        ctx.stroke();
+        ctx.arc(22, 22, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(10,14,24,0.92)";
+        ctx.beginPath();
+        ctx.arc(32, 22, 6, 0, Math.PI * 2);
+        ctx.fill();
       }
 
       ctx.restore();
     }
 
-    /* ----------------------- World title ----------------------- */
+    /* ----------------------- Title ----------------------- */
     function drawWorldTitle() {
       const text = "FA미니월드";
       const padX = 18;
@@ -1784,7 +1918,7 @@
       ctx.restore();
     }
 
-    /* ----------------------- Depth sorting helper ----------------------- */
+    /* ----------------------- Depth sorting ----------------------- */
     function getFootY(entity) {
       if (entity.kind === "building") return entity.y + entity.h;
       if (entity.kind === "car") return entity.y + entity.h;
@@ -1794,6 +1928,7 @@
       if (entity.kind === "flower") return entity.y + 12 * entity.s;
       if (entity.kind === "sign") return entity.y + 40;
       if (entity.kind === "npc") return entity.y + 30;
+      if (entity.kind === "emblem") return entity.y + 12;
       if (entity.kind === "player") return entity.y + 30;
       return entity.y;
     }
@@ -1804,17 +1939,14 @@
       framesCount = 0;
 
     function update(dt, t) {
-      // player move
       let ax = 0,
         ay = 0;
       if (!dragging && !modalState.open) {
-        // keyboard
         if (keys.has("a") || keys.has("arrowleft")) ax -= 1;
         if (keys.has("d") || keys.has("arrowright")) ax += 1;
         if (keys.has("w") || keys.has("arrowup")) ay -= 1;
         if (keys.has("s") || keys.has("arrowdown")) ay += 1;
 
-        // mobile D-Pad
         if (UI.vkeys) {
           if (UI.vkeys.left) ax -= 1;
           if (UI.vkeys.right) ax += 1;
@@ -1840,7 +1972,6 @@
       player.bobT += dt * 6.0;
       addFootprint(dt);
 
-      // cars
       for (const c of cars) {
         c.bob += dt * 3.0;
         if (c.axis === "h") {
@@ -1856,7 +1987,6 @@
         }
       }
 
-      // clouds / birds
       for (const c of clouds) {
         c.x += c.v * (c.layer === 0 ? 1.0 : 0.75) * dt;
         if (c.x > WORLD.w + 420) {
@@ -1878,7 +2008,6 @@
         }
       }
 
-      // portal collision
       activePortal = null;
       for (const p of portals) {
         const z = portalEnterZone(p);
@@ -1888,35 +2017,27 @@
         }
       }
 
-      // toast
       if (!modalState.open && activePortal) {
         UI.toast.hidden = false;
-        if (activePortal.status === "open") {
-          UI.toast.innerHTML = `🧱 <b>${activePortal.label}</b><br/>포탈 앞이에요. <b>Enter/E</b> 또는 <b>클릭/터치</b>`;
-        } else {
-          UI.toast.innerHTML = `🧱 <b>${activePortal.label}</b><br/><span style="letter-spacing:0.6px;">오픈 준비중입니다</span>`;
-        }
+        if (activePortal.status === "open") UI.toast.innerHTML = `🧱 <b>${activePortal.label}</b><br/>포탈 앞이에요. <b>Enter/E</b> 또는 <b>클릭/터치</b>`;
+        else UI.toast.innerHTML = `🧱 <b>${activePortal.label}</b><br/>오픈 준비중입니다`;
       } else if (!modalState.open) {
         UI.toast.hidden = true;
       }
 
-      // footprints life
       for (let i = footprints.length - 1; i >= 0; i--) {
-        const f = footprints[i];
-        f.age += dt;
-        if (f.age >= f.life) footprints.splice(i, 1);
+        footprints[i].age += dt;
+        if (footprints[i].age >= footprints[i].life) footprints.splice(i, 1);
       }
 
       updateCamera(dt);
 
       UI.coord.textContent = `x: ${Math.round(player.x)} · y: ${Math.round(player.y)}`;
 
-      // fps
       acc += dt;
       framesCount++;
       if (acc >= 0.45) {
-        const fps = Math.round(framesCount / acc);
-        UI.fps.textContent = `fps: ${fps}`;
+        UI.fps.textContent = `fps: ${Math.round(framesCount / acc)}`;
         acc = 0;
         framesCount = 0;
       }
@@ -1934,12 +2055,12 @@
       drawRoadsAndSidewalks();
       drawFootprints();
 
-      // depth sorting
       const items = [];
       for (const p of portals) items.push({ kind: "building", ref: p, footY: getFootY({ kind: "building", y: p.y, h: p.h }) });
       for (const c of cars) items.push({ kind: "car", ref: c, footY: getFootY(c) });
       for (const pr of props) items.push({ kind: pr.kind, ref: pr, footY: getFootY(pr) });
       for (const s of signs) items.push({ kind: "sign", ref: s, footY: getFootY({ kind: "sign", y: s.y }) });
+      for (const e of portalEmblems) items.push({ kind: "emblem", ref: e, footY: getFootY(e) });
       for (const n of portalNPCs) items.push({ kind: "npc", ref: n, footY: getFootY(n) });
       items.push({ kind: "player", ref: player, footY: getFootY({ kind: "player", y: player.y }) });
 
@@ -1947,12 +2068,13 @@
 
       for (const it of items) {
         if (it.kind === "building") drawPortalBuilding(it.ref, t);
-        else if (it.kind === "car") drawCar(it.ref, t);
+        else if (it.kind === "car") drawCar(it.ref);
         else if (it.kind === "tree") drawTree(it.ref);
         else if (it.kind === "lamp") drawLamp(it.ref, t);
         else if (it.kind === "bench") drawBench(it.ref);
         else if (it.kind === "flower") drawFlower(it.ref, t);
         else if (it.kind === "sign") drawSign(it.ref);
+        else if (it.kind === "emblem") drawEmblem(it.ref);
         else if (it.kind === "npc") drawNPC(it.ref.key, it.ref.x, it.ref.y);
         else if (it.kind === "player") drawMinifig(player.x, player.y);
       }
@@ -1961,7 +2083,7 @@
       drawWorldTitle();
     }
 
-    /* ----------------------- Main loop (crash guard) ----------------------- */
+    /* ----------------------- Loop ----------------------- */
     function loop(now) {
       const t = now / 1000;
       const dt = Math.min(0.033, (now - lastT) / 1000);
@@ -1979,7 +2101,7 @@
       requestAnimationFrame(loop);
     }
 
-    /* ----------------------- Pointer click on portal (open UI) ----------------------- */
+    /* ----------------------- Portal click ----------------------- */
     canvas.addEventListener(
       "pointerdown",
       (e) => {
@@ -1987,9 +2109,7 @@
         const w = screenToWorld(p.x, p.y);
         if (activePortal && !modalState.open) {
           const z = portalEnterZone(activePortal);
-          if (w.x >= z.x - 20 && w.x <= z.x + z.w + 20 && w.y >= z.y - 20 && w.y <= z.y + z.h + 20) {
-            openPortalUI(activePortal);
-          }
+          if (w.x >= z.x - 20 && w.x <= z.x + z.w + 20 && w.y >= z.y - 20 && w.y <= z.y + z.h + 20) openPortalUI(activePortal);
         }
       },
       { passive: true }
