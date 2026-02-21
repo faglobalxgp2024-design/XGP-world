@@ -12,7 +12,7 @@
   "use strict";
 
   /* ----------------------- CONFIG ----------------------- */
-  const SPRITE_SRC = ""; // "https://example.com/character.png" or data:image/png;base64,...
+  const SPRITE_SRC = "https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/lego.png";
   const USE_SPRITE_IF_LOADED = true;
 
   /* ----------------------- Utilities ----------------------- */
