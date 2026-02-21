@@ -2,18 +2,41 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>XGP 미니월드</title>
   <link rel="stylesheet" href="hub.css" />
 </head>
 <body>
   <header class="topbar">
-    <h1>XGP 미니월드</h1>
-    <div class="hint">PC: WASD/방향키 · 모바일: 드래그</div>
+    <div class="brand">
+      <div class="dot"></div>
+      <div>
+        <div class="title">XGP 미니월드</div>
+        <div class="subtitle">포탈로 들어가서 미니게임을 즐겨요</div>
+      </div>
+    </div>
+
+    <div class="tips">
+      <span class="chip">PC: WASD / 방향키</span>
+      <span class="chip">마우스: 미니미 드래그</span>
+      <span class="chip">모바일: 터치 드래그</span>
+      <span class="chip">포탈 위: Enter/E 또는 손 떼기</span>
+    </div>
   </header>
 
   <main class="wrap">
-    <canvas id="world"></canvas>
+    <canvas id="world" aria-label="미니월드"></canvas>
+
+    <div class="hud">
+      <div class="hud-row">
+        <div class="pill" id="coord">x: 0 · y: 0</div>
+        <div class="pill" id="fps">fps: -</div>
+      </div>
+      <div class="help">
+        포탈에 닿으면 안내가 떠요. <b>Enter/E</b>로 입장 (모바일은 손 떼면 입장).
+      </div>
+    </div>
+
     <div id="toast" class="toast" hidden></div>
   </main>
 
