@@ -1,3 +1,4 @@
+// HUB.JS
 const canvas = document.getElementById("world");
 const ctx = canvas.getContext("2d");
 
@@ -8,13 +9,24 @@ const fadeEl = document.getElementById("fade");
 
 let W = 0, H = 0, DPR = 1;
 
+/** =========================
+ *  VIEW(줌) - 화면을 더 넓게 보이게(줌 아웃)
+ * ========================= */
+const VIEW = { zoom: 0.88, w: 0, h: 0 }; // 0.82~0.92 사이로 취향 조절
+
 function resize() {
   DPR = Math.max(1, window.devicePixelRatio || 1);
   const r = canvas.getBoundingClientRect();
   W = r.width; H = r.height;
+
   canvas.width = Math.floor(W * DPR);
   canvas.height = Math.floor(H * DPR);
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+  // 줌 적용: 논리 좌표계가 더 넓어짐(더 많이 보임)
+  VIEW.w = W / VIEW.zoom;
+  VIEW.h = H / VIEW.zoom;
+
+  ctx.setTransform(DPR * VIEW.zoom, 0, 0, DPR * VIEW.zoom, 0, 0);
   layoutWorld();
 }
 window.addEventListener("resize", resize);
@@ -31,10 +43,10 @@ function worldToScreen(wx, wy) { return { x: wx - cam.x, y: wy - cam.y }; }
 function screenToWorld(sx, sy) { return { x: sx + cam.x, y: sy + cam.y }; }
 
 function updateCamera(dt) {
-  cam.targetX = player.x - W * 0.5;
-  cam.targetY = player.y - H * 0.56;
-  cam.targetX = clamp(cam.targetX, 0, WORLD.w - W);
-  cam.targetY = clamp(cam.targetY, 0, WORLD.h - H);
+  cam.targetX = player.x - VIEW.w * 0.5;
+  cam.targetY = player.y - VIEW.h * 0.56;
+  cam.targetX = clamp(cam.targetX, 0, WORLD.w - VIEW.w);
+  cam.targetY = clamp(cam.targetY, 0, WORLD.h - VIEW.h);
 
   // 스무딩
   const k = 1 - Math.pow(0.0012, dt);
@@ -125,7 +137,11 @@ canvas.addEventListener("pointerup", () => {
 
 function getPointer(e){
   const r = canvas.getBoundingClientRect();
-  return { x: e.clientX - r.left, y: e.clientY - r.top };
+  // 줌 반영(포인터/드래그 정확도 유지)
+  return {
+    x: (e.clientX - r.left) / VIEW.zoom,
+    y: (e.clientY - r.top) / VIEW.zoom
+  };
 }
 function isTouchDevice(){ return (navigator.maxTouchPoints || 0) > 0; }
 
@@ -140,6 +156,62 @@ function clampPlayerToWorld(){
 const roads = [];
 const sidewalks = [];
 const crossings = [];
+
+/** =========================
+ *  자동차(도로 주행)
+ * ========================= */
+const cars = [];
+const CAR_COLORS = ["#ff6b6b","#ffd93d","#6bcBef","#95e06c","#b49bff","#ff9bd6","#ffffff"];
+
+function seedCars(){
+  cars.length = 0;
+
+  const hr = roads[0];
+  const vr = roads[1];
+  if (!hr || !vr) return;
+
+  const makeCar = (kind)=>{
+    const col = CAR_COLORS[Math.floor(Math.random()*CAR_COLORS.length)];
+    const speed = 90 + Math.random()*70;
+
+    if (kind==="h"){
+      const lane = Math.random()<0.5 ? 0 : 1;
+      const dir = Math.random()<0.5 ? 1 : -1;
+      return {
+        kind:"car",
+        axis:"h",
+        dir,
+        color: col,
+        speed,
+        w: 44 + Math.random()*18,
+        h: 20 + Math.random()*6,
+        x: hr.x + Math.random()*hr.w,
+        y: hr.y + (lane===0 ? hr.h*0.38 : hr.h*0.66),
+        bob: Math.random()*10
+      };
+    } else {
+      const lane = Math.random()<0.5 ? 0 : 1;
+      const dir = Math.random()<0.5 ? 1 : -1;
+      return {
+        kind:"car",
+        axis:"v",
+        dir,
+        color: col,
+        speed,
+        w: 22 + Math.random()*6,
+        h: 46 + Math.random()*18,
+        x: vr.x + (lane===0 ? vr.w*0.38 : vr.w*0.66),
+        y: vr.y + Math.random()*vr.h,
+        bob: Math.random()*10
+      };
+    }
+  };
+
+  const nH = 7;
+  const nV = 5;
+  for(let i=0;i<nH;i++) cars.push(makeCar("h"));
+  for(let i=0;i<nV;i++) cars.push(makeCar("v"));
+}
 
 /** =========================
  *  “뿌연 느낌” 제거: 잔디 텍스처는 1회 생성 후 패턴 재사용
@@ -176,6 +248,17 @@ function buildGrassPattern(){
     g.fillStyle = (i%2===0) ? "rgba(255,182,217,0.55)" : "rgba(255,255,255,0.55)";
     g.beginPath();
     g.arc(x,y,1.2,0,Math.PI*2);
+    g.fill();
+  }
+
+  // 흙/길 점(현실감)
+  g.globalAlpha = 0.10;
+  for(let i=0;i<120;i++){
+    const x = Math.random()*c.width;
+    const y = Math.random()*c.height;
+    g.fillStyle = (i%3===0) ? "rgba(26,34,64,0.25)" : "rgba(240,193,115,0.22)";
+    g.beginPath();
+    g.arc(x,y,0.9+Math.random()*1.3,0,Math.PI*2);
     g.fill();
   }
 
@@ -364,7 +447,7 @@ const clouds = Array.from({length:9}, ()=>({
   v: 10 + Math.random()*18
 }));
 
-const sparkles = Array.from({length:40}, ()=>({ // 숫자도 줄임
+const sparkles = Array.from({length:40}, ()=>({
   x: Math.random(),
   y: Math.random(),
   t: Math.random()*10,
@@ -407,8 +490,9 @@ function getFootY(entity){
  *  월드 레이아웃
  * ========================= */
 function layoutWorld(){
-  WORLD.w = Math.max(2400, Math.floor(W * 2.6));
-  WORLD.h = Math.max(1700, Math.floor(H * 2.4));
+  // 월드 자체도 더 크게
+  WORLD.w = Math.max(2800, Math.floor(W * 3.2));
+  WORLD.h = Math.max(1900, Math.floor(H * 2.8));
 
   // 포탈 크기(각각 다르게)
   const base = 220;
@@ -454,6 +538,9 @@ function layoutWorld(){
 
   // 잔디 패턴 생성
   buildGrassPattern();
+
+  // 자동차 생성(도로 기준)
+  seedCars();
 
   // props/표지판
   seedProps();
@@ -511,6 +598,25 @@ function update(dt, t){
 
   // 발자국
   addFootprint(dt);
+
+  // 자동차 이동
+  for (const c of cars){
+    c.bob += dt*3.0;
+
+    if (c.axis === "h"){
+      c.x += c.dir * c.speed * dt;
+      const hr = roads[0];
+      if (!hr) continue;
+      if (c.dir > 0 && c.x > hr.x + hr.w + 120) c.x = hr.x - 120;
+      if (c.dir < 0 && c.x < hr.x - 120) c.x = hr.x + hr.w + 120;
+    } else {
+      c.y += c.dir * c.speed * dt;
+      const vr = roads[1];
+      if (!vr) continue;
+      if (c.dir > 0 && c.y > vr.y + vr.h + 120) c.y = vr.y - 120;
+      if (c.dir < 0 && c.y < vr.y - 120) c.y = vr.y + vr.h + 120;
+    }
+  }
 
   // 구름(월드)
   for (const c of clouds){
@@ -586,7 +692,7 @@ function update(dt, t){
 }
 
 function draw(t){
-  ctx.clearRect(0,0,W,H);
+  ctx.clearRect(0,0,VIEW.w,VIEW.h);
 
   ctx.save();
   ctx.translate(-cam.x, -cam.y);
@@ -604,6 +710,7 @@ function draw(t){
   const items = [];
 
   for (const p of portals) items.push({ kind:"building", ref:p, footY:getFootY({kind:"building", y:p.y, h:p.h}) });
+  for (const c of cars) items.push({ kind:"car", ref:c, footY:(c.axis==="h" ? c.y + 12 : c.y + c.h) });
   for (const pr of props) items.push({ kind:pr.kind, ref:pr, footY:getFootY(pr) });
   for (const s of signs) items.push({ kind:"sign", ref:s, footY:getFootY({kind:"sign", y:s.y}) });
   items.push({ kind:"player", ref:player, footY:getFootY({kind:"player", y:player.y}) });
@@ -612,6 +719,7 @@ function draw(t){
 
   for (const it of items){
     if (it.kind==="building") drawBuildingPortal(it.ref, t);
+    else if (it.kind==="car") drawCar(it.ref, t);
     else if (it.kind==="tree") drawTree(it.ref, t);
     else if (it.kind==="lamp") drawLamp(it.ref, t);
     else if (it.kind==="bench") drawBench(it.ref, t);
@@ -629,6 +737,9 @@ function draw(t){
   drawParticles();
 
   ctx.restore();
+
+  // 월드 상단 타이틀
+  drawWorldTitle();
 
   // 커서
   if (!isTouchDevice() && pointer.active){
@@ -683,7 +794,7 @@ function drawSparklesWorld(t){
   for (const s of sparkles){
     const x = s.x*WORLD.w;
     const y = s.y*WORLD.h*0.46;
-    const a = 0.02 + 0.08*(0.5+0.5*Math.sin(t*1.2+s.t)); // 알파 낮춤
+    const a = 0.02 + 0.08*(0.5+0.5*Math.sin(t*1.2+s.t));
     ctx.globalAlpha = a;
     ctx.fillStyle = "rgba(255,255,255,0.95)";
     ctx.beginPath();
@@ -712,7 +823,6 @@ function cloud(x,y,w,h,alpha){
  *  땅(패턴으로 선명하게)
  * ========================= */
 function drawGroundWorld(){
-  // 잔디 패턴
   ctx.save();
   ctx.fillStyle = grassPattern || "rgba(170,230,200,0.28)";
   ctx.fillRect(0, WORLD.h*0.36, WORLD.w, WORLD.h*0.64);
@@ -825,6 +935,72 @@ function drawParticles(){
 }
 
 /** =========================
+ *  자동차 그리기
+ * ========================= */
+function drawCar(c, t){
+  const bounce = Math.sin(c.bob)*0.8;
+
+  ctx.save();
+  ctx.translate(c.x, c.y + bounce);
+
+  // 진행 방향에 따라 뒤집기/회전
+  if (c.axis === "h" && c.dir < 0) ctx.scale(-1,1);
+  if (c.axis === "v"){
+    ctx.rotate(c.dir > 0 ? Math.PI/2 : -Math.PI/2);
+  }
+
+  const w = c.w, h = c.h;
+
+  // 그림자
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = "rgba(26,34,64,0.35)";
+  ctx.beginPath();
+  ctx.ellipse(0, h*0.55, w*0.52, h*0.32, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // 차체(그라데이션)
+  const g = ctx.createLinearGradient(-w*0.5, -h*0.6, w*0.5, h*0.6);
+  g.addColorStop(0, "rgba(255,255,255,0.85)");
+  g.addColorStop(0.15, c.color);
+  g.addColorStop(1, "rgba(26,34,64,0.10)");
+  ctx.globalAlpha = 0.95;
+  ctx.fillStyle = g;
+  ctx.strokeStyle = "rgba(26,34,64,0.18)";
+  ctx.lineWidth = 2;
+  roundRectAt(-w*0.52, -h*0.42, w*1.04, h*0.84, 10);
+  ctx.fill(); ctx.stroke();
+
+  // 유리
+  ctx.globalAlpha = 0.80;
+  ctx.fillStyle = "rgba(180,230,255,0.65)";
+  roundRectAt(-w*0.22, -h*0.34, w*0.44, h*0.30, 8);
+  ctx.fill();
+
+  // 하이라이트
+  ctx.globalAlpha = 0.14;
+  ctx.fillStyle = "rgba(255,255,255,0.9)";
+  roundRectAt(-w*0.46, -h*0.36, w*0.55, h*0.16, 8);
+  ctx.fill();
+
+  // 바퀴
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = "rgba(26,34,64,0.75)";
+  ctx.beginPath();
+  ctx.ellipse(-w*0.30, h*0.38, w*0.16, h*0.14, 0, 0, Math.PI*2);
+  ctx.ellipse(w*0.30,  h*0.38, w*0.16, h*0.14, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // 라이트(앞쪽)
+  ctx.globalAlpha = 0.55;
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.beginPath();
+  ctx.ellipse(w*0.50, -h*0.08, w*0.06, h*0.12, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/** =========================
  *  표지판(양궁/장기 안내)
  * ========================= */
 function drawSign(s, t){
@@ -900,10 +1076,15 @@ function drawBuildingPortal(p, t){
   ctx.fill();
   ctx.restore();
 
-  // 본체
+  // 본체(그라데이션으로 입체감)
   ctx.save();
-  ctx.fillStyle = pal.main;
-  ctx.strokeStyle = "rgba(26,34,64,0.14)";
+  const bodyG = ctx.createLinearGradient(p.x+18, p.y+40, p.x+p.w-18, p.y+p.h-14);
+  bodyG.addColorStop(0, "rgba(255,255,255,0.65)");
+  bodyG.addColorStop(0.12, pal.main);
+  bodyG.addColorStop(1, "rgba(26,34,64,0.10)");
+
+  ctx.fillStyle = bodyG;
+  ctx.strokeStyle = "rgba(26,34,64,0.16)";
   ctx.lineWidth = 2;
   roundRect(p.x+18, p.y+40, p.w-36, p.h-54, 20);
   ctx.fill(); ctx.stroke();
@@ -1310,7 +1491,7 @@ function drawCarousel(o,t){
  * ========================= */
 function drawTree(o,t){
   const x=o.x, y=o.y, s=o.s;
-  const sway = Math.sin(t*1.6 + x*0.01) * (6.5*s); // 흔들 강하게
+  const sway = Math.sin(t*1.6 + x*0.01) * (6.5*s);
 
   // 그림자
   ctx.save();
@@ -1465,7 +1646,7 @@ function drawFence(o,t){
 }
 
 /** =========================
- *  미니미(4방향)
+ *  미니미(4방향) - 멜빵바지 디테일
  * ========================= */
 function frameIndex(animT){ return Math.floor(animT*10) % 4; }
 
@@ -1502,9 +1683,43 @@ function drawMinimi(x,y,t){
   ctx.beginPath(); ctx.arc(-8,-28,10,0,Math.PI*2); ctx.fill();
   ctx.globalAlpha=1;
 
-  // 몸통
-  ctx.fillStyle="rgba(111,183,230,0.95)";
-  roundRectAt(-12,-2,24,26,10); ctx.fill();
+  // 몸통(멜빵바지)
+  // 셔츠
+  ctx.fillStyle="rgba(255,255,255,0.92)";
+  roundRectAt(-12,-2,24,26,10);
+  ctx.fill();
+
+  // 멜빵바지(데님)
+  const denim = ctx.createLinearGradient(-12,-2,12,24);
+  denim.addColorStop(0, "rgba(111,183,230,0.98)");
+  denim.addColorStop(1, "rgba(26,34,64,0.10)");
+  ctx.fillStyle = denim;
+  roundRectAt(-12,4,24,20,10);
+  ctx.fill();
+
+  // 멜빵 끈
+  ctx.strokeStyle="rgba(26,34,64,0.22)";
+  ctx.lineWidth=3;
+  ctx.lineCap="round";
+  ctx.beginPath();
+  ctx.moveTo(-8, 6); ctx.lineTo(-3, 14);
+  ctx.moveTo(8, 6);  ctx.lineTo(3, 14);
+  ctx.stroke();
+
+  // 단추
+  ctx.fillStyle="rgba(255,255,255,0.85)";
+  ctx.beginPath();
+  ctx.arc(-8,6,2.1,0,Math.PI*2);
+  ctx.arc(8,6,2.1,0,Math.PI*2);
+  ctx.fill();
+
+  // 앞주머니
+  ctx.globalAlpha=0.35;
+  ctx.strokeStyle="rgba(26,34,64,0.35)";
+  ctx.lineWidth=2;
+  roundRectAt(-7, 14, 14, 10, 5);
+  ctx.stroke();
+  ctx.globalAlpha=1;
 
   // 얼굴/등
   if (dir==="down"){
@@ -1572,11 +1787,49 @@ function drawCursor(sx, sy, t){
  * ========================= */
 function vignette(strength=0.06){
   ctx.save();
-  const g = ctx.createRadialGradient(W*0.5,H*0.55,Math.min(W,H)*0.35, W*0.5,H*0.55,Math.min(W,H)*0.95);
+  const g = ctx.createRadialGradient(
+    VIEW.w*0.5, VIEW.h*0.55, Math.min(VIEW.w,VIEW.h)*0.35,
+    VIEW.w*0.5, VIEW.h*0.55, Math.min(VIEW.w,VIEW.h)*0.95
+  );
   g.addColorStop(0,"rgba(255,255,255,0)");
   g.addColorStop(1,`rgba(26,34,64,${strength})`);
   ctx.fillStyle=g;
-  ctx.fillRect(0,0,W,H);
+  ctx.fillRect(0,0,VIEW.w,VIEW.h);
+  ctx.restore();
+}
+
+/** =========================
+ *  월드 상단 타이틀
+ * ========================= */
+function drawWorldTitle(){
+  const text = "FA미니월드";
+  const padX = 18;
+
+  ctx.save();
+  ctx.globalAlpha = 0.92;
+  ctx.font = "900 20px system-ui";
+  const tw = ctx.measureText(text).width;
+  const bw = tw + padX*2;
+  const bh = 40;
+
+  const x = VIEW.w*0.5 - bw*0.5;
+  const y = 14;
+
+  ctx.fillStyle = "rgba(255,255,255,0.72)";
+  ctx.strokeStyle = "rgba(26,34,64,0.12)";
+  ctx.lineWidth = 2;
+  roundRect(x, y, bw, bh, 18);
+  ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "rgba(26,34,64,0.88)";
+  ctx.fillText(text, x + padX, y + 27);
+
+  ctx.globalAlpha = 0.55;
+  ctx.fillStyle = "rgba(111,183,230,0.85)";
+  ctx.beginPath();
+  ctx.arc(x + bw - 18, y + 20, 5, 0, Math.PI*2);
+  ctx.fill();
+
   ctx.restore();
 }
 
