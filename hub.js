@@ -83,6 +83,7 @@
     canvas.style.touchAction = "none";
     canvas.style.userSelect = "none";
     canvas.style.webkitUserSelect = "none";
+    canvas.style.imageRendering = "auto"; // ✅ 혹시라도 pixelated/crisp-edges 잡혀있으면 해제
 
     // ✅ 토스트: 좌측 큰 흰 배경 제거 -> 중앙 상단 글자 블록만
     const toast = ensureEl("toast", "div");
@@ -962,6 +963,10 @@
       VIEW.h = H / VIEW.zoom;
 
       ctx.setTransform(DPR * VIEW.zoom, 0, 0, DPR * VIEW.zoom, 0, 0);
+
+      // ✅ 모자이크 방지 (항상 스무딩 + 고품질)
+ctx.imageSmoothingEnabled = true;
+ctx.imageSmoothingQuality = "high";
       layoutWorld();
     }
     window.addEventListener("resize", resize);
