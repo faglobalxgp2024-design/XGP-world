@@ -1,11 +1,7 @@
 :root{
-  --bg0:#060a16;
-  --bg1:#0b1533;
-  --bg2:#0b1020;
   --line:rgba(255,255,255,.12);
   --text:rgba(255,255,255,.92);
   --muted:rgba(255,255,255,.72);
-  --glow:rgba(255,220,120,.9);
 }
 
 *{box-sizing:border-box}
@@ -13,12 +9,12 @@ html,body{height:100%}
 body{
   margin:0;
   font-family: system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",sans-serif;
-  background: radial-gradient(1200px 600px at 40% -10%, #172b6b 0%, var(--bg0) 55%, #050814 100%);
+  background: radial-gradient(1200px 600px at 40% -10%, #1a2f76 0%, #070a16 58%, #050814 100%);
   color:var(--text);
 }
 
 .topbar{
-  position:sticky; top:0; z-index:5;
+  position:sticky; top:0; z-index:6;
   backdrop-filter: blur(12px);
   background: rgba(0,0,0,.25);
   border-bottom:1px solid var(--line);
@@ -58,7 +54,7 @@ canvas{
   height:min(74vh,720px);
   border-radius:18px;
   border:1px solid rgba(255,255,255,.14);
-  background: linear-gradient(180deg,var(--bg1),var(--bg2));
+  background: linear-gradient(180deg,#0c1738,#070a16);
   box-shadow: 0 24px 60px rgba(0,0,0,.35);
   touch-action:none;
 }
@@ -73,6 +69,7 @@ canvas{
   flex-direction:column;
   gap:10px;
   pointer-events:none;
+  z-index:3;
 }
 
 .hud-row{display:flex;gap:8px;flex-wrap:wrap}
@@ -91,7 +88,7 @@ canvas{
   border:1px solid rgba(255,255,255,.12);
   border-radius:14px;
   padding:10px 12px;
-  max-width:min(520px, calc(100vw - 60px));
+  max-width:min(560px, calc(100vw - 60px));
 }
 
 .toast{
@@ -102,5 +99,18 @@ canvas{
   background: rgba(0,0,0,.45);
   backdrop-filter: blur(10px);
   font-size:14px;
+  z-index:3;
 }
 .toast b{color:rgba(255,240,180,.96)}
+
+/* 페이드 오버레이 */
+.fade{
+  position:absolute; inset:12px;
+  border-radius:18px;
+  pointer-events:none;
+  background:#000;
+  opacity:0;
+  transition: opacity 420ms ease;
+  z-index:5;
+}
+.fade.on{ opacity:1; }
