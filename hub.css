@@ -1,0 +1,14 @@
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",sans-serif;background:#0b1020;color:#eef}
+.topbar{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.12);display:flex;align-items:baseline;gap:12px}
+.topbar h1{margin:0;font-size:18px}
+.hint{opacity:.8;font-size:13px}
+.wrap{position:relative;max-width:980px;margin:0 auto;padding:12px}
+canvas{width:100%;height:min(70vh,620px);background:linear-gradient(180deg,#101a3a,#0b1020);border:1px solid rgba(255,255,255,.12);border-radius:14px;touch-action:none}
+.toast{
+  position:absolute;left:16px;right:16px;bottom:18px;
+  padding:12px 14px;border-radius:12px;
+  background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.16);
+  backdrop-filter: blur(8px);
+  font-size:14px;
+}
