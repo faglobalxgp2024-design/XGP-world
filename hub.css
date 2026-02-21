@@ -1,14 +1,106 @@
+:root{
+  --bg0:#060a16;
+  --bg1:#0b1533;
+  --bg2:#0b1020;
+  --line:rgba(255,255,255,.12);
+  --text:rgba(255,255,255,.92);
+  --muted:rgba(255,255,255,.72);
+  --glow:rgba(255,220,120,.9);
+}
+
 *{box-sizing:border-box}
-body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",sans-serif;background:#0b1020;color:#eef}
-.topbar{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.12);display:flex;align-items:baseline;gap:12px}
-.topbar h1{margin:0;font-size:18px}
-.hint{opacity:.8;font-size:13px}
-.wrap{position:relative;max-width:980px;margin:0 auto;padding:12px}
-canvas{width:100%;height:min(70vh,620px);background:linear-gradient(180deg,#101a3a,#0b1020);border:1px solid rgba(255,255,255,.12);border-radius:14px;touch-action:none}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",sans-serif;
+  background: radial-gradient(1200px 600px at 40% -10%, #172b6b 0%, var(--bg0) 55%, #050814 100%);
+  color:var(--text);
+}
+
+.topbar{
+  position:sticky; top:0; z-index:5;
+  backdrop-filter: blur(12px);
+  background: rgba(0,0,0,.25);
+  border-bottom:1px solid var(--line);
+  padding:14px 16px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.brand{display:flex;align-items:center;gap:12px}
+.dot{
+  width:12px;height:12px;border-radius:999px;
+  background: linear-gradient(180deg,#6fe0ff,#4aa3ff);
+  box-shadow: 0 0 18px rgba(80,170,255,.55);
+}
+.title{font-weight:800;letter-spacing:-.2px}
+.subtitle{font-size:13px;color:var(--muted);margin-top:2px}
+
+.tips{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.chip{
+  font-size:12px;color:rgba(255,255,255,.82);
+  padding:6px 10px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.05);
+}
+
+.wrap{
+  max-width:1100px;
+  margin:0 auto;
+  padding:12px;
+  position:relative;
+}
+
+canvas{
+  width:100%;
+  height:min(74vh,720px);
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.14);
+  background: linear-gradient(180deg,var(--bg1),var(--bg2));
+  box-shadow: 0 24px 60px rgba(0,0,0,.35);
+  touch-action:none;
+}
+
+/* 커서를 숨기고, JS에서 “미니미 커서”를 캔버스에 직접 그림 */
+#world{ cursor:none; }
+
+.hud{
+  position:absolute;
+  left:18px; top:18px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  pointer-events:none;
+}
+
+.hud-row{display:flex;gap:8px;flex-wrap:wrap}
+.pill{
+  font-size:12px;
+  padding:7px 10px;
+  border-radius:999px;
+  background: rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.14);
+}
+
+.help{
+  font-size:13px;
+  color:rgba(255,255,255,.78);
+  background: rgba(0,0,0,.25);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  padding:10px 12px;
+  max-width:min(520px, calc(100vw - 60px));
+}
+
 .toast{
-  position:absolute;left:16px;right:16px;bottom:18px;
-  padding:12px 14px;border-radius:12px;
-  background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.16);
-  backdrop-filter: blur(8px);
+  position:absolute; left:18px; right:18px; bottom:18px;
+  padding:12px 14px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.16);
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(10px);
   font-size:14px;
 }
+.toast b{color:rgba(255,240,180,.96)}
