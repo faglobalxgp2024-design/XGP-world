@@ -1,7 +1,18 @@
 :root{
-  --line:rgba(255,255,255,.12);
-  --text:rgba(255,255,255,.92);
-  --muted:rgba(255,255,255,.72);
+  --ink:#1a2240;
+  --muted:rgba(26,34,64,.75);
+  --line:rgba(26,34,64,.18);
+
+  --bg0:#fff3fb;
+  --bg1:#f0fbff;
+  --bg2:#f7fff4;
+
+  --glass: rgba(255,255,255,.55);
+  --shadow: rgba(26,34,64,.10);
+
+  --accent:#7ec8ff;
+  --accent2:#ffd38c;
+  --accent3:#b8f3d1;
 }
 
 *{box-sizing:border-box}
@@ -9,14 +20,17 @@ html,body{height:100%}
 body{
   margin:0;
   font-family: system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",sans-serif;
-  background: radial-gradient(1200px 600px at 40% -10%, #1a2f76 0%, #070a16 58%, #050814 100%);
-  color:var(--text);
+  color:var(--ink);
+  background:
+    radial-gradient(900px 420px at 20% 0%, #ffe7f5 0%, transparent 60%),
+    radial-gradient(900px 420px at 80% 0%, #e8fbff 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg1), var(--bg2));
 }
 
 .topbar{
   position:sticky; top:0; z-index:6;
   backdrop-filter: blur(12px);
-  background: rgba(0,0,0,.25);
+  background: rgba(255,255,255,.55);
   border-bottom:1px solid var(--line);
   padding:14px 16px;
   display:flex;
@@ -26,20 +40,20 @@ body{
 }
 
 .brand{display:flex;align-items:center;gap:12px}
-.dot{
-  width:12px;height:12px;border-radius:999px;
-  background: linear-gradient(180deg,#6fe0ff,#4aa3ff);
-  box-shadow: 0 0 18px rgba(80,170,255,.55);
+.logo{
+  width:14px;height:14px;border-radius:999px;
+  background: linear-gradient(180deg,var(--accent),#a6e7ff);
+  box-shadow: 0 0 0 6px rgba(126,200,255,.18);
 }
-.title{font-weight:800;letter-spacing:-.2px}
+.title{font-weight:900;letter-spacing:-.2px}
 .subtitle{font-size:13px;color:var(--muted);margin-top:2px}
 
 .tips{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .chip{
-  font-size:12px;color:rgba(255,255,255,.82);
+  font-size:12px;color:rgba(26,34,64,.82);
   padding:6px 10px;border-radius:999px;
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.05);
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.55);
 }
 
 .wrap{
@@ -52,14 +66,13 @@ body{
 canvas{
   width:100%;
   height:min(74vh,720px);
-  border-radius:18px;
-  border:1px solid rgba(255,255,255,.14);
-  background: linear-gradient(180deg,#0c1738,#070a16);
-  box-shadow: 0 24px 60px rgba(0,0,0,.35);
+  border-radius:20px;
+  border:1px solid var(--line);
+  background: linear-gradient(180deg,#f1fbff,#f8fff4);
+  box-shadow: 0 22px 55px var(--shadow);
   touch-action:none;
 }
 
-/* 커서를 숨기고, JS에서 “미니미 커서”를 캔버스에 직접 그림 */
 #world{ cursor:none; }
 
 .hud{
@@ -77,40 +90,39 @@ canvas{
   font-size:12px;
   padding:7px 10px;
   border-radius:999px;
-  background: rgba(0,0,0,.35);
-  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.68);
+  border:1px solid var(--line);
 }
 
 .help{
   font-size:13px;
-  color:rgba(255,255,255,.78);
-  background: rgba(0,0,0,.25);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:14px;
+  color:rgba(26,34,64,.78);
+  background: rgba(255,255,255,.62);
+  border:1px solid var(--line);
+  border-radius:16px;
   padding:10px 12px;
-  max-width:min(560px, calc(100vw - 60px));
+  max-width:min(600px, calc(100vw - 60px));
 }
 
 .toast{
   position:absolute; left:18px; right:18px; bottom:18px;
   padding:12px 14px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.16);
-  background: rgba(0,0,0,.45);
+  border-radius:16px;
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.72);
   backdrop-filter: blur(10px);
   font-size:14px;
   z-index:3;
 }
-.toast b{color:rgba(255,240,180,.96)}
+.toast b{color:rgba(26,34,64,.95)}
 
-/* 페이드 오버레이 */
 .fade{
   position:absolute; inset:12px;
-  border-radius:18px;
+  border-radius:20px;
   pointer-events:none;
-  background:#000;
+  background: #ffffff;
   opacity:0;
-  transition: opacity 420ms ease;
+  transition: opacity 380ms ease;
   z-index:5;
 }
 .fade.on{ opacity:1; }
