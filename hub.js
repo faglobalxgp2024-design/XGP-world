@@ -678,31 +678,38 @@
     }
 
     function buildPatterns() {
-      g.globalAlpha = 0.05;                 // ✅ 0.16 -> 0.05 (격자 티 거의 안남)
-g.strokeStyle = "rgba(0,0,0,0.10)";   // ✅ 더 연하게
-g.lineWidth = 1;                      // ✅ 2 -> 1
-for (let x = 0; x <= w; x += 80) {    // ✅ 48 -> 80 (격자 촘촘함 제거)
-  g.beginPath();
-  g.moveTo(x, 0);
-  g.lineTo(x, h);
-  g.stroke();
-}
-for (let y = 0; y <= h; y += 80) {    // ✅ 48 -> 80
-  g.beginPath();
-  g.moveTo(0, y);
-  g.lineTo(w, y);
-  g.stroke();
-}
+      grassPattern = makePattern(480, 480, (g, w, h) => {
+  g.fillStyle = "#39d975";
+  g.fillRect(0, 0, w, h);
 
-        g.globalAlpha = 0.10;
-        for (let i = 0; i < 70; i++) {
-          g.fillStyle = i % 3 === 0 ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.12)";
-          g.beginPath();
-          g.arc(Math.random() * w, Math.random() * h, 0.8 + Math.random() * 1.5, 0, Math.PI * 2);
-          g.fill();
-        }
-        g.globalAlpha = 1;
-      });
+  // ✅ 약한 격자(타일감 최소)
+  g.globalAlpha = 0.05;
+  g.strokeStyle = "rgba(0,0,0,0.10)";
+  g.lineWidth = 1;
+  for (let x = 0; x <= w; x += 80) {
+    g.beginPath();
+    g.moveTo(x, 0);
+    g.lineTo(x, h);
+    g.stroke();
+  }
+  for (let y = 0; y <= h; y += 80) {
+    g.beginPath();
+    g.moveTo(0, y);
+    g.lineTo(w, y);
+    g.stroke();
+  }
+
+  // ✅ 점 텍스처(잔디 느낌)
+  g.globalAlpha = 0.10;
+  for (let i = 0; i < 140; i++) {
+    g.fillStyle = i % 3 === 0 ? "rgba(255,255,255,0.20)" : "rgba(0,0,0,0.10)";
+    g.beginPath();
+    g.arc(Math.random() * w, Math.random() * h, 0.8 + Math.random() * 1.6, 0, Math.PI * 2);
+    g.fill();
+  }
+
+  g.globalAlpha = 1;
+});
 
       dirtPattern = makePattern(240, 240, (g, w, h) => {
         g.fillStyle = "#c79a64";
