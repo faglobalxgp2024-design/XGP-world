@@ -991,33 +991,33 @@ brickPattern = makePattern(360, 360, (g, w, h) => {
     function layoutWorld() {
       WORLD.w = Math.max(4200, Math.floor(W * 4.4));
       WORLD.h = Math.max(3000, Math.floor(H * 3.8));
-        // ---------------- ZONES layout (Game / Community / Ads) ----------------
-  ZONES.game = {
-    x: WORLD.w * 0.08,
-    y: WORLD.h * 0.12,
-    w: WORLD.w * 0.40,
-    h: WORLD.h * 0.48,
-    label: "GAME ZONE",
-    color: "#0a84ff",
-  };
+// ----------- ZONES layout (tighter, smaller, close together) -----------
+ZONES.game = {
+  x: WORLD.w * 0.10,
+  y: WORLD.h * 0.18,
+  w: WORLD.w * 0.34,
+  h: WORLD.h * 0.34,
+  label: "GAME ZONE",
+  color: "#0a84ff",
+};
 
-  ZONES.community = {
-    x: WORLD.w * 0.54,
-    y: WORLD.h * 0.12,
-    w: WORLD.w * 0.38,
-    h: WORLD.h * 0.52,
-    label: "COMMUNITY ZONE",
-    color: "#34c759",
-  };
+ZONES.community = {
+  x: WORLD.w * 0.56,
+  y: WORLD.h * 0.18,
+  w: WORLD.w * 0.34,
+  h: WORLD.h * 0.34,
+  label: "COMMUNITY ZONE",
+  color: "#34c759",
+};
 
-  ZONES.ads = {
-    x: WORLD.w * 0.30,
-    y: WORLD.h * 0.62,
-    w: WORLD.w * 0.40,
-    h: WORLD.h * 0.26,
-    label: "AD ZONE",
-    color: "#ff2d55",
-  };
+ZONES.ads = {
+  x: WORLD.w * 0.33,
+  y: WORLD.h * 0.58,
+  w: WORLD.w * 0.34,
+  h: WORLD.h * 0.26,
+  label: "AD ZONE",
+  color: "#ff2d55",
+};
 
       const base = 220;
       const mul = { S: 0.82, M: 1.0, L: 1.22 };
@@ -2667,8 +2667,8 @@ if (p.key === "paris")    S.sign = "#0a84ff";
       ctx.save();
       ctx.translate(-cam.x, -cam.y);
 
-      drawSkyWorld(t);
-      drawCloudsWorld();
+      // drawSkyWorld(t);
+      // drawCloudsWorld();
       drawGroundWorld();
       drawRoadsAndSidewalks();
       drawZonesWorld(t);
