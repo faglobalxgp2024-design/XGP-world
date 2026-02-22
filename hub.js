@@ -698,7 +698,7 @@ function inZoneName(x, y) {
     const birds = Array.from({ length: 7 }, () => ({ x: 0, y: 0, p: Math.random() * 10, v: 22 + Math.random() * 22 }));
 
     /* ----------------------- Patterns ----------------------- */
-    let grassPattern = null, dirtPattern = null, roadPattern = null, sidewalkPattern = null, asphaltPattern = null;
+    let grassPattern = null, dirtPattern = null, roadPattern = null, sidewalkPattern = null, asphaltPattern = null, brickPattern = null;
 
     function makePattern(w, h, drawFn) {
       const c = document.createElement("canvas");
