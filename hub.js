@@ -1032,28 +1032,29 @@ ZONES.ads = {
 
       const desired = {
 // ---------------- GAME ZONE (left) : 6 games ----------------
-jump:    { x: ZONES.game.x + ZONES.game.w * 0.22, y: ZONES.game.y + ZONES.game.h * 0.26 },
-archery: { x: ZONES.game.x + ZONES.game.w * 0.52, y: ZONES.game.y + ZONES.game.h * 0.26 },
-omok:    { x: ZONES.game.x + ZONES.game.w * 0.82, y: ZONES.game.y + ZONES.game.h * 0.26 },
+jump:    { x: ZONES.game.x + ZONES.game.w * 0.20, y: ZONES.game.y + ZONES.game.h * 0.30 },
+archery: { x: ZONES.game.x + ZONES.game.w * 0.50, y: ZONES.game.y + ZONES.game.h * 0.30 },
+omok:    { x: ZONES.game.x + ZONES.game.w * 0.80, y: ZONES.game.y + ZONES.game.h * 0.30 },
 
-avoid:   { x: ZONES.game.x + ZONES.game.w * 0.22, y: ZONES.game.y + ZONES.game.h * 0.70 },
-janggi:  { x: ZONES.game.x + ZONES.game.w * 0.52, y: ZONES.game.y + ZONES.game.h * 0.70 },
-snow:    { x: ZONES.game.x + ZONES.game.w * 0.82, y: ZONES.game.y + ZONES.game.h * 0.70 },
+avoid:   { x: ZONES.game.x + ZONES.game.w * 0.20, y: ZONES.game.y + ZONES.game.h * 0.72 },
+janggi:  { x: ZONES.game.x + ZONES.game.w * 0.50, y: ZONES.game.y + ZONES.game.h * 0.72 },
+snow:    { x: ZONES.game.x + ZONES.game.w * 0.80, y: ZONES.game.y + ZONES.game.h * 0.72 },
 
-// ---------------- COMMUNITY ZONE (right) : 5 shops ----------------
-twitter:  { x: ZONES.community.x + ZONES.community.w * 0.22, y: ZONES.community.y + ZONES.community.h * 0.26 },
-telegram: { x: ZONES.community.x + ZONES.community.w * 0.62, y: ZONES.community.y + ZONES.community.h * 0.26 },
+// ----------- COMMUNITY ZONE (right) : tighter 5 shops -----------
+twitter:  { x: ZONES.community.x + ZONES.community.w * 0.25, y: ZONES.community.y + ZONES.community.h * 0.30 },
+telegram: { x: ZONES.community.x + ZONES.community.w * 0.65, y: ZONES.community.y + ZONES.community.h * 0.30 },
 
-wallet:   { x: ZONES.community.x + ZONES.community.w * 0.22, y: ZONES.community.y + ZONES.community.h * 0.62 },
-market:   { x: ZONES.community.x + ZONES.community.w * 0.62, y: ZONES.community.y + ZONES.community.h * 0.62 },
+wallet:   { x: ZONES.community.x + ZONES.community.w * 0.25, y: ZONES.community.y + ZONES.community.h * 0.72 },
+market:   { x: ZONES.community.x + ZONES.community.w * 0.65, y: ZONES.community.y + ZONES.community.h * 0.72 },
 
-support:  { x: ZONES.community.x + ZONES.community.w * 0.42, y: ZONES.community.y + ZONES.community.h * 0.84 },
+support:  { x: ZONES.community.x + ZONES.community.w * 0.45, y: ZONES.community.y + ZONES.community.h * 0.52 },
 
-// ---------------- AD ZONE (bottom-center) : 4 shops ----------------
-mcd:    { x: ZONES.ads.x + ZONES.ads.w * 0.26, y: ZONES.ads.y + ZONES.ads.h * 0.40 },
-bbq:    { x: ZONES.ads.x + ZONES.ads.w * 0.74, y: ZONES.ads.y + ZONES.ads.h * 0.40 },
-baskin: { x: ZONES.ads.x + ZONES.ads.w * 0.26, y: ZONES.ads.y + ZONES.ads.h * 0.78 },
-paris:  { x: ZONES.ads.x + ZONES.ads.w * 0.74, y: ZONES.ads.y + ZONES.ads.h * 0.78 },
+// ----------- AD ZONE (bottom-center) : tighter 4 shops -----------
+mcd:    { x: ZONES.ads.x + ZONES.ads.w * 0.28, y: ZONES.ads.y + ZONES.ads.h * 0.35 },
+bbq:    { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.35 },
+
+baskin: { x: ZONES.ads.x + ZONES.ads.w * 0.28, y: ZONES.ads.y + ZONES.ads.h * 0.72 },
+paris:  { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.72 },
 };
 
       for (const p of portals) {
