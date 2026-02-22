@@ -1257,9 +1257,17 @@ function inZoneName(x, y) {
       }
       ctx.restore();
     }
+    function rectInsideZone(rect) {
+  return (
+    (ZONES.game && rectsOverlap(rect, ZONES.game, 0)) ||
+    (ZONES.community && rectsOverlap(rect, ZONES.community, 0)) ||
+    (ZONES.ads && rectsOverlap(rect, ZONES.ads, 0))
+  );
+}
 
     function drawRoadsAndSidewalks() {
       for (const r of roads) {
+        if (rectInsideZone(r)) continue;
         groundAO(r.x, r.y + r.h - 18, r.w, 26, 0.18);
 
         ctx.save();
@@ -1296,6 +1304,7 @@ function inZoneName(x, y) {
       }
 
       for (const s of sidewalks) {
+        if (rectInsideZone(s)) continue;
         groundAO(s.x, s.y + s.h - 10, s.w, 20, 0.12);
         ctx.save();
         ctx.fillStyle = sidewalkPattern || "#f5efe7";
@@ -1310,6 +1319,7 @@ function inZoneName(x, y) {
       }
 
       for (const c of crossings) {
+        if (rectInsideZone(c)) continue;
         ctx.save();
         ctx.globalAlpha = 0.16;
         ctx.fillStyle = "rgba(255,255,255,0.20)";
