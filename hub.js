@@ -318,17 +318,26 @@
     /* ----------------------- Portals + Shops ----------------------- */
     // ✅ 간판 텍스트/이름은 여기서 바로 수정 가능
     const portals = [
-      { key: "avoid", label: "DODGE", status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "archery", label: "ARCHERY", status: "open", url: "https://ttjdwls777-eng.github.io/XGP-MINI-GAME2/", type: "tower", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "janggi", label: "JANGGI", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "jump", label: "JUMP", status: "soon", url: "", type: "gym", size: "S", x: 0, y: 0, w: 0, h: 0 },
-      { key: "snow", label: "SNOWBALL", status: "soon", url: "", type: "igloo", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "omok", label: "OMOK", status: "soon", url: "", type: "cafe", size: "M", x: 0, y: 0, w: 0, h: 0 },
+      // ---------------- GAME ZONE (6) ----------------
+      { key: "archery", label: "ARCHERY", status: "open", url: "https://ttjdwls777-eng.github.io/XGP-MINI-GAME2/", type: "tower", size: "M", zone: "game", signColor: "#e12a2a", x: 0, y: 0, w: 0, h: 0 },
+      { key: "omok", label: "OMOK", status: "soon", url: "", type: "cafe", size: "M", zone: "game", signColor: "#ff7a00", x: 0, y: 0, w: 0, h: 0 },
+      { key: "janggi", label: "JANGGI", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo", size: "L", zone: "game", signColor: "#2a66ff", x: 0, y: 0, w: 0, h: 0 },
+      { key: "snowroll", label: "SNOWROLL", status: "soon", url: "", type: "igloo", size: "M", zone: "game", signColor: "#00bcd4", x: 0, y: 0, w: 0, h: 0 },
+      { key: "avoid", label: "DODGE", status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", zone: "game", signColor: "#ff2d55", x: 0, y: 0, w: 0, h: 0 },
+      { key: "jump", label: "JUMP", status: "soon", url: "", type: "gym", size: "S", zone: "game", signColor: "#8b5cf6", x: 0, y: 0, w: 0, h: 0 },
 
-      { key: "mcd", label: "McDonald's", status: "soon", url: "", type: "mcd", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "hospital", label: "HOSPITAL", status: "soon", url: "", type: "hospital", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "pharmacy", label: "PHARMACY", status: "soon", url: "", type: "pharmacy", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "chicken", label: "CHICKEN", status: "soon", url: "", type: "chicken", size: "M", x: 0, y: 0, w: 0, h: 0 }
+      // ---------------- COMMUNITY ZONE (5) ----------------
+      { key: "twitter", label: "TWITTER", status: "open", url: "https://twitter.com/", type: "twitter", size: "M", zone: "community", signColor: "#1d9bf0", x: 0, y: 0, w: 0, h: 0 },
+      { key: "telegram", label: "TELEGRAM", status: "open", url: "https://t.me/", type: "telegram", size: "M", zone: "community", signColor: "#229ED9", x: 0, y: 0, w: 0, h: 0 },
+      { key: "wallet", label: "WALLET", status: "soon", url: "", type: "wallet", size: "M", zone: "community", signColor: "#34c759", x: 0, y: 0, w: 0, h: 0 },
+      { key: "market", label: "MARKET", status: "soon", url: "", type: "market", size: "M", zone: "community", signColor: "#ffcc00", x: 0, y: 0, w: 0, h: 0 },
+      { key: "support", label: "SUPPORT", status: "soon", url: "", type: "support", size: "M", zone: "community", signColor: "#ff3b30", x: 0, y: 0, w: 0, h: 0 },
+
+      // ---------------- AD ZONE (4) ----------------
+      { key: "mcd", label: "McDonald's", status: "soon", url: "", type: "mcd", size: "M", zone: "ad", signColor: "#d40000", x: 0, y: 0, w: 0, h: 0 },
+      { key: "bbq", label: "BBQ", status: "soon", url: "", type: "bbq", size: "M", zone: "ad", signColor: "#ff6a00", x: 0, y: 0, w: 0, h: 0 },
+      { key: "baskin", label: "BASKIN", status: "soon", url: "", type: "baskin", size: "M", zone: "ad", signColor: "#ff4fa3", x: 0, y: 0, w: 0, h: 0 },
+      { key: "paris", label: "PARIS", status: "soon", url: "", type: "paris", size: "M", zone: "ad", signColor: "#7b5cff", x: 0, y: 0, w: 0, h: 0 }
     ];
     const portalsByKey = (k) => portals.find((p) => p.key === k);
 
@@ -484,6 +493,8 @@
     }
 
     function isInsideBuildingBuffer(x, y) {
+      const placed = [];
+
       for (const p of portals) {
         const pad = 120;
         if (x >= p.x - pad && x <= p.x + p.w + pad && y >= p.y - pad && y <= p.y + p.h + pad) return true;
@@ -506,10 +517,20 @@
         if (isInsideBuildingBuffer(x, y)) continue;
 
         const r = Math.random();
-        if (r < 0.26) props.push({ kind: "tree", x, y, s: 0.9 + Math.random() * 1.05 });
-        else if (r < 0.35) props.push({ kind: "lamp", x, y, s: 0.9 + Math.random() * 0.55 });
-        else if (r < 0.46) props.push({ kind: "bench", x, y, s: 0.9 + Math.random() * 0.35 });
-        else props.push({ kind: "flower", x, y, s: 0.85 + Math.random() * 0.95 });
+        const zk = isInsideZonePoint(x, y);
+
+        // 존 내부: 나무 제거 + (가로등/꽃)만 최소 배치
+        if (zk) {
+          if (r < 0.08) props.push({ kind: "lamp", x, y, s: 0.95 + Math.random() * 0.35 });
+          else if (r < 0.22) props.push({ kind: "flower", x, y, s: 0.9 + Math.random() * 0.9 });
+          // else: keep empty (clean asphalt)
+        } else {
+          // 존 외부: 기존처럼 그대로
+          if (r < 0.26) props.push({ kind: "tree", x, y, s: 0.9 + Math.random() * 1.05 });
+          else if (r < 0.35) props.push({ kind: "lamp", x, y, s: 0.9 + Math.random() * 0.55 });
+          else if (r < 0.46) props.push({ kind: "bench", x, y, s: 0.9 + Math.random() * 0.35 });
+          else props.push({ kind: "flower", x, y, s: 0.85 + Math.random() * 0.95 });
+        }
       }
 
       for (const p of portals) {
@@ -667,7 +688,8 @@
     let grassPattern = null,
       dirtPattern = null,
       roadPattern = null,
-      sidewalkPattern = null;
+      sidewalkPattern = null,
+      zoneAsphaltPattern = null;
 
     function makePattern(w, h, drawFn) {
       const c = document.createElement("canvas");
@@ -739,6 +761,42 @@
         g.globalAlpha = 0.22;
         g.fillStyle = "rgba(255,255,255,0.75)";
         for (let x = 0; x < w; x += 40) g.fillRect(x + 12, h / 2 - 2, 14, 4);
+        g.globalAlpha = 1;
+      });
+
+
+      zoneAsphaltPattern = makePattern(320, 320, (g, w, h) => {
+        // cleaner asphalt for zone floors (premium look)
+        g.fillStyle = "#1f2631";
+        g.fillRect(0, 0, w, h);
+
+        // subtle aggregate
+        g.globalAlpha = 0.22;
+        for (let i = 0; i < 520; i++) {
+          const a = Math.random() * 0.18 + 0.06;
+          g.fillStyle = i % 2 === 0 ? `rgba(255,255,255,${a})` : `rgba(0,0,0,${a})`;
+          g.beginPath();
+          g.arc(Math.random() * w, Math.random() * h, 0.6 + Math.random() * 1.8, 0, Math.PI * 2);
+          g.fill();
+        }
+        g.globalAlpha = 1;
+
+        // very light seams
+        g.globalAlpha = 0.10;
+        g.strokeStyle = "rgba(255,255,255,0.16)";
+        g.lineWidth = 2;
+        for (let x = 0; x <= w; x += 80) {
+          g.beginPath();
+          g.moveTo(x, 0);
+          g.lineTo(x, h);
+          g.stroke();
+        }
+        for (let y = 0; y <= h; y += 80) {
+          g.beginPath();
+          g.moveTo(0, y);
+          g.lineTo(w, y);
+          g.stroke();
+        }
         g.globalAlpha = 1;
       });
 
@@ -858,7 +916,56 @@
       }
     }
 
-    function placePortalAvoidRoad(p, cx, cy) {
+    
+    /* ----------------------- Zones (GAME / COMMUNITY / AD) ----------------------- */
+    // 요청 반영:
+    // - 게임존/커뮤니티존/광고존을 한 장소에 각각 모아 배치
+    // - 존 내부는 "아스팔트 느낌" 바닥 + 꽃/가로등만 최소 배치(나무 제거)
+    // - 존 입구(하단 중앙) + 큰 표지판(색상 포함)
+    let zoneRects = [];
+    let zoneMap = {};
+    let zoneDecor = []; // gates + signboards (draw order with y-sort)
+
+    function buildZones() {
+      zoneRects = [];
+      zoneMap = {};
+      zoneDecor = [];
+
+      const makeZone = (key, x, y, w, h, label, color) => {
+        const rect = { key, x, y, w, h, label, color };
+        zoneRects.push(rect);
+        zoneMap[key] = rect;
+
+        // Entrance (bottom-center) + big signboard near entrance
+        const gateW = Math.min(240, w * 0.36);
+        const gateH = 110;
+        const gx = x + w * 0.5 - gateW * 0.5;
+        const gy = y + h - gateH + 26;
+
+        zoneDecor.push({ kind: "zoneGate", key, x: gx, y: gy, w: gateW, h: gateH, color, label });
+        zoneDecor.push({ kind: "zoneSign", key, x: gx + gateW * 0.5, y: gy - 46, w: Math.min(320, w * 0.52), h: 56, color, label });
+      };
+
+      // Layout: LEFT=Game, RIGHT=Community, BOTTOM CENTER=Ad
+      makeZone("game", WORLD.w * 0.08, WORLD.h * 0.29, WORLD.w * 0.36, WORLD.h * 0.19, "GAME ZONE", "#7c3aed");
+      makeZone("community", WORLD.w * 0.56, WORLD.h * 0.29, WORLD.w * 0.36, WORLD.h * 0.19, "COMMUNITY ZONE", "#0a84ff");
+      makeZone("ad", WORLD.w * 0.26, WORLD.h * 0.78, WORLD.w * 0.48, WORLD.h * 0.18, "AD ZONE", "#ff2d55");
+    }
+
+    function pointInRect(px, py, r) {
+      return px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h;
+    }
+
+    function isInsideZonePoint(x, y) {
+      for (const z of zoneRects) if (pointInRect(x, y, z)) return z.key;
+      return "";
+    }
+
+    function rectInsideRect(a, b, pad = 0) {
+      return a.x >= b.x + pad && a.y >= b.y + pad && a.x + a.w <= b.x + b.w - pad && a.y + a.h <= b.y + b.h - pad;
+    }
+
+    function placePortalAvoidRoad(p, cx, cy, avoidRects = [], zoneKey = "") {
       const maxTry = 80;
       const step = 22;
 
@@ -868,6 +975,17 @@
         const rect = { x, y, w: p.w, h: p.h };
         for (const r of roads) if (rectsOverlap(rect, r, 8)) return null;
         for (const s of sidewalks) if (rectsOverlap(rect, s, 4)) return null;
+
+        // avoid overlap with other placed buildings
+        for (const b of avoidRects) if (rectsOverlap(rect, b, 26)) return null;
+
+        // keep inside zone if requested
+        if (zoneKey) {
+          const z = zoneMap[zoneKey];
+          if (!z) return null;
+          if (!rectInsideRect(rect, z, 32)) return null;
+        }
+
         return rect;
       };
 
@@ -903,27 +1021,37 @@
 
       buildPatterns();
       layoutRoadNetwork();
+      buildZones();
 
       const desired = {
-        jump: { x: WORLD.w * 0.18, y: WORLD.h * 0.18 },
-        archery: { x: WORLD.w * 0.66, y: WORLD.h * 0.18 },
-        omok: { x: WORLD.w * 0.82, y: WORLD.h * 0.3 },
+        // GAME ZONE (left)
+        archery:   { x: WORLD.w * 0.20, y: WORLD.h * 0.32 },
+        omok:      { x: WORLD.w * 0.32, y: WORLD.h * 0.32 },
+        janggi:    { x: WORLD.w * 0.20, y: WORLD.h * 0.39 },
+        snowroll:  { x: WORLD.w * 0.32, y: WORLD.h * 0.39 },
+        avoid:     { x: WORLD.w * 0.20, y: WORLD.h * 0.46 },
+        jump:      { x: WORLD.w * 0.32, y: WORLD.h * 0.46 },
 
-        avoid: { x: WORLD.w * 0.18, y: WORLD.h * 0.6 },
-        janggi: { x: WORLD.w * 0.82, y: WORLD.h * 0.6 },
-        snow: { x: WORLD.w * 0.34, y: WORLD.h * 0.84 },
+        // COMMUNITY ZONE (right)
+        twitter:   { x: WORLD.w * 0.68, y: WORLD.h * 0.32 },
+        telegram:  { x: WORLD.w * 0.80, y: WORLD.h * 0.32 },
+        wallet:    { x: WORLD.w * 0.68, y: WORLD.h * 0.39 },
+        market:    { x: WORLD.w * 0.80, y: WORLD.h * 0.39 },
+        support:   { x: WORLD.w * 0.74, y: WORLD.h * 0.46 },
 
-        mcd: { x: WORLD.w * 0.12, y: WORLD.h * 0.36 },
-        hospital: { x: WORLD.w * 0.88, y: WORLD.h * 0.4 },
-        pharmacy: { x: WORLD.w * 0.88, y: WORLD.h * 0.62 },
-        chicken: { x: WORLD.w * 0.12, y: WORLD.h * 0.8 }
+        // AD ZONE (bottom center)
+        mcd:       { x: WORLD.w * 0.42, y: WORLD.h * 0.82 },
+        bbq:       { x: WORLD.w * 0.58, y: WORLD.h * 0.82 },
+        baskin:    { x: WORLD.w * 0.42, y: WORLD.h * 0.90 },
+        paris:     { x: WORLD.w * 0.58, y: WORLD.h * 0.90 }
       };
 
       for (const p of portals) {
         const d = desired[p.key] || { x: WORLD.w * 0.5, y: WORLD.h * 0.5 };
-        const rect = placePortalAvoidRoad(p, d.x, d.y);
+        const rect = placePortalAvoidRoad(p, d.x, d.y, placed, p.zone || "");
         p.x = clamp(rect.x, WORLD.margin, WORLD.w - WORLD.margin - p.w);
         p.y = clamp(rect.y, WORLD.margin, WORLD.h - WORLD.margin - p.h);
+        placed.push({ x: p.x, y: p.y, w: p.w, h: p.h });
       }
 
       buildGroundPatches();
@@ -1128,6 +1256,39 @@
       ctx.fillRect(0, WORLD.h * 0.3, WORLD.w, WORLD.h * 0.7);
       ctx.restore();
 
+      // Zones: premium asphalt floors (no trees inside)
+      ctx.save();
+      for (const z of zoneRects) {
+        // shadow
+        groundAO(z.x + 6, z.y + z.h - 18, z.w - 12, 30, 0.22);
+
+        ctx.globalAlpha = 0.18;
+        ctx.fillStyle = "rgba(255,255,255,0.22)";
+        roundRect(z.x - 8, z.y - 8, z.w + 16, z.h + 16, 48);
+        ctx.fill();
+
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = zoneAsphaltPattern || "#1f2631";
+        roundRect(z.x, z.y, z.w, z.h, 44);
+        ctx.fill();
+
+        // subtle top gloss
+        ctx.globalAlpha = 0.10;
+        ctx.fillStyle = "rgba(255,255,255,0.55)";
+        roundRect(z.x + 14, z.y + 12, z.w - 28, Math.max(22, z.h * 0.16), 34);
+        ctx.fill();
+
+        // border line
+        ctx.globalAlpha = 0.28;
+        ctx.strokeStyle = "rgba(255,255,255,0.18)";
+        ctx.lineWidth = 2;
+        roundRect(z.x + 2, z.y + 2, z.w - 4, z.h - 4, 42);
+        ctx.stroke();
+
+        ctx.globalAlpha = 1;
+      }
+      ctx.restore();
+
       ctx.save();
       const sh = ctx.createLinearGradient(0, WORLD.h * 0.3, 0, WORLD.h);
       sh.addColorStop(0, "rgba(10,14,24,0.00)");
@@ -1291,6 +1452,14 @@
         igloo: "#bfe9ff",
         cafe: "#b889ff",
         mcd: "#ffcc00",
+        bbq: "#ff6a00",
+        baskin: "#ff4fa3",
+        paris: "#7b5cff",
+        twitter: "#1d9bf0",
+        telegram: "#229ED9",
+        wallet: "#34c759",
+        market: "#ffcc00",
+        support: "#ff3b30",
         hospital: "#0a84ff",
         pharmacy: "#34c759",
         chicken: "#ff2d55"
@@ -1367,12 +1536,12 @@
       ctx.restore();
     }
 
-    function drawLegoSignPlaque(x, y, w, h, text, textSize) {
+    function drawLegoSignPlaque(x, y, w, h, text, textSize, signColor = "#e12a2a") {
       // red rounded plaque with white letters (like the photo)
       softShadow(x + 2, y + 4, w, h, 0.12);
 
       ctx.save();
-      ctx.fillStyle = "#e12a2a";
+      ctx.fillStyle = signColor;
       ctx.strokeStyle = "rgba(0,0,0,0.12)";
       ctx.lineWidth = 2;
       roundRect(x, y, w, h, 18);
@@ -1538,7 +1707,7 @@
       const signX = bodyX + signPad;
       const signY = p.y + 10;
       const textSize = p.size === "L" ? 34 : p.size === "M" ? 30 : 28;
-      drawLegoSignPlaque(signX, signY, signW, signH, p.label, textSize);
+      drawLegoSignPlaque(signX, signY, signW, signH, p.label, textSize, p.signColor || S.sign);
 
       // door & window positions (like photo)
       const doorW = bodyW * 0.36;
@@ -1891,6 +2060,83 @@
         ctx.ellipse(f.x, f.y, 5.2, 2.4, 0, 0, Math.PI * 2);
         ctx.fill();
       }
+      ctx.restore();
+    }
+
+
+    /* ----------------------- Zone Entrance / Sign ----------------------- */
+    function drawZoneGate(g) {
+      // simple entrance arch (no overlap)
+      ctx.save();
+      ctx.translate(g.x, g.y);
+
+      groundAO(0, g.h - 8, g.w, 26, 0.18);
+
+      // pillars
+      ctx.fillStyle = "rgba(10,14,24,0.65)";
+      roundRect(0, 18, 22, g.h - 18, 12);
+      ctx.fill();
+      roundRect(g.w - 22, 18, 22, g.h - 18, 12);
+      ctx.fill();
+
+      // arch beam
+      ctx.fillStyle = "rgba(10,14,24,0.82)";
+      roundRect(12, 0, g.w - 24, 32, 16);
+      ctx.fill();
+
+      // colored inner trim
+      ctx.globalAlpha = 0.92;
+      ctx.fillStyle = g.color;
+      roundRect(18, 6, g.w - 36, 20, 12);
+      ctx.fill();
+
+      // light studs
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.arc(28 + i * ((g.w - 56) / 4), 16, 3.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.globalAlpha = 1;
+
+      // opening highlight
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = "rgba(255,255,255,0.75)";
+      roundRect(28, 40, g.w - 56, g.h - 50, 22);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.restore();
+    }
+
+    function drawZoneSign(s) {
+      // big color signboard text
+      ctx.save();
+      ctx.translate(s.x, s.y);
+
+      softShadow(-s.w / 2 + 2, -s.h / 2 + 4, s.w, s.h, 0.14);
+
+      ctx.fillStyle = s.color;
+      ctx.strokeStyle = "rgba(0,0,0,0.14)";
+      ctx.lineWidth = 2;
+      roundRect(-s.w / 2, -s.h / 2, s.w, s.h, 18);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.globalAlpha = 0.16;
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      roundRect(-s.w / 2 + 10, -s.h / 2 + 8, s.w - 20, Math.max(10, s.h * 0.35), 14);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = "rgba(255,255,255,0.98)";
+      ctx.font = "1200 26px system-ui";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(s.label, 0, 2);
+
       ctx.restore();
     }
 
@@ -2320,6 +2566,8 @@
       if (entity.kind === "lamp") return entity.y + 68 * entity.s;
       if (entity.kind === "bench") return entity.y + 32 * entity.s;
       if (entity.kind === "flower") return entity.y + 12 * entity.s;
+      if (entity.kind === "zoneGate") return entity.y + entity.h;
+      if (entity.kind === "zoneSign") return entity.y + 12;
       if (entity.kind === "sign") return entity.y + 40;
       if (entity.kind === "npc") return entity.y + 30;
       if (entity.kind === "emblem") return entity.y + 12;
@@ -2476,6 +2724,7 @@
       for (const c of cars) items.push({ kind: "car", ref: c, footY: getFootY(c) });
       for (const pr of props) items.push({ kind: pr.kind, ref: pr, footY: getFootY(pr) });
       for (const s of signs) items.push({ kind: "sign", ref: s, footY: getFootY({ kind: "sign", y: s.y }) });
+      for (const zd of zoneDecor) items.push({ kind: zd.kind, ref: zd, footY: getFootY(zd) });
       for (const e of portalEmblems) items.push({ kind: "emblem", ref: e, footY: getFootY(e) });
       for (const n of portalNPCs) items.push({ kind: "npc", ref: n, footY: getFootY(n) });
       for (const sg of signals) items.push({ kind: "signal", ref: sg, footY: getFootY({ kind: "signal", y: sg.y }) });
@@ -2491,6 +2740,8 @@
         else if (it.kind === "lamp") drawLamp(it.ref, t);
         else if (it.kind === "bench") drawBench(it.ref);
         else if (it.kind === "flower") drawFlower(it.ref, t);
+        else if (it.kind === "zoneGate") drawZoneGate(it.ref);
+        else if (it.kind === "zoneSign") drawZoneSign(it.ref);
         else if (it.kind === "sign") drawSign(it.ref);
         else if (it.kind === "emblem") drawEmblem(it.ref);
         else if (it.kind === "npc") drawNPC(it.ref.key, it.ref.x, it.ref.y);
