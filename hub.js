@@ -1372,7 +1372,48 @@ function inZoneName(x, y) {
   drawZone(ZONES.community);
   drawZone(ZONES.ads);
 }
-    
+
+    function drawSignal(s, t) {
+  const phase = (t + s.phase) % 6;
+  const greenOn = phase < 2.4;
+  const yellowOn = phase >= 2.4 && phase < 3.2;
+  const redOn = phase >= 3.2;
+
+  ctx.save();
+  ctx.translate(s.x, s.y);
+
+  groundAO(-10, 28, 20, 10, 0.1);
+
+  ctx.fillStyle = "rgba(40,46,58,0.92)";
+  roundRect(-4, -18, 8, 48, 6);
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(10,14,24,0.92)";
+  roundRect(-14, -42, 28, 28, 10);
+  ctx.fill();
+
+  const dot = (yy, on, col) => {
+    ctx.save();
+    ctx.globalAlpha = on ? 1 : 0.25;
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.arc(0, yy, 4.6, 0, Math.PI * 2);
+    ctx.fill();
+    if (on) {
+      ctx.globalAlpha = 0.18;
+      ctx.beginPath();
+      ctx.arc(0, yy, 10, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  };
+
+  dot(-34, redOn, "#ff3b30");
+  dot(-28, yellowOn, "#ffcc00");
+  dot(-22, greenOn, "#34c759");
+
+  ctx.restore();
+}
 
     /* ----------------------- LEGO Building style (from your photo) ----------------------- */
     function legoStyleForType(type) {
