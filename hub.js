@@ -1267,7 +1267,7 @@ function inZoneName(x, y) {
 
     function drawRoadsAndSidewalks() {
       for (const r of roads) {
-        if (rectInsideZone(r)) continue;
+        // if (rectInsideZone(r)) continue;
         groundAO(r.x, r.y + r.h - 18, r.w, 26, 0.18);
 
         ctx.save();
