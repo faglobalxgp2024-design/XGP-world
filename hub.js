@@ -1955,6 +1955,90 @@
       ctx.restore();
       return true;
     }
+    /* ----------------------- FLAT ROUND CHARACTER (like sample) ----------------------- */
+function drawFlatPerson(x, y, opts = {}) {
+  const moving = !!opts.moving;
+  const dir = opts.dir || "down";
+  const animT = opts.animT ?? 0;
+  const bobT = opts.bobT ?? 0;
+
+  const skin = opts.skin || "#9ad8ff";
+  const hair = opts.hair || "#ffd100";
+  const shirt = opts.shirt || "#0a84ff";
+  const pants = opts.pants || "#2f343c";
+  const accent = opts.accent || "#ffcc00";
+
+  const side = dir === "left" || dir === "right";
+  const swing = moving ? Math.sin(animT * 10) : 0;
+  const bob = moving ? Math.sin(bobT) * 0.9 : 0;
+
+  // shadow
+  ctx.save();
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = "rgba(10,14,24,0.45)";
+  ctx.beginPath();
+  ctx.ellipse(x, y + 28, 18, 6.8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(x, y + bob);
+
+  // mirror for left
+  if (dir === "left") ctx.scale(-1, 1);
+
+  // head
+  ctx.fillStyle = skin;
+  ctx.beginPath();
+  ctx.arc(0, -18, 14, 0, Math.PI * 2);
+  ctx.fill();
+
+  // hair/hat bar
+  ctx.fillStyle = hair;
+  roundRect(-12, -34, 24, 7, 4);
+  ctx.fill();
+
+  // face by dir
+  if (dir === "down") {
+    ctx.fillStyle = "rgba(10,14,24,0.55)";
+    ctx.beginPath();
+    ctx.arc(-4.2, -20, 1.6, 0, Math.PI * 2);
+    ctx.arc(4.2, -20, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (side) {
+    ctx.fillStyle = "rgba(10,14,24,0.55)";
+    ctx.beginPath();
+    ctx.arc(5.2, -20, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // body
+  ctx.fillStyle = shirt;
+  ctx.beginPath();
+  ctx.arc(0, 2, 11.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // hand dot (accent)
+  ctx.fillStyle = accent;
+  const handOff = 2.2 * swing;
+  ctx.beginPath();
+  ctx.arc(12, 4 + handOff, 3.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // legs
+  ctx.fillStyle = pants;
+  if (!side) {
+    roundRect(-8, 14 + 2.6 * swing, 6, 12, 3);
+    ctx.fill();
+    roundRect(2, 14 - 2.6 * swing, 6, 12, 3);
+    ctx.fill();
+  } else {
+    roundRect(0, 14 + 2.6 * swing, 6, 12, 3);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
 
     // 옆모습: 몸통/다리 1개만 보이도록 + 걷는 모션
     function drawMinifig(x, y, opts = null) {
@@ -2125,7 +2209,15 @@
           omok: { torso: "#ffffff", pants: "#3b4251", hat: "#0a84ff", acc: "stone2" }
         }[key] || { torso: "#ffffff", pants: "#3b4251", hat: "#ff3b30", acc: "none" };
 
-      drawMinifig(x, y, { moving: false, dir: "right", torso: theme.torso, pants: theme.pants, hat: theme.hat });
+      drawFlatPerson(x, y, {
+  moving: false,
+  dir: "right",
+  skin: "#9ad8ff",
+  hair: theme.hat,     // 기존 hat색을 머리색으로 사용
+  shirt: theme.torso,  // 기존 torso색을 상의색으로 사용
+  pants: theme.pants,
+  accent: "#ffcc00"
+});
 
       ctx.save();
       ctx.translate(x, y);
@@ -2162,16 +2254,17 @@
 
     function drawRoamer(n, palette) {
       const c = palette[n.colorIdx % palette.length];
-      drawMinifig(n.x, n.y, {
-        moving: true,
-        dir: n.dir,
-        animT: n.t,
-        bobT: n.t * 0.9,
-        torso: c.torso,
-        pants: c.pants,
-        hat: c.hat
-      });
-    }
+      drawFlatPerson(n.x, n.y, {
+  moving: true,
+  dir: n.dir,
+  animT: n.t,
+  bobT: n.t * 0.9,
+  skin: "#9ad8ff",
+  hair: c.hat,
+  shirt: c.torso,
+  pants: c.pants,
+  accent: "#ffcc00"
+});
 
     /* ----------------------- Title ----------------------- */
     function drawWorldTitle() {
@@ -2498,10 +2591,17 @@
         else if (it.kind === "roamer") drawRoamer(it.ref, roamerPalette);
         else if (it.kind === "player") {
           if (!(SPRITE_SRC && USE_SPRITE_IF_LOADED && drawSpriteCharacter(player.x, player.y))) {
-            drawMinifig(player.x, player.y);
-          }
-        }
-      }
+            drawFlatPerson(player.x, player.y, {
+  moving: player.moving,
+  dir: player.dir,
+  animT: player.animT,
+  bobT: player.bobT,
+  skin: "#9ad8ff",
+  hair: "#ffd100",
+  shirt: "#0a84ff",
+  pants: "#2f343c",
+  accent: "#ffcc00"
+});
 
       ctx.restore();
 
