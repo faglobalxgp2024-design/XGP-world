@@ -731,7 +731,7 @@ function inZoneName(x, y) {
         }
 
         g.globalAlpha = 0.1;
-        for (let i = 0; i < 140; i++) {
+        for (let i = 0; i < 70; i++) {
           g.fillStyle = i % 3 === 0 ? "rgba(255,255,255,0.20)" : "rgba(0,0,0,0.10)";
           g.beginPath();
           g.arc(Math.random() * w, Math.random() * h, 0.8 + Math.random() * 1.6, 0, Math.PI * 2);
