@@ -316,24 +316,24 @@
     const signals = [];
 
     /* ----------------------- Portals + Shops ----------------------- */
-    // ✅ 간판 텍스트/이름은 여기서 바로 수정 가능
-    // ✅ 포탈(게임 6 + 커뮤니티 5) : 요청 반영
+    // ✅ Portals: GAME ZONE(6) + COMMUNITY ZONE(5)
 const portals = [
-  // --- GAME ZONE (6) ---
-  { key: "archery", label: "ARCHERY", status: "open", url: "https://ttjdwls777-eng.github.io/XGP-MINI-GAME2/", type: "tower", size: "M", group: "game", logo: "" , x:0,y:0,w:0,h:0},
-  { key: "omok",    label: "OMOK",    status: "soon", url: "", type: "cafe",  size: "M", group: "game", logo: "" , x:0,y:0,w:0,h:0},
-  { key: "janggi",  label: "JANGGI",  status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo",  size: "M", group: "game", logo: "" , x:0,y:0,w:0,h:0},
-  { key: "snow",    label: "SNOWBALL",status: "soon", url: "", type: "igloo", size: "M", group: "game", logo: "" , x:0,y:0,w:0,h:0},
-  { key: "avoid",   label: "DODGE",   status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "M", group: "game", logo: "" , x:0,y:0,w:0,h:0},
-  { key: "jump",    label: "JUMP",    status: "soon", url: "", type: "gym",   size: "M", group: "game", logo: "" , x:0,y:0,w:0,h:0},
+  // ===== GAME ZONE (6) =====
+  { key: "archery", label: "ARCHERY",  status: "open", url: "https://ttjdwls777-eng.github.io/XGP-MINI-GAME2/", type: "tower",  size: "M", group: "game", logo: "", x: 0, y: 0, w: 0, h: 0 },
+  { key: "omok",    label: "OMOK",     status: "soon", url: "", type: "cafe",   size: "M", group: "game", logo: "", x: 0, y: 0, w: 0, h: 0 },
+  { key: "janggi",  label: "JANGGI",   status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo",  size: "M", group: "game", logo: "", x: 0, y: 0, w: 0, h: 0 },
+  { key: "snow",    label: "SNOWBALL", status: "soon", url: "", type: "igloo",  size: "M", group: "game", logo: "", x: 0, y: 0, w: 0, h: 0 },
+  { key: "avoid",   label: "DODGE",    status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "M", group: "game", logo: "", x: 0, y: 0, w: 0, h: 0 },
+  { key: "jump",    label: "JUMP",     status: "soon", url: "", type: "gym",    size: "M", group: "game", logo: "", x: 0, y: 0, w: 0, h: 0 },
 
-  // --- COMMUNITY ZONE (5) ---
-  { key: "twitter",  label: "TWITTER",  status: "soon", url: "", type: "shop", size: "M", group: "community", logo: "twitter", x:0,y:0,w:0,h:0},
-  { key: "telegram", label: "TELEGRAM", status: "soon", url: "", type: "shop", size: "M", group: "community", logo: "telegram", x:0,y:0,w:0,h:0},
-  { key: "wallet",   label: "WALLET",   status: "soon", url: "", type: "shop", size: "M", group: "community", logo: "wallet", x:0,y:0,w:0,h:0},
-  { key: "market",   label: "MARKET",   status: "soon", url: "", type: "shop", size: "M", group: "community", logo: "market", x:0,y:0,w:0,h:0},
-  { key: "support",  label: "고객센터", status: "soon", url: "", type: "shop", size: "M", group: "community", logo: "support", x:0,y:0,w:0,h:0},
+  // ===== COMMUNITY ZONE (5) =====
+  { key: "twitter",  label: "TWITTER",  status: "soon", url: "", type: "shop", size: "M", group: "community", logo: "twitter",  x: 0, y: 0, w: 0, h: 0 },
+  { key: "telegram", label: "TELEGRAM", status: "soon", url: "", type: "shop", size: "M", group: "community", logo: "telegram", x: 0, y: 0, w: 0, h: 0 },
+  { key: "wallet",   label: "WALLET",   status: "soon", url: "", type: "shop", size: "M", group: "community", logo: "wallet",   x: 0, y: 0, w: 0, h: 0 },
+  { key: "market",   label: "MARKET",   status: "soon", url: "", type: "shop", size: "M", group: "community", logo: "market",   x: 0, y: 0, w: 0, h: 0 },
+  { key: "support",  label: "고객센터", status: "soon", url: "", type: "shop", size: "M", group: "community", logo: "support",  x: 0, y: 0, w: 0, h: 0 },
 ];
+
 const portalsByKey = (k) => portals.find((p) => p.key === k);
 
     /* ----------------------- Player ----------------------- */
@@ -672,6 +672,7 @@ const portalsByKey = (k) => portals.find((p) => p.key === k);
       dirtPattern = null,
       roadPattern = null,
       sidewalkPattern = null;
+      plazaAsphaltPattern = null; // ✅ ZONE asphalt
 
     function makePattern(w, h, drawFn) {
       const c = document.createElement("canvas");
@@ -767,6 +768,58 @@ const portalsByKey = (k) => portals.find((p) => p.key === k);
         g.globalAlpha = 1;
       });
     }
+    // ✅ ZONE asphalt (high-quality plaza floor)
+plazaAsphaltPattern = makePattern(360, 360, (g, w, h) => {
+  // base asphalt
+  g.fillStyle = "#303744";
+  g.fillRect(0, 0, w, h);
+
+  // fine noise speckles
+  g.globalAlpha = 0.16;
+  for (let i = 0; i < 1400; i++) {
+    const rr = Math.random() * 1.6;
+    g.fillStyle = i % 3 === 0 ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.10)";
+    g.beginPath();
+    g.arc(Math.random() * w, Math.random() * h, rr, 0, Math.PI * 2);
+    g.fill();
+  }
+
+  // subtle patch stains
+  g.globalAlpha = 0.12;
+  for (let i = 0; i < 18; i++) {
+    g.fillStyle = "rgba(0,0,0,0.22)";
+    g.beginPath();
+    g.ellipse(
+      Math.random() * w,
+      Math.random() * h,
+      24 + Math.random() * 48,
+      10 + Math.random() * 26,
+      (Math.random() - 0.5) * 1.6,
+      0,
+      Math.PI * 2
+    );
+    g.fill();
+  }
+
+  // faint seams (like asphalt plates)
+  g.globalAlpha = 0.12;
+  g.strokeStyle = "rgba(255,255,255,0.18)";
+  g.lineWidth = 1;
+  for (let x = 0; x <= w; x += 60) {
+    g.beginPath();
+    g.moveTo(x, 0);
+    g.lineTo(x, h);
+    g.stroke();
+  }
+  for (let y = 0; y <= h; y += 60) {
+    g.beginPath();
+    g.moveTo(0, y);
+    g.lineTo(w, y);
+    g.stroke();
+  }
+
+  g.globalAlpha = 1;
+});
 
     /* ----------------------- Shape helpers ----------------------- */
     function roundRect(x, y, w, h, r) {
@@ -909,19 +962,23 @@ const portalsByKey = (k) => portals.find((p) => p.key === k);
       layoutRoadNetwork();
 
       const desired = {
-        jump: { x: WORLD.w * 0.18, y: WORLD.h * 0.18 },
-        archery: { x: WORLD.w * 0.66, y: WORLD.h * 0.18 },
-        omok: { x: WORLD.w * 0.82, y: WORLD.h * 0.3 },
+  // ===== GAME ZONE (위쪽 3 + 3) =====
+  archery: { x: WORLD.w * 0.32, y: WORLD.h * 0.18 },
+  omok:    { x: WORLD.w * 0.50, y: WORLD.h * 0.18 },
+  janggi:  { x: WORLD.w * 0.68, y: WORLD.h * 0.18 },
 
-        avoid: { x: WORLD.w * 0.18, y: WORLD.h * 0.6 },
-        janggi: { x: WORLD.w * 0.82, y: WORLD.h * 0.6 },
-        snow: { x: WORLD.w * 0.34, y: WORLD.h * 0.84 },
+  avoid:   { x: WORLD.w * 0.32, y: WORLD.h * 0.34 },
+  snow:    { x: WORLD.w * 0.50, y: WORLD.h * 0.34 },
+  jump:    { x: WORLD.w * 0.68, y: WORLD.h * 0.34 },
 
-        mcd: { x: WORLD.w * 0.12, y: WORLD.h * 0.36 },
-        hospital: { x: WORLD.w * 0.88, y: WORLD.h * 0.4 },
-        pharmacy: { x: WORLD.w * 0.88, y: WORLD.h * 0.62 },
-        chicken: { x: WORLD.w * 0.12, y: WORLD.h * 0.8 }
-      };
+  // ===== COMMUNITY ZONE (아래 3 + 2) =====
+  twitter:  { x: WORLD.w * 0.32, y: WORLD.h * 0.64 },
+  telegram: { x: WORLD.w * 0.50, y: WORLD.h * 0.64 },
+  wallet:   { x: WORLD.w * 0.68, y: WORLD.h * 0.64 },
+
+  market:   { x: WORLD.w * 0.41, y: WORLD.h * 0.80 },
+  support:  { x: WORLD.w * 0.59, y: WORLD.h * 0.80 },
+};
 
       for (const p of portals) {
         const d = desired[p.key] || { x: WORLD.w * 0.5, y: WORLD.h * 0.5 };
@@ -1158,7 +1215,9 @@ const portalsByKey = (k) => portals.find((p) => p.key === k);
         ctx.fill();
       }
       ctx.restore();
+      
     }
+    
 
     function drawRoadsAndSidewalks() {
       for (const r of roads) {
