@@ -317,20 +317,54 @@
 
     /* ----------------------- Portals + Shops ----------------------- */
     // ✅ 간판 텍스트/이름은 여기서 바로 수정 가능
-    const portals = [
-      { key: "avoid", label: "DODGE", status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "archery", label: "ARCHERY", status: "open", url: "https://ttjdwls777-eng.github.io/XGP-MINI-GAME2/", type: "tower", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "janggi", label: "JANGGI", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "jump", label: "JUMP", status: "soon", url: "", type: "gym", size: "S", x: 0, y: 0, w: 0, h: 0 },
-      { key: "snow", label: "SNOWBALL", status: "soon", url: "", type: "igloo", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "omok", label: "OMOK", status: "soon", url: "", type: "cafe", size: "M", x: 0, y: 0, w: 0, h: 0 },
+    // ✅ 포탈(상점/게임) 정의: 게임 6개 + 커뮤니티 5개 + 광고 4개
+// - 게임 6개: DODGE(피하기), ARCHERY(양궁), JANGGI(장기), OMOK(오목), SNOWBALL(눈굴리기), JUMP(점프하기)
+// - 커뮤니티 5개: TWITTER, TELEGRAM, WALLET, MARKET, SUPPORT
+// - 광고 4개: McDonald's, BBQ, BASKIN, PARIS
+const portals = [
+  // ---------- GAME ZONE (6) ----------
+  { key: "avoid",   label: "DODGE",     status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/",       type: "arcade",  size: "L", x: 0, y: 0, w: 0, h: 0 },
+  { key: "archery", label: "ARCHERY",   status: "open", url: "https://ttjdwls777-eng.github.io/XGP-MINI-GAME2/",           type: "tower",   size: "M", x: 0, y: 0, w: 0, h: 0 },
+  { key: "janggi",  label: "JANGGI",    status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/",         type: "dojo",    size: "L", x: 0, y: 0, w: 0, h: 0 },
 
-      { key: "mcd", label: "McDonald's", status: "soon", url: "", type: "mcd", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "hospital", label: "HOSPITAL", status: "soon", url: "", type: "hospital", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "pharmacy", label: "PHARMACY", status: "soon", url: "", type: "pharmacy", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "chicken", label: "CHICKEN", status: "soon", url: "", type: "chicken", size: "M", x: 0, y: 0, w: 0, h: 0 }
-    ];
+  // URL 아직 없으면 오픈준비중
+  { key: "omok",    label: "OMOK",      status: "soon", url: "",                                                         type: "cafe",    size: "M", x: 0, y: 0, w: 0, h: 0 },
+  { key: "snow",    label: "SNOWBALL",  status: "soon", url: "",                                                         type: "igloo",   size: "M", x: 0, y: 0, w: 0, h: 0 },
+  { key: "jump",    label: "JUMP",      status: "soon", url: "",                                                         type: "gym",     size: "M", x: 0, y: 0, w: 0, h: 0 },
+
+  // ---------- COMMUNITY ZONE (5) ----------
+  { key: "twitter",   label: "TWITTER",   status: "soon", url: "", type: "social",  size: "M", x: 0, y: 0, w: 0, h: 0 },
+  { key: "telegram",  label: "TELEGRAM",  status: "soon", url: "", type: "social",  size: "M", x: 0, y: 0, w: 0, h: 0 },
+  { key: "wallet",    label: "WALLET",    status: "soon", url: "", type: "wallet",  size: "M", x: 0, y: 0, w: 0, h: 0 },
+  { key: "market",    label: "MARKET",    status: "soon", url: "", type: "market",  size: "M", x: 0, y: 0, w: 0, h: 0 },
+  { key: "support",   label: "SUPPORT",   status: "soon", url: "", type: "support", size: "M", x: 0, y: 0, w: 0, h: 0 },
+
+  // ---------- AD ZONE (4) ----------
+  { key: "mcd",     label: "McDonald's", status: "soon", url: "", type: "mcd",     size: "M", x: 0, y: 0, w: 0, h: 0 },
+  { key: "bbq",     label: "BBQ",        status: "soon", url: "", type: "bbq",     size: "M", x: 0, y: 0, w: 0, h: 0 },
+  { key: "baskin",  label: "BASKIN",     status: "soon", url: "", type: "baskin",  size: "M", x: 0, y: 0, w: 0, h: 0 },
+  { key: "paris",   label: "PARIS",      status: "soon", url: "", type: "paris",   size: "M", x: 0, y: 0, w: 0, h: 0 },
+];
     const portalsByKey = (k) => portals.find((p) => p.key === k);
+    /* ----------------------- ZONES (Game / Community / Ads) ----------------------- */
+const ZONES = {
+  game:      { x: 0, y: 0, w: 0, h: 0, label: "GAME ZONE",      color: "#0a84ff" },
+  community: { x: 0, y: 0, w: 0, h: 0, label: "COMMUNITY ZONE", color: "#34c759" },
+  ads:       { x: 0, y: 0, w: 0, h: 0, label: "AD ZONE",        color: "#ff2d55" },
+};
+
+function ptInRect(x, y, r) {
+  return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+}
+function inAnyZone(x, y) {
+  return ptInRect(x, y, ZONES.game) || ptInRect(x, y, ZONES.community) || ptInRect(x, y, ZONES.ads);
+}
+function inZoneName(x, y) {
+  if (ptInRect(x, y, ZONES.game)) return "game";
+  if (ptInRect(x, y, ZONES.community)) return "community";
+  if (ptInRect(x, y, ZONES.ads)) return "ads";
+  return "";
+}
 
     /* ----------------------- Player ----------------------- */
     const player = {
@@ -664,10 +698,7 @@
     const birds = Array.from({ length: 7 }, () => ({ x: 0, y: 0, p: Math.random() * 10, v: 22 + Math.random() * 22 }));
 
     /* ----------------------- Patterns ----------------------- */
-    let grassPattern = null,
-      dirtPattern = null,
-      roadPattern = null,
-      sidewalkPattern = null;
+    let grassPattern = null, dirtPattern = null, roadPattern = null, sidewalkPattern = null, asphaltPattern = null;
 
     function makePattern(w, h, drawFn) {
       const c = document.createElement("canvas");
@@ -741,6 +772,7 @@
         for (let x = 0; x < w; x += 40) g.fillRect(x + 12, h / 2 - 2, 14, 4);
         g.globalAlpha = 1;
       });
+      
 
       sidewalkPattern = makePattern(240, 240, (g, w, h) => {
         g.fillStyle = "#f5efe7";
@@ -762,6 +794,40 @@
         }
         g.globalAlpha = 1;
       });
+          // asphalt for zones (realistic)
+    asphaltPattern = makePattern(360, 360, (g, w, h) => {
+
+      g.fillStyle = "#2b303a";
+      g.fillRect(0, 0, w, h);
+
+      // fine grain
+      g.globalAlpha = 0.16;
+      for (let i = 0; i < 2200; i++) {
+        const v = (Math.random() * 55) | 0;
+        g.fillStyle = `rgb(${40 + v},${44 + v},${52 + v})`;
+        g.fillRect(Math.random() * w, Math.random() * h, 1, 1);
+      }
+
+      // aggregate specks
+      g.globalAlpha = 0.08;
+      for (let i = 0; i < 500; i++) {
+        g.fillStyle = "rgba(255,255,255,0.25)";
+        g.fillRect(Math.random() * w, Math.random() * h, 2, 2);
+      }
+
+      // subtle seams
+      g.globalAlpha = 0.12;
+      g.strokeStyle = "rgba(255,255,255,0.08)";
+      g.lineWidth = 1;
+      for (let y = 0; y <= h; y += 60) {
+        g.beginPath();
+        g.moveTo(0, y);
+        g.lineTo(w, y);
+        g.stroke();
+      }
+
+      g.globalAlpha = 1;
+    });
     }
 
     /* ----------------------- Shape helpers ----------------------- */
@@ -868,6 +934,7 @@
         const rect = { x, y, w: p.w, h: p.h };
         for (const r of roads) if (rectsOverlap(rect, r, 8)) return null;
         for (const s of sidewalks) if (rectsOverlap(rect, s, 4)) return null;
+        for (const op of portals) if (op !== p && op.w && rectsOverlap(rect, op, 26)) return null; // avoid portal overlap
         return rect;
       };
 
@@ -892,6 +959,33 @@
     function layoutWorld() {
       WORLD.w = Math.max(4200, Math.floor(W * 4.4));
       WORLD.h = Math.max(3000, Math.floor(H * 3.8));
+        // ---------------- ZONES layout (Game / Community / Ads) ----------------
+  ZONES.game = {
+    x: WORLD.w * 0.08,
+    y: WORLD.h * 0.12,
+    w: WORLD.w * 0.40,
+    h: WORLD.h * 0.48,
+    label: "GAME ZONE",
+    color: "#0a84ff",
+  };
+
+  ZONES.community = {
+    x: WORLD.w * 0.54,
+    y: WORLD.h * 0.12,
+    w: WORLD.w * 0.38,
+    h: WORLD.h * 0.52,
+    label: "COMMUNITY ZONE",
+    color: "#34c759",
+  };
+
+  ZONES.ads = {
+    x: WORLD.w * 0.30,
+    y: WORLD.h * 0.62,
+    w: WORLD.w * 0.40,
+    h: WORLD.h * 0.26,
+    label: "AD ZONE",
+    color: "#ff2d55",
+  };
 
       const base = 220;
       const mul = { S: 0.82, M: 1.0, L: 1.22 };
@@ -905,19 +999,27 @@
       layoutRoadNetwork();
 
       const desired = {
-        jump: { x: WORLD.w * 0.18, y: WORLD.h * 0.18 },
-        archery: { x: WORLD.w * 0.66, y: WORLD.h * 0.18 },
-        omok: { x: WORLD.w * 0.82, y: WORLD.h * 0.3 },
+  // ---------------- GAME ZONE (left) : 6 games ----------------
+  jump:    { x: ZONES.game.x + ZONES.game.w * 0.28, y: ZONES.game.y + ZONES.game.h * 0.28 },
+  archery: { x: ZONES.game.x + ZONES.game.w * 0.62, y: ZONES.game.y + ZONES.game.h * 0.26 },
+  omok:    { x: ZONES.game.x + ZONES.game.w * 0.62, y: ZONES.game.y + ZONES.game.h * 0.56 },
+  avoid:   { x: ZONES.game.x + ZONES.game.w * 0.28, y: ZONES.game.y + ZONES.game.h * 0.58 },
+  janggi:  { x: ZONES.game.x + ZONES.game.w * 0.28, y: ZONES.game.y + ZONES.game.h * 0.80 },
+  snow:    { x: ZONES.game.x + ZONES.game.w * 0.62, y: ZONES.game.y + ZONES.game.h * 0.80 },
 
-        avoid: { x: WORLD.w * 0.18, y: WORLD.h * 0.6 },
-        janggi: { x: WORLD.w * 0.82, y: WORLD.h * 0.6 },
-        snow: { x: WORLD.w * 0.34, y: WORLD.h * 0.84 },
+  // ---------------- COMMUNITY ZONE (right) : 5 shops ----------------
+  twitter:   { x: ZONES.community.x + ZONES.community.w * 0.28, y: ZONES.community.y + ZONES.community.h * 0.26 },
+  telegram:  { x: ZONES.community.x + ZONES.community.w * 0.68, y: ZONES.community.y + ZONES.community.h * 0.26 },
+  wallet:    { x: ZONES.community.x + ZONES.community.w * 0.28, y: ZONES.community.y + ZONES.community.h * 0.54 },
+  market:    { x: ZONES.community.x + ZONES.community.w * 0.68, y: ZONES.community.y + ZONES.community.h * 0.54 },
+  support:   { x: ZONES.community.x + ZONES.community.w * 0.48, y: ZONES.community.y + ZONES.community.h * 0.80 },
 
-        mcd: { x: WORLD.w * 0.12, y: WORLD.h * 0.36 },
-        hospital: { x: WORLD.w * 0.88, y: WORLD.h * 0.4 },
-        pharmacy: { x: WORLD.w * 0.88, y: WORLD.h * 0.62 },
-        chicken: { x: WORLD.w * 0.12, y: WORLD.h * 0.8 }
-      };
+  // ---------------- AD ZONE (bottom-center) : 4 shops ----------------
+  mcd:     { x: ZONES.ads.x + ZONES.ads.w * 0.22, y: ZONES.ads.y + ZONES.ads.h * 0.48 },
+  bbq:     { x: ZONES.ads.x + ZONES.ads.w * 0.50, y: ZONES.ads.y + ZONES.ads.h * 0.48 },
+  baskin:  { x: ZONES.ads.x + ZONES.ads.w * 0.78, y: ZONES.ads.y + ZONES.ads.h * 0.48 },
+  paris:   { x: ZONES.ads.x + ZONES.ads.w * 0.50, y: ZONES.ads.y + ZONES.ads.h * 0.80 },
+};
 
       for (const p of portals) {
         const d = desired[p.key] || { x: WORLD.w * 0.5, y: WORLD.h * 0.5 };
@@ -1225,48 +1327,52 @@
     }
 
     /* ----------------------- Traffic lights ----------------------- */
-    function drawSignal(s, t) {
-      const phase = (t + s.phase) % 6;
-      const greenOn = phase < 2.4;
-      const yellowOn = phase >= 2.4 && phase < 3.2;
-      const redOn = phase >= 3.2;
+    function drawZonesWorld(t) {
+  function drawZone(z) {
+    if (!z.w) return;
 
-      ctx.save();
-      ctx.translate(s.x, s.y);
+    ctx.save();
 
-      groundAO(-10, 28, 20, 10, 0.1);
+    // asphalt base
+    ctx.fillStyle = asphaltPattern || "#2b303a";
+    ctx.globalAlpha = 0.95;
+    roundRect(z.x, z.y, z.w, z.h, 26);
+    ctx.fill();
 
-      ctx.fillStyle = "rgba(40,46,58,0.92)";
-      roundRect(-4, -16, 8, 48, 6);
-      ctx.fill();
+    // subtle edge highlight
+    ctx.globalAlpha = 0.08;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 4;
+    roundRect(z.x, z.y, z.w, z.h, 26);
+    ctx.stroke();
 
-      ctx.fillStyle = "rgba(10,14,24,0.92)";
-      roundRect(-14, -42, 28, 28, 10);
-      ctx.fill();
+    ctx.globalAlpha = 1;
 
-      const dot = (yy, on, col) => {
-        ctx.save();
-        ctx.globalAlpha = on ? 1 : 0.25;
-        ctx.fillStyle = col;
-        ctx.beginPath();
-        ctx.arc(0, yy, 4.6, 0, Math.PI * 2);
-        ctx.fill();
-        if (on) {
-          ctx.globalAlpha = 0.18;
-          ctx.fillStyle = col;
-          ctx.beginPath();
-          ctx.arc(0, yy, 10, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        ctx.restore();
-      };
+    // title plate
+    ctx.fillStyle = z.color;
+    roundRect(z.x + z.w / 2 - 120, z.y - 48, 240, 36, 14);
+    ctx.fill();
 
-      dot(-34, redOn, "#ff3b30");
-      dot(-28, yellowOn, "#ffcc00");
-      dot(-22, greenOn, "#34c759");
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "1200 16px system-ui";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(z.label, z.x + z.w / 2, z.y - 30);
 
-      ctx.restore();
-    }
+    // entrance strip
+    ctx.fillStyle = "#ffffff";
+    ctx.globalAlpha = 0.9;
+    roundRect(z.x + z.w / 2 - 60, z.y + z.h - 16, 120, 8, 4);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  drawZone(ZONES.game);
+  drawZone(ZONES.community);
+  drawZone(ZONES.ads);
+}
+    
 
     /* ----------------------- LEGO Building style (from your photo) ----------------------- */
     function legoStyleForType(type) {
@@ -1367,12 +1473,12 @@
       ctx.restore();
     }
 
-    function drawLegoSignPlaque(x, y, w, h, text, textSize) {
+    function drawLegoSignPlaque(x, y, w, h, text, textSize, signColor) {
       // red rounded plaque with white letters (like the photo)
       softShadow(x + 2, y + 4, w, h, 0.12);
 
       ctx.save();
-      ctx.fillStyle = "#e12a2a";
+      ctx.fillStyle = (typeof signColor === "string" && signColor) ? signColor : "#e12a2a";
       ctx.strokeStyle = "rgba(0,0,0,0.12)";
       ctx.lineWidth = 2;
       roundRect(x, y, w, h, 18);
@@ -1465,6 +1571,16 @@
     function drawPortalBuilding(p, t) {
       // LEGO facade style
       const S = legoStyleForType(p.type);
+      // key-based sign color override
+if (p.key === "twitter")  S.sign = "#1da1f2";
+if (p.key === "telegram") S.sign = "#229ED9";
+if (p.key === "wallet")   S.sign = "#34c759";
+if (p.key === "market")   S.sign = "#ffcc00";
+if (p.key === "support")  S.sign = "#8b5cf6";
+
+if (p.key === "bbq")      S.sign = "#ff2d55";
+if (p.key === "baskin")   S.sign = "#ff66cc";
+if (p.key === "paris")    S.sign = "#0a84ff";
       const isActive = activePortal === p;
       const pulse = 0.55 + 0.45 * Math.sin(t * 3.0 + hash01(p.key) * 6);
 
@@ -1538,7 +1654,7 @@
       const signX = bodyX + signPad;
       const signY = p.y + 10;
       const textSize = p.size === "L" ? 34 : p.size === "M" ? 30 : 28;
-      drawLegoSignPlaque(signX, signY, signW, signH, p.label, textSize);
+      drawLegoSignPlaque(signX, signY, signW, signH, p.label, textSize, S.sign);
 
       // door & window positions (like photo)
       const doorW = bodyW * 0.36;
@@ -2469,6 +2585,7 @@
       drawCloudsWorld();
       drawGroundWorld();
       drawRoadsAndSidewalks();
+      drawZonesWorld(t);
       drawFootprints();
 
       const items = [];
