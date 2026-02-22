@@ -286,6 +286,43 @@
     const VIEW = { zoom: 0.86, w: 0, h: 0 };
     const WORLD = { w: 3000, h: 2200, margin: 140 };
 
+    /* ----------------------- Zones ----------------------- */
+    const ZONES = {
+      game: { name: "게임존", color: "#ffcc00", x: 0, y: 0, w: 0, h: 0 },
+      community: { name: "커뮤니티존", color: "#7c6bff", x: 0, y: 0, w: 0, h: 0 },
+      ad: { name: "광고존", color: "#ff5a8a", x: 0, y: 0, w: 0, h: 0 }
+    };
+
+    function computeZones() {
+      // left / right / bottom-center layout
+      ZONES.game.x = WORLD.w * 0.08;
+      ZONES.game.y = WORLD.h * 0.20;
+      ZONES.game.w = WORLD.w * 0.38;
+      ZONES.game.h = WORLD.h * 0.36;
+
+      ZONES.community.x = WORLD.w * 0.54;
+      ZONES.community.y = WORLD.h * 0.20;
+      ZONES.community.w = WORLD.w * 0.38;
+      ZONES.community.h = WORLD.h * 0.36;
+
+      ZONES.ad.x = WORLD.w * 0.30;
+      ZONES.ad.y = WORLD.h * 0.70;
+      ZONES.ad.w = WORLD.w * 0.40;
+      ZONES.ad.h = WORLD.h * 0.24;
+    }
+
+    function pointInRect(x, y, r) {
+      return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+    }
+
+    function isInsideAnyZone(x, y, pad = 0) {
+      for (const z of Object.values(ZONES)) {
+        const rr = { x: z.x + pad, y: z.y + pad, w: z.w - pad * 2, h: z.h - pad * 2 };
+        if (pointInRect(x, y, rr)) return true;
+      }
+      return false;
+    }
+
     const cam = { x: 0, y: 0, targetX: 0, targetY: 0 };
     function screenToWorld(sx, sy) {
       return { x: sx + cam.x, y: sy + cam.y };
@@ -318,19 +355,44 @@
     /* ----------------------- Portals + Shops ----------------------- */
     // ✅ 간판 텍스트/이름은 여기서 바로 수정 가능
     const portals = [
-      { key: "avoid", label: "DODGE", status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "archery", label: "ARCHERY", status: "open", url: "https://ttjdwls777-eng.github.io/XGP-MINI-GAME2/", type: "tower", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "janggi", label: "JANGGI", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "jump", label: "JUMP", status: "soon", url: "", type: "gym", size: "S", x: 0, y: 0, w: 0, h: 0 },
-      { key: "snow", label: "SNOWBALL", status: "soon", url: "", type: "igloo", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "omok", label: "OMOK", status: "soon", url: "", type: "cafe", size: "M", x: 0, y: 0, w: 0, h: 0 },
+      // GAME ZONE (6 games)
+      { key: "archery",  label: "ARCHERY",  status: "open", url: "https://ttjdwls777-eng.github.io/XGP-MINI-GAME2/", type: "tower",  size: "M", x: 0, y: 0, w: 0, h: 0, zone: "game" },
+      { key: "omok",     label: "OMOK",     status: "soon", url: "", type: "cafe",   size: "M", x: 0, y: 0, w: 0, h: 0, zone: "game" },
+      { key: "janggi",   label: "JANGGI",   status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo", size: "L", x: 0, y: 0, w: 0, h: 0, zone: "game" },
+      { key: "snowroll", label: "SNOW ROLL", status: "soon", url: "", type: "igloo",  size: "M", x: 0, y: 0, w: 0, h: 0, zone: "game" },
+      { key: "avoid",    label: "DODGE",    status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", x: 0, y: 0, w: 0, h: 0, zone: "game" },
+      { key: "jump",     label: "JUMP",     status: "soon", url: "", type: "gym",    size: "S", x: 0, y: 0, w: 0, h: 0, zone: "game" },
 
-      { key: "mcd", label: "McDonald's", status: "soon", url: "", type: "mcd", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "hospital", label: "HOSPITAL", status: "soon", url: "", type: "hospital", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "pharmacy", label: "PHARMACY", status: "soon", url: "", type: "pharmacy", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "chicken", label: "CHICKEN", status: "soon", url: "", type: "chicken", size: "M", x: 0, y: 0, w: 0, h: 0 }
+      // COMMUNITY ZONE (5 shops)
+      { key: "twitter",  label: "TWITTER",   status: "open", url: "https://twitter.com", type: "shop", size: "M", x: 0, y: 0, w: 0, h: 0, zone: "community" },
+      { key: "telegram", label: "TELEGRAM",  status: "open", url: "https://t.me", type: "shop", size: "M", x: 0, y: 0, w: 0, h: 0, zone: "community" },
+      { key: "wallet",   label: "WALLET",    status: "soon", url: "", type: "shop", size: "M", x: 0, y: 0, w: 0, h: 0, zone: "community" },
+      { key: "market",   label: "MARKET",    status: "soon", url: "", type: "shop", size: "M", x: 0, y: 0, w: 0, h: 0, zone: "community" },
+      { key: "support",  label: "SUPPORT",   status: "soon", url: "", type: "shop", size: "M", x: 0, y: 0, w: 0, h: 0, zone: "community" },
+
+      // AD ZONE (4 shops)
+      { key: "mcd",      label: "McDonald's",        status: "soon", url: "", type: "ad", size: "M", x: 0, y: 0, w: 0, h: 0, zone: "ad" },
+      { key: "bbq",      label: "BBQ",              status: "soon", url: "", type: "ad", size: "M", x: 0, y: 0, w: 0, h: 0, zone: "ad" },
+      { key: "baskin",   label: "BASKIN ROBBINS",   status: "soon", url: "", type: "ad", size: "M", x: 0, y: 0, w: 0, h: 0, zone: "ad" },
+      { key: "paris",    label: "PARIS BAGUETTE",   status: "soon", url: "", type: "ad", size: "M", x: 0, y: 0, w: 0, h: 0, zone: "ad" }
     ];
     const portalsByKey = (k) => portals.find((p) => p.key === k);
+
+    function getPortalSignColor(p) {
+      // 커뮤니티존: 건물마다 간판 색 다르게
+      const map = {
+        twitter: "#1d9bf0",
+        telegram: "#2aabee",
+        wallet: "#34c759",
+        market: "#ff9f0a",
+        support: "#ff375f"
+      };
+      if (map[p.key]) return map[p.key];
+      if (p.zone === "ad") return "#ffcc00";
+      if (p.zone === "game") return "#7cdbff";
+      return "#8f98a9";
+    }
+
 
     /* ----------------------- Player ----------------------- */
     const player = {
@@ -484,6 +546,23 @@
     }
 
     function isInsideBuildingBuffer(x, y) {
+
+      // --- Zone decorations (inside zones: lamps + flowers only) ---
+      const zDecor = [
+        { z: ZONES.game, lamps: 3, flowers: 6 },
+        { z: ZONES.community, lamps: 3, flowers: 6 },
+        { z: ZONES.ad, lamps: 2, flowers: 4 }
+      ];
+      for (const it of zDecor) {
+        const z = it.z;
+        for (let i = 0; i < it.lamps; i++) {
+          props.push({ kind: "lamp", x: z.x + 60 + Math.random() * (z.w - 120), y: z.y + 70 + Math.random() * (z.h - 140), s: 1.0 });
+        }
+        for (let i = 0; i < it.flowers; i++) {
+          props.push({ kind: "flower", x: z.x + 50 + Math.random() * (z.w - 100), y: z.y + 60 + Math.random() * (z.h - 120), s: 1.0 });
+        }
+      }
+
       for (const p of portals) {
         const pad = 120;
         if (x >= p.x - pad && x <= p.x + p.w + pad && y >= p.y - pad && y <= p.y + p.h + pad) return true;
@@ -504,6 +583,8 @@
         const y = WORLD.margin + Math.random() * (WORLD.h - WORLD.margin * 2);
         if (isOnRoadLike(x, y)) continue;
         if (isInsideBuildingBuffer(x, y)) continue;
+        // 존 내부는 랜덤 나무/벤치 배치 금지(겹침 방지)
+        if (isInsideAnyZone(x, y, 10)) continue;
 
         const r = Math.random();
         if (r < 0.26) props.push({ kind: "tree", x, y, s: 0.9 + Math.random() * 1.05 });
@@ -742,6 +823,37 @@
         g.globalAlpha = 1;
       });
 
+      zoneAsphaltPattern = makePattern(320, 320, (g, w, h) => {
+        // 세련된 아스팔트 느낌 (미세 노이즈 + 은은한 타일)
+        g.fillStyle = "#1f2430";
+        g.fillRect(0, 0, w, h);
+
+        g.globalAlpha = 0.10;
+        g.strokeStyle = "rgba(255,255,255,0.10)";
+        g.lineWidth = 2;
+        for (let x = 0; x <= w; x += 64) {
+          g.beginPath();
+          g.moveTo(x, 0);
+          g.lineTo(x, h);
+          g.stroke();
+        }
+        for (let y = 0; y <= h; y += 64) {
+          g.beginPath();
+          g.moveTo(0, y);
+          g.lineTo(w, y);
+          g.stroke();
+        }
+
+        g.globalAlpha = 0.20;
+        for (let i = 0; i < 420; i++) {
+          g.fillStyle = i % 2 ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.16)";
+          g.beginPath();
+          g.arc(Math.random() * w, Math.random() * h, 0.7 + Math.random() * 2.0, 0, Math.PI * 2);
+          g.fill();
+        }
+        g.globalAlpha = 1;
+      });
+
       sidewalkPattern = makePattern(240, 240, (g, w, h) => {
         g.fillStyle = "#f5efe7";
         g.fillRect(0, 0, w, h);
@@ -858,7 +970,7 @@
       }
     }
 
-    function placePortalAvoidRoad(p, cx, cy) {
+    function placePortalAvoidRoad(p, cx, cy, placed = [], zoneName = "") {
       const maxTry = 80;
       const step = 22;
 
@@ -868,6 +980,13 @@
         const rect = { x, y, w: p.w, h: p.h };
         for (const r of roads) if (rectsOverlap(rect, r, 8)) return null;
         for (const s of sidewalks) if (rectsOverlap(rect, s, 4)) return null;
+        for (const b of placed) if (rectsOverlap(rect, b, 26)) return null;
+
+        if (zoneName && ZONES[zoneName]) {
+          const z = ZONES[zoneName];
+          const pad = 34;
+          if (rect.x < z.x + pad || rect.y < z.y + pad || rect.x + rect.w > z.x + z.w - pad || rect.y + rect.h > z.y + z.h - pad) return null;
+        }
         return rect;
       };
 
@@ -903,27 +1022,39 @@
 
       buildPatterns();
       layoutRoadNetwork();
+      computeZones();
 
       const desired = {
-        jump: { x: WORLD.w * 0.18, y: WORLD.h * 0.18 },
-        archery: { x: WORLD.w * 0.66, y: WORLD.h * 0.18 },
-        omok: { x: WORLD.w * 0.82, y: WORLD.h * 0.3 },
+        // GAME ZONE (left)
+        archery:  { x: WORLD.w * 0.20, y: WORLD.h * 0.26 },
+        omok:     { x: WORLD.w * 0.32, y: WORLD.h * 0.26 },
+        janggi:   { x: WORLD.w * 0.20, y: WORLD.h * 0.34 },
+        snowroll: { x: WORLD.w * 0.32, y: WORLD.h * 0.34 },
+        avoid:    { x: WORLD.w * 0.20, y: WORLD.h * 0.42 },
+        jump:     { x: WORLD.w * 0.32, y: WORLD.h * 0.42 },
 
-        avoid: { x: WORLD.w * 0.18, y: WORLD.h * 0.6 },
-        janggi: { x: WORLD.w * 0.82, y: WORLD.h * 0.6 },
-        snow: { x: WORLD.w * 0.34, y: WORLD.h * 0.84 },
+        // COMMUNITY ZONE (right)
+        twitter:  { x: WORLD.w * 0.66, y: WORLD.h * 0.26 },
+        telegram: { x: WORLD.w * 0.78, y: WORLD.h * 0.26 },
+        wallet:   { x: WORLD.w * 0.66, y: WORLD.h * 0.34 },
+        market:   { x: WORLD.w * 0.78, y: WORLD.h * 0.34 },
+        support:  { x: WORLD.w * 0.72, y: WORLD.h * 0.42 },
 
-        mcd: { x: WORLD.w * 0.12, y: WORLD.h * 0.36 },
-        hospital: { x: WORLD.w * 0.88, y: WORLD.h * 0.4 },
-        pharmacy: { x: WORLD.w * 0.88, y: WORLD.h * 0.62 },
-        chicken: { x: WORLD.w * 0.12, y: WORLD.h * 0.8 }
+        // AD ZONE (bottom center)
+        mcd:      { x: WORLD.w * 0.44, y: WORLD.h * 0.76 },
+        bbq:      { x: WORLD.w * 0.56, y: WORLD.h * 0.76 },
+        baskin:   { x: WORLD.w * 0.44, y: WORLD.h * 0.86 },
+        paris:    { x: WORLD.w * 0.56, y: WORLD.h * 0.86 }
       };
 
+      const placed = [];
       for (const p of portals) {
         const d = desired[p.key] || { x: WORLD.w * 0.5, y: WORLD.h * 0.5 };
-        const rect = placePortalAvoidRoad(p, d.x, d.y);
+        const zoneName = p.zone || "";
+        const rect = placePortalAvoidRoad(p, d.x, d.y, placed, zoneName);
         p.x = clamp(rect.x, WORLD.margin, WORLD.w - WORLD.margin - p.w);
         p.y = clamp(rect.y, WORLD.margin, WORLD.h - WORLD.margin - p.h);
+        placed.push({ x: p.x, y: p.y, w: p.w, h: p.h });
       }
 
       buildGroundPatches();
@@ -1134,6 +1265,23 @@
       sh.addColorStop(1, "rgba(10,14,24,0.08)");
       ctx.fillStyle = sh;
       ctx.fillRect(0, WORLD.h * 0.3, WORLD.w, WORLD.h * 0.7);
+      // --- Zones ground (asphalt) ---
+      ctx.save();
+      for (const z of Object.values(ZONES)) {
+        groundAO(z.x, z.y + z.h - 22, z.w, 32, 0.18);
+        ctx.fillStyle = zoneAsphaltPattern || roadPattern || "#262c37";
+        roundRect(z.x, z.y, z.w, z.h, 44);
+        ctx.fill();
+
+        ctx.globalAlpha = 0.16;
+        ctx.strokeStyle = "rgba(255,255,255,0.55)";
+        ctx.lineWidth = 6;
+        roundRect(z.x + 10, z.y + 10, z.w - 20, z.h - 20, 38);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+      ctx.restore();
+
       ctx.restore();
 
       ctx.save();
@@ -1155,6 +1303,44 @@
       }
       ctx.restore();
     }
+
+    function drawZoneEntrancesAndSigns() {
+      const drawGate = (z) => {
+        const gx = z.x + z.w * 0.5;
+        const gy = z.y + z.h + 14;
+        ctx.save();
+        // gate base
+        ctx.globalAlpha = 0.95;
+        ctx.fillStyle = "rgba(245,239,231,0.95)";
+        roundRect(gx - 120, gy - 44, 240, 78, 26);
+        ctx.fill();
+
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = "rgba(38,44,55,0.92)";
+        roundRect(gx - 104, gy - 30, 208, 52, 18);
+        ctx.fill();
+
+        // sign panel
+        ctx.fillStyle = z.color;
+        roundRect(gx - 168, gy - 104, 336, 54, 18);
+        ctx.fill();
+        ctx.fillStyle = "rgba(0,0,0,0.25)";
+        roundRect(gx - 168, gy - 104, 336, 54, 18);
+        ctx.fill();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "900 28px system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(z.name, gx, gy - 77);
+        ctx.restore();
+      };
+
+      drawGate(ZONES.game);
+      drawGate(ZONES.community);
+      drawGate(ZONES.ad);
+    }
+
 
     function drawRoadsAndSidewalks() {
       for (const r of roads) {
@@ -1294,6 +1480,8 @@
         hospital: "#0a84ff",
         pharmacy: "#34c759",
         chicken: "#ff2d55"
+        shop: "#7c6bff",
+        ad: "#ffcc00",
       };
 
       return {
@@ -1955,90 +2143,6 @@
       ctx.restore();
       return true;
     }
-    /* ----------------------- FLAT ROUND CHARACTER (like sample) ----------------------- */
-function drawFlatPerson(x, y, opts = {}) {
-  const moving = !!opts.moving;
-  const dir = opts.dir || "down";
-  const animT = opts.animT ?? 0;
-  const bobT = opts.bobT ?? 0;
-
-  const skin = opts.skin || "#9ad8ff";
-  const hair = opts.hair || "#ffd100";
-  const shirt = opts.shirt || "#0a84ff";
-  const pants = opts.pants || "#2f343c";
-  const accent = opts.accent || "#ffcc00";
-
-  const side = dir === "left" || dir === "right";
-  const swing = moving ? Math.sin(animT * 10) : 0;
-  const bob = moving ? Math.sin(bobT) * 0.9 : 0;
-
-  // shadow
-  ctx.save();
-  ctx.globalAlpha = 0.22;
-  ctx.fillStyle = "rgba(10,14,24,0.45)";
-  ctx.beginPath();
-  ctx.ellipse(x, y + 28, 18, 6.8, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  ctx.save();
-  ctx.translate(x, y + bob);
-
-  // mirror for left
-  if (dir === "left") ctx.scale(-1, 1);
-
-  // head
-  ctx.fillStyle = skin;
-  ctx.beginPath();
-  ctx.arc(0, -18, 14, 0, Math.PI * 2);
-  ctx.fill();
-
-  // hair/hat bar
-  ctx.fillStyle = hair;
-  roundRect(-12, -34, 24, 7, 4);
-  ctx.fill();
-
-  // face by dir
-  if (dir === "down") {
-    ctx.fillStyle = "rgba(10,14,24,0.55)";
-    ctx.beginPath();
-    ctx.arc(-4.2, -20, 1.6, 0, Math.PI * 2);
-    ctx.arc(4.2, -20, 1.6, 0, Math.PI * 2);
-    ctx.fill();
-  } else if (side) {
-    ctx.fillStyle = "rgba(10,14,24,0.55)";
-    ctx.beginPath();
-    ctx.arc(5.2, -20, 1.6, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // body
-  ctx.fillStyle = shirt;
-  ctx.beginPath();
-  ctx.arc(0, 2, 11.5, 0, Math.PI * 2);
-  ctx.fill();
-
-  // hand dot (accent)
-  ctx.fillStyle = accent;
-  const handOff = 2.2 * swing;
-  ctx.beginPath();
-  ctx.arc(12, 4 + handOff, 3.2, 0, Math.PI * 2);
-  ctx.fill();
-
-  // legs
-  ctx.fillStyle = pants;
-  if (!side) {
-    roundRect(-8, 14 + 2.6 * swing, 6, 12, 3);
-    ctx.fill();
-    roundRect(2, 14 - 2.6 * swing, 6, 12, 3);
-    ctx.fill();
-  } else {
-    roundRect(0, 14 + 2.6 * swing, 6, 12, 3);
-    ctx.fill();
-  }
-
-  ctx.restore();
-}
 
     // 옆모습: 몸통/다리 1개만 보이도록 + 걷는 모션
     function drawMinifig(x, y, opts = null) {
@@ -2209,15 +2313,7 @@ function drawFlatPerson(x, y, opts = {}) {
           omok: { torso: "#ffffff", pants: "#3b4251", hat: "#0a84ff", acc: "stone2" }
         }[key] || { torso: "#ffffff", pants: "#3b4251", hat: "#ff3b30", acc: "none" };
 
-      drawFlatPerson(x, y, {
-  moving: false,
-  dir: "right",
-  skin: "#9ad8ff",
-  hair: theme.hat,     // 기존 hat색을 머리색으로 사용
-  shirt: theme.torso,  // 기존 torso색을 상의색으로 사용
-  pants: theme.pants,
-  accent: "#ffcc00"
-});
+      drawMinifig(x, y, { moving: false, dir: "right", torso: theme.torso, pants: theme.pants, hat: theme.hat });
 
       ctx.save();
       ctx.translate(x, y);
@@ -2254,17 +2350,16 @@ function drawFlatPerson(x, y, opts = {}) {
 
     function drawRoamer(n, palette) {
       const c = palette[n.colorIdx % palette.length];
-      drawFlatPerson(n.x, n.y, {
-  moving: true,
-  dir: n.dir,
-  animT: n.t,
-  bobT: n.t * 0.9,
-  skin: "#9ad8ff",
-  hair: c.hat,
-  shirt: c.torso,
-  pants: c.pants,
-  accent: "#ffcc00"
-});
+      drawMinifig(n.x, n.y, {
+        moving: true,
+        dir: n.dir,
+        animT: n.t,
+        bobT: n.t * 0.9,
+        torso: c.torso,
+        pants: c.pants,
+        hat: c.hat
+      });
+    }
 
     /* ----------------------- Title ----------------------- */
     function drawWorldTitle() {
@@ -2373,17 +2468,27 @@ function drawFlatPerson(x, y, opts = {}) {
                   ? "오"
                   : p.key === "jump"
                     ? "점"
-                    : p.key === "snow"
+                    : p.key === "snowroll"
                       ? "눈"
-                      : p.key === "mcd"
-                        ? "맥"
-                        : p.key === "hospital"
-                          ? "병"
-                          : p.key === "pharmacy"
-                            ? "약"
-                            : p.key === "chicken"
-                              ? "치"
-                              : "•";
+                      : p.key === "twitter"
+                        ? "트"
+                        : p.key === "telegram"
+                          ? "텔"
+                          : p.key === "wallet"
+                            ? "월"
+                            : p.key === "market"
+                              ? "마"
+                              : p.key === "support"
+                                ? "센"
+                                : p.key === "mcd"
+                                  ? "맥"
+                                  : p.key === "bbq"
+                                    ? "비"
+                                    : p.key === "baskin"
+                                      ? "베"
+                                      : p.key === "paris"
+                                        ? "파"
+                                        : "•";
         ctx.fillText(short, cx + 6, cy);
         ctx.restore();
       }
@@ -2561,6 +2666,7 @@ function drawFlatPerson(x, y, opts = {}) {
       drawSkyWorld(t);
       drawCloudsWorld();
       drawGroundWorld();
+      drawZoneEntrancesAndSigns();
       drawRoadsAndSidewalks();
       drawFootprints();
 
@@ -2591,17 +2697,10 @@ function drawFlatPerson(x, y, opts = {}) {
         else if (it.kind === "roamer") drawRoamer(it.ref, roamerPalette);
         else if (it.kind === "player") {
           if (!(SPRITE_SRC && USE_SPRITE_IF_LOADED && drawSpriteCharacter(player.x, player.y))) {
-            drawFlatPerson(player.x, player.y, {
-  moving: player.moving,
-  dir: player.dir,
-  animT: player.animT,
-  bobT: player.bobT,
-  skin: "#9ad8ff",
-  hair: "#ffd100",
-  shirt: "#0a84ff",
-  pants: "#2f343c",
-  accent: "#ffcc00"
-});
+            drawMinifig(player.x, player.y);
+          }
+        }
+      }
 
       ctx.restore();
 
