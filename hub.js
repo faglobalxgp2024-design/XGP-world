@@ -794,6 +794,38 @@ function inZoneName(x, y) {
         }
         g.globalAlpha = 1;
       });
+      // brick/tile ground for ZONES (neighborhood floor)
+brickPattern = makePattern(360, 360, (g, w, h) => {
+  // base
+  g.fillStyle = "#d9c6a3";       // warm block base
+  g.fillRect(0, 0, w, h);
+
+  // tile grid (blocks)
+  g.globalAlpha = 0.35;
+  g.strokeStyle = "rgba(60,45,30,0.35)";
+  g.lineWidth = 2;
+
+  const tileW = 60;
+  const tileH = 40;
+
+  for (let y = 0; y <= h; y += tileH) {
+    // stagger every other row
+    const off = (Math.floor(y / tileH) % 2) ? tileW / 2 : 0;
+    for (let x = -tileW; x <= w + tileW; x += tileW) {
+      g.strokeRect(x + off, y, tileW, tileH);
+    }
+  }
+
+  // subtle grain
+  g.globalAlpha = 0.10;
+  for (let i = 0; i < 1600; i++) {
+    const v = (Math.random() * 40) | 0;
+    g.fillStyle = `rgb(${210 + v},${190 + v},${155 + v})`;
+    g.fillRect(Math.random() * w, Math.random() * h, 1, 1);
+  }
+
+  g.globalAlpha = 1;
+});
           // asphalt for zones (realistic)
     asphaltPattern = makePattern(360, 360, (g, w, h) => {
 
@@ -1344,8 +1376,8 @@ function inZoneName(x, y) {
     ctx.save();
 
     // asphalt base
-    ctx.fillStyle = asphaltPattern || "#2b303a";
-    ctx.globalAlpha = 0.95;
+    ctx.fillStyle = brickPattern || "#d9c6a3";
+    ctx.globalAlpha = 1;
     roundRect(z.x, z.y, z.w, z.h, 26);
     ctx.fill();
 
