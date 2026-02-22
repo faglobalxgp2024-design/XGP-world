@@ -1031,26 +1031,29 @@ brickPattern = makePattern(360, 360, (g, w, h) => {
       layoutRoadNetwork();
 
       const desired = {
-  // ---------------- GAME ZONE (left) : 6 games ----------------
-  jump:    { x: ZONES.game.x + ZONES.game.w * 0.28, y: ZONES.game.y + ZONES.game.h * 0.28 },
-  archery: { x: ZONES.game.x + ZONES.game.w * 0.62, y: ZONES.game.y + ZONES.game.h * 0.26 },
-  omok:    { x: ZONES.game.x + ZONES.game.w * 0.62, y: ZONES.game.y + ZONES.game.h * 0.56 },
-  avoid:   { x: ZONES.game.x + ZONES.game.w * 0.28, y: ZONES.game.y + ZONES.game.h * 0.58 },
-  janggi:  { x: ZONES.game.x + ZONES.game.w * 0.28, y: ZONES.game.y + ZONES.game.h * 0.80 },
-  snow:    { x: ZONES.game.x + ZONES.game.w * 0.62, y: ZONES.game.y + ZONES.game.h * 0.80 },
+// ---------------- GAME ZONE (left) : 6 games ----------------
+jump:    { x: ZONES.game.x + ZONES.game.w * 0.22, y: ZONES.game.y + ZONES.game.h * 0.26 },
+archery: { x: ZONES.game.x + ZONES.game.w * 0.52, y: ZONES.game.y + ZONES.game.h * 0.26 },
+omok:    { x: ZONES.game.x + ZONES.game.w * 0.82, y: ZONES.game.y + ZONES.game.h * 0.26 },
 
-  // ---------------- COMMUNITY ZONE (right) : 5 shops ----------------
-  twitter:   { x: ZONES.community.x + ZONES.community.w * 0.28, y: ZONES.community.y + ZONES.community.h * 0.26 },
-  telegram:  { x: ZONES.community.x + ZONES.community.w * 0.68, y: ZONES.community.y + ZONES.community.h * 0.26 },
-  wallet:    { x: ZONES.community.x + ZONES.community.w * 0.28, y: ZONES.community.y + ZONES.community.h * 0.54 },
-  market:    { x: ZONES.community.x + ZONES.community.w * 0.68, y: ZONES.community.y + ZONES.community.h * 0.54 },
-  support:   { x: ZONES.community.x + ZONES.community.w * 0.48, y: ZONES.community.y + ZONES.community.h * 0.80 },
+avoid:   { x: ZONES.game.x + ZONES.game.w * 0.22, y: ZONES.game.y + ZONES.game.h * 0.70 },
+janggi:  { x: ZONES.game.x + ZONES.game.w * 0.52, y: ZONES.game.y + ZONES.game.h * 0.70 },
+snow:    { x: ZONES.game.x + ZONES.game.w * 0.82, y: ZONES.game.y + ZONES.game.h * 0.70 },
 
-  // ---------------- AD ZONE (bottom-center) : 4 shops ----------------
-  mcd:     { x: ZONES.ads.x + ZONES.ads.w * 0.22, y: ZONES.ads.y + ZONES.ads.h * 0.48 },
-  bbq:     { x: ZONES.ads.x + ZONES.ads.w * 0.50, y: ZONES.ads.y + ZONES.ads.h * 0.48 },
-  baskin:  { x: ZONES.ads.x + ZONES.ads.w * 0.78, y: ZONES.ads.y + ZONES.ads.h * 0.48 },
-  paris:   { x: ZONES.ads.x + ZONES.ads.w * 0.50, y: ZONES.ads.y + ZONES.ads.h * 0.80 },
+// ---------------- COMMUNITY ZONE (right) : 5 shops ----------------
+twitter:  { x: ZONES.community.x + ZONES.community.w * 0.22, y: ZONES.community.y + ZONES.community.h * 0.26 },
+telegram: { x: ZONES.community.x + ZONES.community.w * 0.62, y: ZONES.community.y + ZONES.community.h * 0.26 },
+
+wallet:   { x: ZONES.community.x + ZONES.community.w * 0.22, y: ZONES.community.y + ZONES.community.h * 0.62 },
+market:   { x: ZONES.community.x + ZONES.community.w * 0.62, y: ZONES.community.y + ZONES.community.h * 0.62 },
+
+support:  { x: ZONES.community.x + ZONES.community.w * 0.42, y: ZONES.community.y + ZONES.community.h * 0.84 },
+
+// ---------------- AD ZONE (bottom-center) : 4 shops ----------------
+mcd:    { x: ZONES.ads.x + ZONES.ads.w * 0.26, y: ZONES.ads.y + ZONES.ads.h * 0.40 },
+bbq:    { x: ZONES.ads.x + ZONES.ads.w * 0.74, y: ZONES.ads.y + ZONES.ads.h * 0.40 },
+baskin: { x: ZONES.ads.x + ZONES.ads.w * 0.26, y: ZONES.ads.y + ZONES.ads.h * 0.78 },
+paris:  { x: ZONES.ads.x + ZONES.ads.w * 0.74, y: ZONES.ads.y + ZONES.ads.h * 0.78 },
 };
 
       for (const p of portals) {
