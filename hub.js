@@ -317,20 +317,24 @@
 
     /* ----------------------- Portals + Shops ----------------------- */
     // ✅ 간판 텍스트/이름은 여기서 바로 수정 가능
-    const portals = [
-      { key: "avoid", label: "DODGE", status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "archery", label: "ARCHERY", status: "open", url: "https://ttjdwls777-eng.github.io/XGP-MINI-GAME2/", type: "tower", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "janggi", label: "JANGGI", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "jump", label: "JUMP", status: "soon", url: "", type: "gym", size: "S", x: 0, y: 0, w: 0, h: 0 },
-      { key: "snow", label: "SNOWBALL", status: "soon", url: "", type: "igloo", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "omok", label: "OMOK", status: "soon", url: "", type: "cafe", size: "M", x: 0, y: 0, w: 0, h: 0 },
+    // ✅ 포탈(게임 6 + 커뮤니티 5) : 요청 반영
+const portals = [
+  // --- GAME ZONE (6) ---
+  { key: "archery", label: "ARCHERY", status: "open", url: "https://ttjdwls777-eng.github.io/XGP-MINI-GAME2/", type: "tower", size: "M", group: "game", logo: "" , x:0,y:0,w:0,h:0},
+  { key: "omok",    label: "OMOK",    status: "soon", url: "", type: "cafe",  size: "M", group: "game", logo: "" , x:0,y:0,w:0,h:0},
+  { key: "janggi",  label: "JANGGI",  status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo",  size: "M", group: "game", logo: "" , x:0,y:0,w:0,h:0},
+  { key: "snow",    label: "SNOWBALL",status: "soon", url: "", type: "igloo", size: "M", group: "game", logo: "" , x:0,y:0,w:0,h:0},
+  { key: "avoid",   label: "DODGE",   status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "M", group: "game", logo: "" , x:0,y:0,w:0,h:0},
+  { key: "jump",    label: "JUMP",    status: "soon", url: "", type: "gym",   size: "M", group: "game", logo: "" , x:0,y:0,w:0,h:0},
 
-      { key: "mcd", label: "McDonald's", status: "soon", url: "", type: "mcd", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "hospital", label: "HOSPITAL", status: "soon", url: "", type: "hospital", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "pharmacy", label: "PHARMACY", status: "soon", url: "", type: "pharmacy", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "chicken", label: "CHICKEN", status: "soon", url: "", type: "chicken", size: "M", x: 0, y: 0, w: 0, h: 0 }
-    ];
-    const portalsByKey = (k) => portals.find((p) => p.key === k);
+  // --- COMMUNITY ZONE (5) ---
+  { key: "twitter",  label: "TWITTER",  status: "soon", url: "", type: "shop", size: "M", group: "community", logo: "twitter", x:0,y:0,w:0,h:0},
+  { key: "telegram", label: "TELEGRAM", status: "soon", url: "", type: "shop", size: "M", group: "community", logo: "telegram", x:0,y:0,w:0,h:0},
+  { key: "wallet",   label: "WALLET",   status: "soon", url: "", type: "shop", size: "M", group: "community", logo: "wallet", x:0,y:0,w:0,h:0},
+  { key: "market",   label: "MARKET",   status: "soon", url: "", type: "shop", size: "M", group: "community", logo: "market", x:0,y:0,w:0,h:0},
+  { key: "support",  label: "고객센터", status: "soon", url: "", type: "shop", size: "M", group: "community", logo: "support", x:0,y:0,w:0,h:0},
+];
+const portalsByKey = (k) => portals.find((p) => p.key === k);
 
     /* ----------------------- Player ----------------------- */
     const player = {
@@ -1308,9 +1312,28 @@
         glassB,
         knob,
         accent: accentBy[type] || "#0a84ff"
+        
       };
     }
+// ✅ building sign colors (per-portal key)
+const SIGN_COLORS = [
+  "#e12a2a", // red
+  "#0a84ff", // blue
+  "#34c759", // green
+  "#ffcc00", // yellow
+  "#b889ff", // purple
+  "#ff2d55", // pink/red
+  "#ff7a00", // orange
+  "#00c7be", // teal
+  "#5e5ce6", // indigo
+  "#ff5aa5", // hot pink
+  "#2ad49a"  // mint
+];
 
+function signColorForKey(key) {
+  const idx = Math.floor(hash01(key) * SIGN_COLORS.length) % SIGN_COLORS.length;
+  return SIGN_COLORS[idx];
+}
     function drawLegoStudRow(x, y, w, count, color) {
       ctx.save();
       ctx.fillStyle = color;
@@ -1367,12 +1390,12 @@
       ctx.restore();
     }
 
-    function drawLegoSignPlaque(x, y, w, h, text, textSize) {
+    function drawLegoSignPlaque(x, y, w, h, text, textSize, signColor) {
       // red rounded plaque with white letters (like the photo)
       softShadow(x + 2, y + 4, w, h, 0.12);
 
       ctx.save();
-      ctx.fillStyle = "#e12a2a";
+      ctx.fillStyle = signColor || "#e12a2a";
       ctx.strokeStyle = "rgba(0,0,0,0.12)";
       ctx.lineWidth = 2;
       roundRect(x, y, w, h, 18);
@@ -1538,7 +1561,7 @@
       const signX = bodyX + signPad;
       const signY = p.y + 10;
       const textSize = p.size === "L" ? 34 : p.size === "M" ? 30 : 28;
-      drawLegoSignPlaque(signX, signY, signW, signH, p.label, textSize);
+      drawLegoSignPlaque(signX, signY, signW, signH, p.label, textSize, signColorForKey(p.key));
 
       // door & window positions (like photo)
       const doorW = bodyW * 0.36;
