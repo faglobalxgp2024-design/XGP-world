@@ -1,30 +1,30 @@
-/* HUB.JS - MINI WORLD (single-file) v3.0
-   ✅ 요청 반영:
-   1) 게임 6개(양궁/오목/장기/눈굴리기/피하기/점프하기) 한 장소(게임존)에 모아 배치
-      - 입구 표지판: "게임존"
-      - 게임존 내부: 나무/벤치 등 걸리적거리는 오브젝트 금지
-      - 바닥: 고퀄리티 아스팔트 느낌(패턴)
-      - 꽃 + 가로등만 일부 배치
-      - 건물 간판 색상: 건물마다 다르게
-   2) 커뮤니티존 생성(사진 느낌: 3개 위, 2개 아래)
-      - 입구 표지판: "커뮤니티존"
-      - 상점 5개: 트위터/텔레그램/월렛/마켓/고객센터
-      - 건물에 로고(아이콘) 같이 표시(캔버스 벡터 아이콘)
-   3) URL 없는 상점은 "오픈 준비중" 표시 유지
-   4) 기존: 미니맵 / 포탈 모달 / 모바일 D-PAD / bfcache(뒤로가기) 패치 유지
-   ---------------------------------------------------
-   사용법: 이 파일 전체를 hub.js에 그대로 붙여넣기
-*/
+/* HUN.JS - LEGO PREMIUM (single-file) v2.4 (LEGO SHOP FACADES)
+ * 변경사항(요청 반영):
+ * - 제공 이미지(LEGO 건물 느낌) 기반으로 상점 외관을 “레고 브릭” 스타일로 재구성
+ *   (베이지 브릭 벽체 + 라운드 간판 플레이트 + 큰 흰 글씨 + 심플 창/문)
+ * - 간판 텍스트를 상점/미니게임 이름에 맞게 정리(필요시 여기서 수정 가능)
+ * - 기존 미니맵/포탈 UI/옆모습 캐릭터/모바일 복귀(bfcache) 패치 유지
+ *
+ * 사용법: 이 파일 전체를 hub.js에 그대로 붙여넣기
+ */
+
 (() => {
   "use strict";
 
   /* ----------------------- CONFIG ----------------------- */
-  const SPRITE_SRC = ""; // 선택: "https://...png" 또는 data:image/png;base64,...
+  const SPRITE_SRC = ""; // "https://example.com/character.png" or data:image/png;base64,...
   const USE_SPRITE_IF_LOADED = true;
 
   /* ----------------------- Utilities ----------------------- */
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const lerp = (a, b, t) => a + (b - a) * t;
+
+  function shade(hex, amt) {
+    const h = hex.replace("#", "");
+    const r = clamp(parseInt(h.slice(0, 2), 16) + amt, 0, 255);
+    const g = clamp(parseInt(h.slice(2, 4), 16) + amt, 0, 255);
+    const b = clamp(parseInt(h.slice(4, 6), 16) + amt, 0, 255);
+    return `rgb(${r},${g},${b})`;
+  }
 
   function hash01(s) {
     let h = 2166136261;
@@ -48,8 +48,11 @@
       return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
     };
   }
+  function seedFromWorld(w, h) {
+    return ((w * 73856093) ^ (h * 19349663)) >>> 0;
+  }
 
-  /* ----------------------- Safe DOM ----------------------- */
+  /* ----------------------- Safe DOM (no HTML edits) ----------------------- */
   function ensureEl(id, tag, parent = document.body) {
     let el = document.getElementById(id);
     if (!el) {
@@ -72,7 +75,7 @@
     canvas.style.webkitUserSelect = "none";
     canvas.style.imageRendering = "auto";
 
-    // Toast
+    // Portal 안내(토스트): 중앙쪽(상단-중앙) / 블러/백드롭 제거 / 가독성 크게
     const toast = ensureEl("toast", "div");
     toast.style.position = "fixed";
     toast.style.left = "50%";
@@ -129,7 +132,7 @@
     fade.style.transition = "opacity 240ms ease";
     fade.style.background = "#ffffff";
 
-    // modal overlay
+    // modal overlay (center text only)
     const modal = ensureEl("lego_modal", "div");
     modal.style.position = "fixed";
     modal.style.inset = "0";
@@ -233,6 +236,7 @@
     bRight.style.gridRow = "2";
     bDown.style.gridColumn = "2";
     bDown.style.gridRow = "3";
+
     bMid.style.opacity = "0.55";
     bMid.style.fontSize = "16px";
 
@@ -243,13 +247,17 @@
         e.preventDefault();
         e.stopPropagation();
         vkeys[key] = true;
-        try { btn.setPointerCapture(e.pointerId); } catch {}
+        try {
+          btn.setPointerCapture(e.pointerId);
+        } catch {}
       };
       const off = (e) => {
         e.preventDefault();
         e.stopPropagation();
         vkeys[key] = false;
-        try { btn.releasePointerCapture(e.pointerId); } catch {}
+        try {
+          btn.releasePointerCapture(e.pointerId);
+        } catch {}
       };
       btn.addEventListener("pointerdown", on, { passive: false });
       btn.addEventListener("pointerup", off, { passive: false });
@@ -257,7 +265,6 @@
       btn.addEventListener("pointerleave", off, { passive: false });
       btn.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });
     }
-
     bindHold(bUp, "up");
     bindHold(bDown, "down");
     bindHold(bLeft, "left");
@@ -266,53 +273,76 @@
     return { canvas, toast, coord, fps, fade, modal, modalTitle, modalBody, modalHint, vkeys };
   }
 
-  /* ----------------------- Main ----------------------- */
+  /* ----------------------- Start ----------------------- */
   window.addEventListener("DOMContentLoaded", () => {
     const UI = ensureUI();
     const canvas = UI.canvas;
     const ctx = canvas.getContext("2d", { alpha: true });
 
-    let W = 0, H = 0, DPR = 1;
+    let W = 0,
+      H = 0,
+      DPR = 1;
+
     const VIEW = { zoom: 0.86, w: 0, h: 0 };
-    const WORLD = { w: 3000, h: 2200, margin: 160 };
+    const WORLD = { w: 3000, h: 2200, margin: 140 };
 
     const cam = { x: 0, y: 0, targetX: 0, targetY: 0 };
-    function screenToWorld(sx, sy) { return { x: sx + cam.x, y: sy + cam.y }; }
+    function screenToWorld(sx, sy) {
+      return { x: sx + cam.x, y: sy + cam.y };
+    }
 
     /* ----------------------- Optional character sprite ----------------------- */
-    const sprite = { img: null, loaded: false };
+    const sprite = { img: null, loaded: false, w: 1, h: 1 };
     if (SPRITE_SRC && USE_SPRITE_IF_LOADED) {
       const im = new Image();
       im.crossOrigin = "anonymous";
-      im.onload = () => { sprite.img = im; sprite.loaded = true; };
-      im.onerror = () => { sprite.loaded = false; sprite.img = null; };
+      im.onload = () => {
+        sprite.img = im;
+        sprite.loaded = true;
+        sprite.w = im.naturalWidth || 1;
+        sprite.h = im.naturalHeight || 1;
+      };
+      im.onerror = () => {
+        sprite.loaded = false;
+        sprite.img = null;
+      };
       im.src = SPRITE_SRC;
     }
 
-    /* ----------------------- Portals ----------------------- */
-    // ✅ 게임 6개는 “게임존”으로 모으기 (URL 없는건 오픈 준비중)
-    // ✅ 커뮤니티존 5개 추가 (로고 표시)
+    /* ----------------------- Roads / Sidewalks / Crossings / Signals ----------------------- */
+    const roads = [];
+    const sidewalks = [];
+    const crossings = [];
+    const signals = [];
+
+    /* ----------------------- Portals + Shops ----------------------- */
+    // ✅ 간판 텍스트/이름은 여기서 바로 수정 가능
     const portals = [
-      // Game Zone (6)
-      { key: "archery", label: "ARCHERY", status: "open", url: "https://ttjdwls777-eng.github.io/XGP-MINI-GAME2/", group: "game", signColor: "#0a84ff" },
-      { key: "omok", label: "OMOK", status: "soon", url: "", group: "game", signColor: "#8b5cf6" },
-      { key: "janggi", label: "JANGGI", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", group: "game", signColor: "#ff3b30" },
-      { key: "snow", label: "SNOW", status: "soon", url: "", group: "game", signColor: "#00bcd4" },
-      { key: "avoid", label: "DODGE", status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", group: "game", signColor: "#ff2d55" },
-      { key: "jump", label: "JUMP", status: "soon", url: "", group: "game", signColor: "#ffcc00" },
+      { key: "avoid", label: "DODGE", status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", x: 0, y: 0, w: 0, h: 0 },
+      { key: "archery", label: "ARCHERY", status: "open", url: "https://ttjdwls777-eng.github.io/XGP-MINI-GAME2/", type: "tower", size: "M", x: 0, y: 0, w: 0, h: 0 },
+      { key: "janggi", label: "JANGGI", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo", size: "L", x: 0, y: 0, w: 0, h: 0 },
+      { key: "jump", label: "JUMP", status: "soon", url: "", type: "gym", size: "S", x: 0, y: 0, w: 0, h: 0 },
+      { key: "snow", label: "SNOWBALL", status: "soon", url: "", type: "igloo", size: "M", x: 0, y: 0, w: 0, h: 0 },
+      { key: "omok", label: "OMOK", status: "soon", url: "", type: "cafe", size: "M", x: 0, y: 0, w: 0, h: 0 },
 
-      // Community Zone (5)
-      { key: "twitter", label: "TWITTER", status: "soon", url: "", group: "community", signColor: "#1da1f2", logo: "twitter" },
-      { key: "telegram", label: "TELEGRAM", status: "soon", url: "", group: "community", signColor: "#2aabee", logo: "telegram" },
-      { key: "wallet", label: "WALLET", status: "soon", url: "", group: "community", signColor: "#34c759", logo: "wallet" },
-      { key: "market", label: "MARKET", status: "soon", url: "", group: "community", signColor: "#ff9500", logo: "market" },
-      { key: "support", label: "SUPPORT", status: "soon", url: "", group: "community", signColor: "#af52de", logo: "support" },
+      { key: "mcd", label: "McDonald's", status: "soon", url: "", type: "mcd", size: "M", x: 0, y: 0, w: 0, h: 0 },
+      { key: "hospital", label: "HOSPITAL", status: "soon", url: "", type: "hospital", size: "M", x: 0, y: 0, w: 0, h: 0 },
+      { key: "pharmacy", label: "PHARMACY", status: "soon", url: "", type: "pharmacy", size: "M", x: 0, y: 0, w: 0, h: 0 },
+      { key: "chicken", label: "CHICKEN", status: "soon", url: "", type: "chicken", size: "M", x: 0, y: 0, w: 0, h: 0 }
     ];
-
     const portalsByKey = (k) => portals.find((p) => p.key === k);
 
     /* ----------------------- Player ----------------------- */
-    const player = { x: 420, y: 420, r: 18, speed: 250, moving: false, animT: 0, bobT: 0, dir: "down" };
+    const player = {
+      x: 360,
+      y: 360,
+      r: 18,
+      speed: 250,
+      moving: false,
+      animT: 0,
+      bobT: 0,
+      dir: "down"
+    };
     if (isTouchDevice()) player.speed = 175;
 
     let activePortal = null;
@@ -326,13 +356,13 @@
     window.addEventListener("keydown", (e) => {
       const k = e.key.toLowerCase();
       keys.add(k);
+
       if (k === "enter" || k === "e") {
         if (modalState.open && modalState.portal) confirmEnter(modalState.portal);
         else if (activePortal) openPortalUI(activePortal);
       }
       if (k === "escape") closeModal();
     });
-
     window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
 
     function getPointer(e) {
@@ -345,7 +375,8 @@
       if (isTouchDevice()) return;
       const p = getPointer(e);
       const w = screenToWorld(p.x, p.y);
-      const dx = w.x - player.x, dy = w.y - player.y;
+      const dx = w.x - player.x,
+        dy = w.y - player.y;
       if (dx * dx + dy * dy <= (player.r + 18) * (player.r + 18)) {
         dragging = true;
         dragOffset.x = player.x - w.x;
@@ -367,14 +398,373 @@
       player.animT += 1 / 60;
     });
 
-    canvas.addEventListener("pointerup", () => { dragging = false; });
+    canvas.addEventListener("pointerup", () => {
+      dragging = false;
+    });
 
     function clampPlayerToWorld() {
       player.x = clamp(player.x, WORLD.margin, WORLD.w - WORLD.margin);
       player.y = clamp(player.y, WORLD.margin, WORLD.h - WORLD.margin);
     }
 
-    /* ----------------------- Shapes ----------------------- */
+    /* ----------------------- Cars ----------------------- */
+    const cars = [];
+    const CAR_COLORS = ["#ff3b30", "#ffcc00", "#34c759", "#0a84ff", "#af52de", "#ff2d55", "#ffffff"];
+
+    function seedCars() {
+      cars.length = 0;
+      if (roads.length === 0) return;
+
+      const makeCar = (r, axis) => {
+        const col = CAR_COLORS[(Math.random() * CAR_COLORS.length) | 0];
+        const speed = 92 + Math.random() * 110;
+
+        if (axis === "h") {
+          const lane = Math.random() < 0.5 ? 0 : 1;
+          const dir = Math.random() < 0.5 ? 1 : -1;
+          return {
+            kind: "car",
+            axis: "h",
+            dir,
+            color: col,
+            speed,
+            w: 56 + Math.random() * 20,
+            h: 26 + Math.random() * 8,
+            x: r.x + Math.random() * r.w,
+            y: r.y + (lane === 0 ? r.h * 0.36 : r.h * 0.66),
+            bob: Math.random() * 10,
+            roadId: r._id
+          };
+        } else {
+          const lane = Math.random() < 0.5 ? 0 : 1;
+          const dir = Math.random() < 0.5 ? 1 : -1;
+          return {
+            kind: "car",
+            axis: "v",
+            dir,
+            color: col,
+            speed,
+            w: 26 + Math.random() * 8,
+            h: 60 + Math.random() * 20,
+            x: r.x + (lane === 0 ? r.w * 0.36 : r.w * 0.66),
+            y: r.y + Math.random() * r.h,
+            bob: Math.random() * 10,
+            roadId: r._id
+          };
+        }
+      };
+
+      for (const r of roads) {
+        const n = r.axis === "h" ? 3 + ((Math.random() * 2) | 0) : 2 + ((Math.random() * 2) | 0);
+        for (let i = 0; i < n; i++) cars.push(makeCar(r, r.axis));
+      }
+    }
+
+    /* ----------------------- Props / Signs / NPCs ----------------------- */
+    const props = [];
+    const signs = [];
+    let portalNPCs = [];
+    let portalEmblems = [];
+    const roamers = [];
+
+    function rectsOverlap(a, b, pad = 0) {
+      return !(
+        a.x + a.w + pad < b.x - pad ||
+        a.x - pad > b.x + b.w + pad ||
+        a.y + a.h + pad < b.y - pad ||
+        a.y - pad > b.y + b.h + pad
+      );
+    }
+
+    function isOnRoadLike(x, y) {
+      for (const r of roads) {
+        if (x >= r.x - 18 && x <= r.x + r.w + 18 && y >= r.y - 18 && y <= r.y + r.h + 18) return true;
+      }
+      return false;
+    }
+
+    function isInsideBuildingBuffer(x, y) {
+      for (const p of portals) {
+        const pad = 120;
+        if (x >= p.x - pad && x <= p.x + p.w + pad && y >= p.y - pad && y <= p.y + p.h + pad) return true;
+      }
+      return false;
+    }
+
+    function seedProps() {
+      props.length = 0;
+      signs.length = 0;
+      portalNPCs = [];
+      portalEmblems = [];
+
+      const tries = 420;
+
+      for (let i = 0; i < tries; i++) {
+        const x = WORLD.margin + Math.random() * (WORLD.w - WORLD.margin * 2);
+        const y = WORLD.margin + Math.random() * (WORLD.h - WORLD.margin * 2);
+        if (isOnRoadLike(x, y)) continue;
+        if (isInsideBuildingBuffer(x, y)) continue;
+
+        const r = Math.random();
+        if (r < 0.26) props.push({ kind: "tree", x, y, s: 0.9 + Math.random() * 1.05 });
+        else if (r < 0.35) props.push({ kind: "lamp", x, y, s: 0.9 + Math.random() * 0.55 });
+        else if (r < 0.46) props.push({ kind: "bench", x, y, s: 0.9 + Math.random() * 0.35 });
+        else props.push({ kind: "flower", x, y, s: 0.85 + Math.random() * 0.95 });
+      }
+
+      for (const p of portals) {
+        if (Math.random() < 0.65) props.push({ kind: "flower", x: p.x + p.w * 0.2, y: p.y + p.h + 28, s: 1.1 });
+        if (Math.random() < 0.65) props.push({ kind: "flower", x: p.x + p.w * 0.8, y: p.y + p.h + 18, s: 1.0 });
+      }
+
+      const arch = portalsByKey("archery");
+      const jang = portalsByKey("janggi");
+      if (arch) signs.push({ x: arch.x + arch.w * 0.5 - 10, y: arch.y + arch.h + 90, text: "양궁 →" });
+      if (jang) signs.push({ x: jang.x + jang.w * 0.5 + 10, y: jang.y + jang.h + 90, text: "← 장기" });
+
+      for (const p of portals) {
+        const ex = p.x + p.w * 0.5;
+        const ey = p.y + p.h * 0.92;
+
+        if (["archery", "janggi", "omok"].includes(p.key)) {
+          portalNPCs.push({ kind: "npc", key: p.key, x: p.x + p.w + 42, y: p.y + p.h * 0.74 });
+        }
+
+        portalEmblems.push({ kind: "emblem", key: p.key, x: ex + 38, y: ey + 18 });
+      }
+    }
+
+    /* ----------------------- Roaming NPCs (20) ----------------------- */
+    function seedRoamers() {
+      roamers.length = 0;
+      const N = 20;
+
+      function okPos(x, y) {
+        if (isOnRoadLike(x, y)) return false;
+        if (isInsideBuildingBuffer(x, y)) return false;
+        return true;
+      }
+
+      for (let i = 0; i < N; i++) {
+        let x = 0,
+          y = 0;
+        for (let t = 0; t < 200; t++) {
+          x = WORLD.margin + Math.random() * (WORLD.w - WORLD.margin * 2);
+          y = WORLD.margin + Math.random() * (WORLD.h - WORLD.margin * 2);
+          if (okPos(x, y)) break;
+        }
+        roamers.push({
+          kind: "roamer",
+          x,
+          y,
+          r: 16,
+          speed: 95 + Math.random() * 40,
+          dir: ["down", "left", "right", "up"][(Math.random() * 4) | 0],
+          t: Math.random() * 10,
+          tx: x,
+          ty: y,
+          colorIdx: (Math.random() * 6) | 0
+        });
+      }
+    }
+
+    function stepRoamers(dt) {
+      const palette = [
+        { torso: "#0a84ff", pants: "#3b4251", hat: "#ff3b30" },
+        { torso: "#34c759", pants: "#2a2f3b", hat: "#ffcc00" },
+        { torso: "#b889ff", pants: "#3b4251", hat: "#0a84ff" },
+        { torso: "#ffffff", pants: "#2a2f3b", hat: "#ff2d55" },
+        { torso: "#ffd66b", pants: "#3b4251", hat: "#0a84ff" },
+        { torso: "#7fd7ff", pants: "#2a2f3b", hat: "#ffcc00" }
+      ];
+      for (const n of roamers) {
+        n.t += dt;
+
+        if (Math.hypot(n.tx - n.x, n.ty - n.y) < 12 || Math.random() < 0.004) {
+          let nx = n.x,
+            ny = n.y;
+          for (let k = 0; k < 40; k++) {
+            nx = clamp(n.x + (Math.random() - 0.5) * 520, WORLD.margin, WORLD.w - WORLD.margin);
+            ny = clamp(n.y + (Math.random() - 0.5) * 520, WORLD.margin, WORLD.h - WORLD.margin);
+            if (!isOnRoadLike(nx, ny) && !isInsideBuildingBuffer(nx, ny)) break;
+          }
+          n.tx = nx;
+          n.ty = ny;
+        }
+
+        const dx = n.tx - n.x;
+        const dy = n.ty - n.y;
+        const len = Math.hypot(dx, dy) || 1;
+        const vx = (dx / len) * n.speed;
+        const vy = (dy / len) * n.speed;
+        n.x += vx * dt;
+        n.y += vy * dt;
+
+        if (Math.abs(vy) >= Math.abs(vx)) n.dir = vy < 0 ? "up" : "down";
+        else n.dir = vx < 0 ? "left" : "right";
+
+        n.x = clamp(n.x, WORLD.margin, WORLD.w - WORLD.margin);
+        n.y = clamp(n.y, WORLD.margin, WORLD.h - WORLD.margin);
+      }
+      return palette;
+    }
+
+    /* ----------------------- Stable ground patches ----------------------- */
+    let groundPatches = [];
+    function buildGroundPatches() {
+      const rand = mulberry32(seedFromWorld(WORLD.w, WORLD.h) ^ 0xa13f0c55);
+      groundPatches = [];
+      for (let i = 0; i < 18; i++) {
+        groundPatches.push({
+          x: WORLD.w * 0.1 + rand() * WORLD.w * 0.8,
+          y: WORLD.h * 0.32 + rand() * WORLD.h * 0.6,
+          rx: 60 + rand() * 160,
+          ry: 18 + rand() * 52,
+          rot: (rand() - 0.5) * 0.7,
+          a: 0.28 + rand() * 0.12
+        });
+      }
+    }
+
+    /* ----------------------- Footprints ----------------------- */
+    const footprints = [];
+    let footStepAcc = 0;
+    function addFootprint(dt) {
+      if (!player.moving) {
+        footStepAcc = 0;
+        return;
+      }
+      footStepAcc += dt * (player.speed / 220);
+      if (footStepAcc < 0.12) return;
+      footStepAcc = 0;
+
+      let ox = 0,
+        oy = 0;
+      if (player.dir === "up") oy = 8;
+      else if (player.dir === "down") oy = -6;
+      else if (player.dir === "left") ox = 8;
+      else if (player.dir === "right") ox = -8;
+
+      footprints.push({
+        x: player.x + ox + (Math.random() - 0.5) * 2,
+        y: player.y + 30 + oy + (Math.random() - 0.5) * 2,
+        life: 1.25,
+        age: 0
+      });
+    }
+
+    /* ----------------------- Background layers ----------------------- */
+    const clouds = Array.from({ length: 12 }, () => ({
+      x: Math.random() * 3600,
+      y: 40 + Math.random() * 260,
+      s: 0.7 + Math.random() * 1.25,
+      v: 9 + Math.random() * 18,
+      layer: Math.random() < 0.5 ? 0 : 1
+    }));
+    const birds = Array.from({ length: 7 }, () => ({ x: 0, y: 0, p: Math.random() * 10, v: 22 + Math.random() * 22 }));
+
+    /* ----------------------- Patterns ----------------------- */
+    let grassPattern = null,
+      dirtPattern = null,
+      roadPattern = null,
+      sidewalkPattern = null;
+
+    function makePattern(w, h, drawFn) {
+      const c = document.createElement("canvas");
+      c.width = w;
+      c.height = h;
+      const g = c.getContext("2d");
+      drawFn(g, w, h);
+      return ctx.createPattern(c, "repeat");
+    }
+
+    function buildPatterns() {
+      grassPattern = makePattern(480, 480, (g, w, h) => {
+        g.fillStyle = "#39d975";
+        g.fillRect(0, 0, w, h);
+
+        g.globalAlpha = 0.05;
+        g.strokeStyle = "rgba(0,0,0,0.10)";
+        g.lineWidth = 1;
+        for (let x = 0; x <= w; x += 80) {
+          g.beginPath();
+          g.moveTo(x, 0);
+          g.lineTo(x, h);
+          g.stroke();
+        }
+        for (let y = 0; y <= h; y += 80) {
+          g.beginPath();
+          g.moveTo(0, y);
+          g.lineTo(w, y);
+          g.stroke();
+        }
+
+        g.globalAlpha = 0.1;
+        for (let i = 0; i < 140; i++) {
+          g.fillStyle = i % 3 === 0 ? "rgba(255,255,255,0.20)" : "rgba(0,0,0,0.10)";
+          g.beginPath();
+          g.arc(Math.random() * w, Math.random() * h, 0.8 + Math.random() * 1.6, 0, Math.PI * 2);
+          g.fill();
+        }
+        g.globalAlpha = 1;
+      });
+
+      dirtPattern = makePattern(240, 240, (g, w, h) => {
+        g.fillStyle = "#c79a64";
+        g.fillRect(0, 0, w, h);
+        g.globalAlpha = 0.18;
+        for (let i = 0; i < 220; i++) {
+          g.fillStyle = i % 2 === 0 ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.12)";
+          g.beginPath();
+          g.arc(Math.random() * w, Math.random() * h, 0.8 + Math.random() * 2.6, 0, Math.PI * 2);
+          g.fill();
+        }
+        g.globalAlpha = 1;
+      });
+
+      roadPattern = makePattern(240, 240, (g, w, h) => {
+        g.fillStyle = "#262c37";
+        g.fillRect(0, 0, w, h);
+        g.globalAlpha = 0.1;
+        g.strokeStyle = "rgba(255,255,255,0.12)";
+        g.lineWidth = 2;
+        for (let y = 0; y <= h; y += 40) {
+          g.beginPath();
+          g.moveTo(0, y);
+          g.lineTo(w, y);
+          g.stroke();
+        }
+        g.globalAlpha = 1;
+
+        g.globalAlpha = 0.22;
+        g.fillStyle = "rgba(255,255,255,0.75)";
+        for (let x = 0; x < w; x += 40) g.fillRect(x + 12, h / 2 - 2, 14, 4);
+        g.globalAlpha = 1;
+      });
+
+      sidewalkPattern = makePattern(240, 240, (g, w, h) => {
+        g.fillStyle = "#f5efe7";
+        g.fillRect(0, 0, w, h);
+        g.globalAlpha = 0.12;
+        g.strokeStyle = "rgba(0,0,0,0.18)";
+        g.lineWidth = 1;
+        for (let x = 0; x <= w; x += 24) {
+          g.beginPath();
+          g.moveTo(x, 0);
+          g.lineTo(x, h);
+          g.stroke();
+        }
+        for (let y = 0; y <= h; y += 24) {
+          g.beginPath();
+          g.moveTo(0, y);
+          g.lineTo(w, y);
+          g.stroke();
+        }
+        g.globalAlpha = 1;
+      });
+    }
+
+    /* ----------------------- Shape helpers ----------------------- */
     function roundRect(x, y, w, h, r) {
       const rr = Math.min(r, w / 2, h / 2);
       ctx.beginPath();
@@ -418,269 +808,151 @@
       ctx.restore();
     }
 
-    /* ----------------------- Patterns ----------------------- */
-    let grassPattern = null;
-    let asphaltPattern = null;
-
-    function makePattern(w, h, drawFn) {
-      const c = document.createElement("canvas");
-      c.width = w;
-      c.height = h;
-      const g = c.getContext("2d");
-      drawFn(g, w, h);
-      return ctx.createPattern(c, "repeat");
-    }
-
-    function buildPatterns() {
-      grassPattern = makePattern(420, 420, (g, w, h) => {
-        g.fillStyle = "#39d975";
-        g.fillRect(0, 0, w, h);
-
-        g.globalAlpha = 0.06;
-        g.strokeStyle = "rgba(0,0,0,0.10)";
-        g.lineWidth = 1;
-        for (let x = 0; x <= w; x += 70) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
-        for (let y = 0; y <= h; y += 70) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
-
-        g.globalAlpha = 0.10;
-        for (let i = 0; i < 160; i++) {
-          g.fillStyle = i % 3 === 0 ? "rgba(255,255,255,0.20)" : "rgba(0,0,0,0.10)";
-          g.beginPath();
-          g.arc(Math.random() * w, Math.random() * h, 0.8 + Math.random() * 1.6, 0, Math.PI * 2);
-          g.fill();
-        }
-        g.globalAlpha = 1;
-      });
-
-      // 고퀄리티 아스팔트 느낌: 노이즈 + 미세 크랙 + 입자
-      asphaltPattern = makePattern(520, 520, (g, w, h) => {
-        g.fillStyle = "#242a35";
-        g.fillRect(0, 0, w, h);
-
-        // subtle gradient
-        const grad = g.createLinearGradient(0, 0, w, h);
-        grad.addColorStop(0, "rgba(255,255,255,0.06)");
-        grad.addColorStop(1, "rgba(0,0,0,0.12)");
-        g.fillStyle = grad;
-        g.fillRect(0, 0, w, h);
-
-        // speckles
-        g.globalAlpha = 0.18;
-        for (let i = 0; i < 1800; i++) {
-          const x = Math.random() * w, y = Math.random() * h;
-          const r = Math.random() < 0.85 ? 0.7 : 1.3;
-          g.fillStyle = Math.random() < 0.55 ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.18)";
-          g.beginPath();
-          g.arc(x, y, r, 0, Math.PI * 2);
-          g.fill();
-        }
-        g.globalAlpha = 1;
-
-        // cracks
-        g.globalAlpha = 0.15;
-        g.strokeStyle = "rgba(0,0,0,0.65)";
-        g.lineWidth = 1;
-        for (let c = 0; c < 14; c++) {
-          let x = Math.random() * w, y = Math.random() * h;
-          g.beginPath();
-          g.moveTo(x, y);
-          for (let k = 0; k < 10; k++) {
-            x += (Math.random() - 0.5) * 60;
-            y += (Math.random() - 0.5) * 60;
-            g.lineTo(clamp(x, 0, w), clamp(y, 0, h));
-          }
-          g.stroke();
-        }
-        g.globalAlpha = 1;
-
-        // faint seams
-        g.globalAlpha = 0.06;
-        g.strokeStyle = "rgba(255,255,255,0.55)";
-        g.lineWidth = 2;
-        for (let y = 0; y <= h; y += 130) {
-          g.beginPath();
-          g.moveTo(0, y);
-          g.lineTo(w, y);
-          g.stroke();
-        }
-        for (let x = 0; x <= w; x += 160) {
-          g.beginPath();
-          g.moveTo(x, 0);
-          g.lineTo(x, h);
-          g.stroke();
-        }
-        g.globalAlpha = 1;
-      });
-    }
-
-    /* ----------------------- Zones Layout ----------------------- */
-    // 사진 느낌: 게임존(3+3), 커뮤니티존(3+2)
-    const zones = {
-      game: { x: 0, y: 0, w: 0, h: 0, title: "게임존" },
-      community: { x: 0, y: 0, w: 0, h: 0, title: "커뮤니티존" },
-    };
-
-    function inRect(x, y, r) {
-      return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
-    }
-
-    /* ----------------------- Props ----------------------- */
-    const props = []; // {kind:'flower'|'lamp', x,y,s}
-    function seedProps() {
-      props.length = 0;
-
-      const rand = mulberry32((WORLD.w ^ (WORLD.h * 1337)) >>> 0);
-
-      // ✅ 게임존 내부: 나무/벤치 금지, 꽃/가로등만 일부
-      // ✅ 커뮤니티존도 깔끔하게: 꽃/가로등만
-      function addLamp(x, y, s = 1) { props.push({ kind: "lamp", x, y, s }); }
-      function addFlower(x, y, s = 1) { props.push({ kind: "flower", x, y, s }); }
-
-      // Game zone decor (외곽 위주)
-      const gz = zones.game;
-      for (let i = 0; i < 6; i++) {
-        addFlower(gz.x + 80 + rand() * (gz.w - 160), gz.y + 60 + rand() * 80, 0.95 + rand() * 0.2);
-      }
-      addLamp(gz.x + 80, gz.y + gz.h - 90, 1.05);
-      addLamp(gz.x + gz.w - 80, gz.y + gz.h - 90, 1.05);
-      addLamp(gz.x + gz.w * 0.5, gz.y + 64, 1.0);
-
-      // Community zone decor
-      const cz = zones.community;
-      for (let i = 0; i < 5; i++) {
-        addFlower(cz.x + 70 + rand() * (cz.w - 140), cz.y + cz.h - 70 - rand() * 90, 0.95 + rand() * 0.25);
-      }
-      addLamp(cz.x + 80, cz.y + 70, 1.05);
-      addLamp(cz.x + cz.w - 80, cz.y + 70, 1.05);
-
-      // world outside zones: 아주 소량 꽃/가로등만 (깔끔하게)
-      for (let i = 0; i < 22; i++) {
-        const x = WORLD.margin + rand() * (WORLD.w - WORLD.margin * 2);
-        const y = WORLD.margin + rand() * (WORLD.h - WORLD.margin * 2);
-
-        // zones 내부는 금지(게임존/커뮤니티존)
-        if (inRect(x, y, gz) || inRect(x, y, cz)) continue;
-
-        if (rand() < 0.55) addFlower(x, y, 0.85 + rand() * 0.4);
-        else addLamp(x, y, 0.85 + rand() * 0.35);
-      }
-    }
-
     /* ----------------------- World layout ----------------------- */
+    function layoutRoadNetwork() {
+      roads.length = 0;
+      sidewalks.length = 0;
+      crossings.length = 0;
+      signals.length = 0;
+
+      let id = 0;
+      const addRoadH = (y, wFrac = 0.84, h = 124) => {
+        const r = { _id: id++, axis: "h", x: WORLD.w * (1 - wFrac) * 0.5, y, w: WORLD.w * wFrac, h };
+        roads.push(r);
+        sidewalks.push({ x: r.x, y: r.y - 48, w: r.w, h: 38 });
+        sidewalks.push({ x: r.x, y: r.y + r.h + 10, w: r.w, h: 38 });
+        return r;
+      };
+
+      const addRoadV = (x, hFrac = 0.8, w = 124) => {
+        const r = { _id: id++, axis: "v", x, y: WORLD.h * 0.1, w, h: WORLD.h * hFrac };
+        roads.push(r);
+        sidewalks.push({ x: r.x - 46, y: r.y, w: 34, h: r.h });
+        sidewalks.push({ x: r.x + r.w + 12, y: r.y, w: 34, h: r.h });
+        return r;
+      };
+
+      addRoadH(WORLD.h * 0.5, 0.86, 132);
+      addRoadH(WORLD.h * 0.26, 0.78, 120);
+      addRoadH(WORLD.h * 0.74, 0.78, 120);
+
+      const v1 = addRoadV(WORLD.w * 0.5 - 62, 0.84, 124);
+      addRoadV(WORLD.w * 0.26 - 62, 0.72, 118);
+      addRoadV(WORLD.w * 0.74 - 62, 0.72, 118);
+
+      const makeCross = (vx, vy) => {
+        crossings.push({ x: vx - 92, y: vy + 32, w: 184, h: 56 });
+        crossings.push({ x: vx - 92, y: vy - 88, w: 184, h: 56 });
+      };
+
+      for (const ry of [WORLD.h * 0.5, WORLD.h * 0.26, WORLD.h * 0.74]) {
+        makeCross(v1.x + v1.w * 0.5, ry);
+      }
+
+      function addSignal(x, y, dir) {
+        signals.push({ x, y, dir, phase: Math.random() * 10 });
+      }
+      for (const c of crossings) {
+        addSignal(c.x - 14, c.y + 8, "v");
+        addSignal(c.x + c.w + 14, c.y + 8, "v");
+      }
+    }
+
+    function placePortalAvoidRoad(p, cx, cy) {
+      const maxTry = 80;
+      const step = 22;
+
+      const test = (centerX, centerY) => {
+        const x = centerX - p.w / 2;
+        const y = centerY - p.h / 2;
+        const rect = { x, y, w: p.w, h: p.h };
+        for (const r of roads) if (rectsOverlap(rect, r, 8)) return null;
+        for (const s of sidewalks) if (rectsOverlap(rect, s, 4)) return null;
+        return rect;
+      };
+
+      let rect = test(cx, cy);
+      if (rect) return rect;
+
+      for (let i = 1; i <= maxTry; i++) {
+        const ang = i * 0.55;
+        const rr = step * i * 0.35;
+        rect = test(cx + Math.cos(ang) * rr, cy + Math.sin(ang) * rr);
+        if (rect) return rect;
+      }
+
+      return {
+        x: clamp(cx - p.w / 2, WORLD.margin, WORLD.w - WORLD.margin - p.w),
+        y: clamp(cy - p.h / 2, WORLD.margin, WORLD.h - WORLD.margin - p.h),
+        w: p.w,
+        h: p.h
+      };
+    }
+
     function layoutWorld() {
       WORLD.w = Math.max(4200, Math.floor(W * 4.4));
       WORLD.h = Math.max(3000, Math.floor(H * 3.8));
 
-      // zones sizing
-      zones.game.w = Math.max(1500, WORLD.w * 0.44);
-      zones.game.h = Math.max(820, WORLD.h * 0.34);
-
-      zones.community.w = Math.max(1500, WORLD.w * 0.44);
-      zones.community.h = Math.max(820, WORLD.h * 0.34);
-
-      // placement (좌측=게임존, 우측=커뮤니티존 느낌)
-      zones.game.x = WORLD.w * 0.12;
-      zones.game.y = WORLD.h * 0.20;
-
-      zones.community.x = WORLD.w * 0.54;
-      zones.community.y = WORLD.h * 0.54;
-
-      // portal sizes
-      const base = 240;
+      const base = 220;
+      const mul = { S: 0.82, M: 1.0, L: 1.22 };
       for (const p of portals) {
-        p.w = base * 1.1;
-        p.h = base * 0.92;
+        const m = mul[p.size] || 1;
+        p.w = base * 1.22 * m;
+        p.h = base * 0.92 * m;
       }
 
-      // place portals into grids
-      placePortalsInZones();
+      buildPatterns();
+      layoutRoadNetwork();
 
-      // player spawn between zones
-      player.x = clamp(WORLD.w * 0.46, WORLD.margin + 80, WORLD.w - WORLD.margin - 80);
-      player.y = clamp(WORLD.h * 0.46, WORLD.margin + 80, WORLD.h - WORLD.margin - 80);
+      const desired = {
+        jump: { x: WORLD.w * 0.18, y: WORLD.h * 0.18 },
+        archery: { x: WORLD.w * 0.66, y: WORLD.h * 0.18 },
+        omok: { x: WORLD.w * 0.82, y: WORLD.h * 0.3 },
 
+        avoid: { x: WORLD.w * 0.18, y: WORLD.h * 0.6 },
+        janggi: { x: WORLD.w * 0.82, y: WORLD.h * 0.6 },
+        snow: { x: WORLD.w * 0.34, y: WORLD.h * 0.84 },
+
+        mcd: { x: WORLD.w * 0.12, y: WORLD.h * 0.36 },
+        hospital: { x: WORLD.w * 0.88, y: WORLD.h * 0.4 },
+        pharmacy: { x: WORLD.w * 0.88, y: WORLD.h * 0.62 },
+        chicken: { x: WORLD.w * 0.12, y: WORLD.h * 0.8 }
+      };
+
+      for (const p of portals) {
+        const d = desired[p.key] || { x: WORLD.w * 0.5, y: WORLD.h * 0.5 };
+        const rect = placePortalAvoidRoad(p, d.x, d.y);
+        p.x = clamp(rect.x, WORLD.margin, WORLD.w - WORLD.margin - p.w);
+        p.y = clamp(rect.y, WORLD.margin, WORLD.h - WORLD.margin - p.h);
+      }
+
+      buildGroundPatches();
+      seedCars();
       seedProps();
+      seedRoamers();
+
+      player.x = clamp(player.x, WORLD.margin + 80, WORLD.w - WORLD.margin - 80);
+      player.y = clamp(player.y, WORLD.margin + 80, WORLD.h - WORLD.margin - 80);
     }
 
-    function placePortalsInZones() {
-      // helper
-      function placeGrid(groupKey, keysTopRow, keysBottomRow) {
-        const z = zones[groupKey];
-        const pad = 120;
-        const topY = z.y + 140;
-        const bottomY = z.y + z.h * 0.52;
-
-        function row(keys, y) {
-          const n = keys.length;
-          const usableW = z.w - pad * 2;
-          const gap = usableW / n;
-          for (let i = 0; i < n; i++) {
-            const p = portalsByKey(keys[i]);
-            if (!p) continue;
-            const cx = z.x + pad + gap * (i + 0.5);
-            p.x = clamp(cx - p.w / 2, WORLD.margin, WORLD.w - WORLD.margin - p.w);
-            p.y = clamp(y, WORLD.margin, WORLD.h - WORLD.margin - p.h);
-          }
-        }
-
-        row(keysTopRow, topY);
-        row(keysBottomRow, bottomY);
-      }
-
-      // ✅ 게임존: 3 + 3
-      placeGrid("game", ["archery", "omok", "janggi"], ["snow", "avoid", "jump"]);
-
-      // ✅ 커뮤니티존: 3 + 2 (가운데 정렬 느낌)
-      const cz = zones.community;
-      const pad = 120;
-      const topY = cz.y + 140;
-      const bottomY = cz.y + cz.h * 0.52;
-
-      const top = ["twitter", "telegram", "wallet"];
-      const bottom = ["market", "support"];
-
-      // top row 3
-      {
-        const usableW = cz.w - pad * 2;
-        const gap = usableW / top.length;
-        top.forEach((k, i) => {
-          const p = portalsByKey(k);
-          if (!p) return;
-          const cx = cz.x + pad + gap * (i + 0.5);
-          p.x = clamp(cx - p.w / 2, WORLD.margin, WORLD.w - WORLD.margin - p.w);
-          p.y = clamp(topY, WORLD.margin, WORLD.h - WORLD.margin - p.h);
-        });
-      }
-      // bottom row 2 (가운데 정렬)
-      {
-        const usableW = cz.w - pad * 2;
-        const gap = usableW / bottom.length;
-        bottom.forEach((k, i) => {
-          const p = portalsByKey(k);
-          if (!p) return;
-          const cx = cz.x + pad + gap * (i + 0.5);
-          p.x = clamp(cx - p.w / 2, WORLD.margin, WORLD.w - WORLD.margin - p.w);
-          p.y = clamp(bottomY, WORLD.margin, WORLD.h - WORLD.margin - p.h);
-        });
-      }
-    }
-
-    /* ----------------------- Resize ----------------------- */
     function resize() {
       DPR = Math.max(1, window.devicePixelRatio || 1);
       const r = canvas.getBoundingClientRect();
       W = r.width;
       H = r.height;
+
       canvas.width = Math.floor(W * DPR);
       canvas.height = Math.floor(H * DPR);
+
       VIEW.w = W / VIEW.zoom;
       VIEW.h = H / VIEW.zoom;
 
       ctx.setTransform(DPR * VIEW.zoom, 0, 0, DPR * VIEW.zoom, 0, 0);
+
+      // 모자이크(거친 픽셀) 방지: 항상 스무딩 + 고품질
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
 
-      buildPatterns();
       layoutWorld();
     }
     window.addEventListener("resize", resize);
@@ -700,6 +972,7 @@
       cam.targetY = player.y - VIEW.h * 0.56;
       cam.targetX = clamp(cam.targetX, 0, WORLD.w - VIEW.w);
       cam.targetY = clamp(cam.targetY, 0, WORLD.h - VIEW.h);
+
       const k = 1 - Math.pow(0.0012, dt);
       cam.x += (cam.targetX - cam.x) * k;
       cam.y += (cam.targetY - cam.y) * k;
@@ -707,21 +980,22 @@
 
     /* ----------------------- Portal zones ----------------------- */
     function portalEnterZone(p) {
-      const zx = p.x + p.w * 0.5 - 30;
+      const zx = p.x + p.w * 0.5 - 28;
       const zy = p.y + p.h * 0.76;
-      return { x: zx, y: zy, w: 60, h: 46 };
+      return { x: zx, y: zy, w: 56, h: 44 };
     }
-
     function circleRectHit(cx, cy, r, rect) {
       const closestX = Math.max(rect.x, Math.min(cx, rect.x + rect.w));
       const closestY = Math.max(rect.y, Math.min(cy, rect.y + rect.h));
-      const dx = cx - closestX, dy = cy - closestY;
+      const dx = cx - closestX,
+        dy = cy - closestY;
       return dx * dx + dy * dy <= r * r;
     }
 
     /* ----------------------- Modal ----------------------- */
     const modalState = { open: false, portal: null };
 
+    // 블러/글로우 제거: 깔끔한 카드형 블록만
     function blockSpan(html, opt = {}) {
       const bg = opt.bg || "rgba(10,14,24,0.86)";
       const fg = opt.fg || "rgba(255,255,255,0.98)";
@@ -736,7 +1010,9 @@
           box-shadow: 0 18px 54px rgba(0,0,0,0.22);
           letter-spacing: 0.4px;
           border: 1px solid rgba(255,255,255,0.10);
-          filter:none; backdrop-filter:none; -webkit-backdrop-filter:none;
+          filter:none;
+          backdrop-filter:none;
+          -webkit-backdrop-filter:none;
           text-shadow:none;
         ">${html}</span>
       `;
@@ -749,35 +1025,34 @@
       UI.modal.style.display = "flex";
       modalState.open = true;
     }
-
     function closeModal() {
       UI.modal.style.display = "none";
       modalState.open = false;
       modalState.portal = null;
     }
-
     UI.modal.addEventListener("pointerdown", (e) => {
       if (e.target === UI.modal) closeModal();
     });
 
     function openPortalUI(p) {
       if (!p) return;
+
       if (p.status !== "open" || !p.url) {
         openModal(`🧱 ${p.label}`, "오픈 준비중입니다", isTouchDevice() ? "모바일: 바깥을 탭하면 닫힘" : "ESC로 닫기");
         modalState.portal = null;
         return;
       }
+
       modalState.portal = p;
-      openModal(
-        `🧱 ${p.label}`,
-        `입장하시겠습니까?<br/><span style="opacity:.95;font-size:22px;font-weight:1200;">Enter / E</span>`,
-        isTouchDevice() ? "모바일: 화면 탭하면 입장" : "PC: Enter 또는 E"
-      );
+      openModal(`🧱 ${p.label}`, `입장하시겠습니까?<br/><span style="opacity:.95;font-size:22px;font-weight:1200;">Enter / E</span>`, isTouchDevice() ? "모바일: 화면 탭하면 입장" : "PC: Enter 또는 E");
     }
 
     function confirmEnter(p) {
       if (entering) return;
-      if (!p || p.status !== "open" || !p.url) { closeModal(); return; }
+      if (!p || p.status !== "open" || !p.url) {
+        closeModal();
+        return;
+      }
       closeModal();
       entering = true;
       UI.fade.classList.add("on");
@@ -788,7 +1063,7 @@
       if (isTouchDevice() && modalState.open && modalState.portal) confirmEnter(modalState.portal);
     });
 
-    // 뒤로가기(bfcache) 복귀 시 entering/fade 남는 현상 방지
+    // 뒤로가기(bfcache)로 돌아왔을 때 entering/fade가 남아 재진입 막는 현상 방지
     function resetEnterState() {
       entering = false;
       UI.fade.classList.remove("on");
@@ -799,33 +1074,41 @@
       if (document.visibilityState === "visible") resetEnterState();
     });
 
-    /* ----------------------- Drawing: background ----------------------- */
-    const clouds = Array.from({ length: 10 }, () => ({
-      x: Math.random() * 3600, y: 40 + Math.random() * 260,
-      s: 0.7 + Math.random() * 1.25, v: 9 + Math.random() * 18,
-      layer: Math.random() < 0.5 ? 0 : 1
-    }));
-
-    function drawSkyWorld() {
+    /* ----------------------- Rendering: background ----------------------- */
+    function drawSkyWorld(t) {
       const g = ctx.createLinearGradient(0, 0, 0, WORLD.h);
       g.addColorStop(0, "#bfe7ff");
       g.addColorStop(0.55, "#d7f1ff");
       g.addColorStop(1, "#fff2fb");
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, WORLD.w, WORLD.h);
+
+      ctx.save();
+      ctx.globalAlpha = 0.2;
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.beginPath();
+      ctx.ellipse(WORLD.w * 0.22, WORLD.h * 0.18, 520, 240, 0, 0, Math.PI * 2);
+      ctx.ellipse(WORLD.w * 0.72, WORLD.h * 0.16, 580, 260, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.save();
+      ctx.globalAlpha = 0.26;
+      ctx.strokeStyle = "rgba(10,14,24,0.52)";
+      ctx.lineWidth = 2;
+      for (const b of birds) {
+        const yy = b.y + Math.sin(b.p) * 6;
+        const xx = b.x;
+        ctx.beginPath();
+        ctx.moveTo(xx - 7, yy);
+        ctx.quadraticCurveTo(xx, yy - 5, xx + 7, yy);
+        ctx.stroke();
+      }
+      ctx.restore();
     }
 
-    function drawCloudsWorld(dt) {
+    function drawCloudsWorld() {
       for (const c of clouds) {
-        c.x += c.v * (c.layer === 0 ? 1.0 : 0.75) * dt;
-        if (c.x > WORLD.w + 420) {
-          c.x = -420;
-          c.y = 40 + Math.random() * 280;
-          c.s = 0.7 + Math.random() * 1.2;
-          c.v = 9 + Math.random() * 18;
-          c.layer = Math.random() < 0.5 ? 0 : 1;
-        }
-
         const a = 0.12 + 0.05 * (c.layer === 0 ? 1.0 : 0.75);
         ctx.save();
         ctx.globalAlpha = a;
@@ -840,99 +1123,225 @@
     }
 
     function drawGroundWorld() {
-      // grass base
       ctx.save();
       ctx.fillStyle = grassPattern || "#35d572";
-      ctx.fillRect(0, 0, WORLD.w, WORLD.h);
+      ctx.fillRect(0, WORLD.h * 0.3, WORLD.w, WORLD.h * 0.7);
       ctx.restore();
 
-      // zones asphalt
-      drawZoneAsphalt(zones.game);
-      drawZoneAsphalt(zones.community);
+      ctx.save();
+      const sh = ctx.createLinearGradient(0, WORLD.h * 0.3, 0, WORLD.h);
+      sh.addColorStop(0, "rgba(10,14,24,0.00)");
+      sh.addColorStop(1, "rgba(10,14,24,0.08)");
+      ctx.fillStyle = sh;
+      ctx.fillRect(0, WORLD.h * 0.3, WORLD.w, WORLD.h * 0.7);
+      ctx.restore();
+
+      ctx.save();
+      ctx.fillStyle = dirtPattern || "#c79a64";
+      for (const p of groundPatches) {
+        ctx.globalAlpha = p.a;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, p.rx, p.ry, p.rot, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.globalAlpha = 0.5;
+      for (const po of portals) {
+        const cx = po.x + po.w * 0.5;
+        const cy = po.y + po.h * 0.9;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + 34, 74, 30, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
     }
 
-    function drawZoneAsphalt(z) {
-      // soft AO under zone
-      groundAO(z.x + 6, z.y + z.h - 18, z.w - 12, 26, 0.18);
+    function drawRoadsAndSidewalks() {
+      for (const r of roads) {
+        groundAO(r.x, r.y + r.h - 18, r.w, 26, 0.18);
 
-      // outer frame
-      ctx.save();
-      ctx.globalAlpha = 0.18;
-      ctx.fillStyle = "rgba(255,255,255,0.35)";
-      roundRect(z.x - 10, z.y - 10, z.w + 20, z.h + 20, 44);
-      ctx.fill();
-      ctx.restore();
+        ctx.save();
+        ctx.globalAlpha = 0.14;
+        ctx.fillStyle = "rgba(255,255,255,0.30)";
+        roundRect(r.x - 6, r.y - 6, r.w + 12, r.h + 12, 44);
+        ctx.fill();
 
-      // asphalt fill
-      ctx.save();
-      ctx.fillStyle = asphaltPattern || "#242a35";
-      roundRect(z.x, z.y, z.w, z.h, 40);
-      ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = roadPattern || "#262c37";
+        roundRect(r.x, r.y, r.w, r.h, 40);
+        ctx.fill();
 
-      // subtle top gloss
-      ctx.globalAlpha = 0.10;
-      ctx.fillStyle = "rgba(255,255,255,0.32)";
-      roundRect(z.x + 16, z.y + 14, z.w - 32, 56, 26);
-      ctx.fill();
-      ctx.globalAlpha = 1;
+        ctx.globalAlpha = 0.12;
+        ctx.fillStyle = "rgba(255,255,255,0.26)";
+        roundRect(r.x + 10, r.y + 10, r.w - 20, r.h * 0.26, 30);
+        ctx.fill();
 
-      // border line
-      ctx.strokeStyle = "rgba(255,255,255,0.08)";
-      ctx.lineWidth = 3;
-      roundRect(z.x + 2, z.y + 2, z.w - 4, z.h - 4, 38);
-      ctx.stroke();
+        ctx.globalAlpha = 0.4;
+        ctx.strokeStyle = "rgba(255,255,255,0.88)";
+        ctx.lineWidth = 4;
+        ctx.setLineDash([18, 16]);
+        ctx.beginPath();
+        if (r.axis === "h") {
+          ctx.moveTo(r.x + 26, r.y + r.h / 2);
+          ctx.lineTo(r.x + r.w - 26, r.y + r.h / 2);
+        } else {
+          ctx.moveTo(r.x + r.w / 2, r.y + 26);
+          ctx.lineTo(r.x + r.w / 2, r.y + r.h - 26);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
 
-      ctx.restore();
+      for (const s of sidewalks) {
+        groundAO(s.x, s.y + s.h - 10, s.w, 20, 0.12);
+        ctx.save();
+        ctx.fillStyle = sidewalkPattern || "#f5efe7";
+        roundRect(s.x, s.y, s.w, s.h, 18);
+        ctx.fill();
 
-      // zone entrance sign (아래쪽 중앙에 배치)
-      drawZoneEntranceSign(z);
+        ctx.globalAlpha = 0.1;
+        ctx.fillStyle = "rgba(255,255,255,0.85)";
+        roundRect(s.x + 4, s.y + 3, s.w - 8, Math.max(8, s.h * 0.35), 14);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      for (const c of crossings) {
+        ctx.save();
+        ctx.globalAlpha = 0.16;
+        ctx.fillStyle = "rgba(255,255,255,0.20)";
+        roundRect(c.x, c.y, c.w, c.h, 14);
+        ctx.fill();
+
+        ctx.globalAlpha = 0.9;
+        for (let i = 0; i < 9; i++) {
+          const yy = c.y + 6 + i * 6;
+          ctx.fillStyle = i % 2 === 0 ? "rgba(255,255,255,0.92)" : "rgba(0,0,0,0.08)";
+          ctx.fillRect(c.x + 10, yy, c.w - 20, 4);
+        }
+        ctx.restore();
+      }
     }
 
-    function drawZoneEntranceSign(z) {
-      const text = z.title;
-      const boxW = 360;
-      const boxH = 66;
-      const x = z.x + z.w * 0.5 - boxW * 0.5;
-      const y = z.y + z.h + 26;
-
-      // sign shadow
-      softShadow(x + 2, y + 6, boxW, boxH, 0.16);
+    /* ----------------------- Traffic lights ----------------------- */
+    function drawSignal(s, t) {
+      const phase = (t + s.phase) % 6;
+      const greenOn = phase < 2.4;
+      const yellowOn = phase >= 2.4 && phase < 3.2;
+      const redOn = phase >= 3.2;
 
       ctx.save();
-      ctx.fillStyle = "rgba(255,255,255,0.92)";
-      ctx.strokeStyle = "rgba(0,0,0,0.10)";
-      ctx.lineWidth = 2;
-      roundRect(x, y, boxW, boxH, 22);
+      ctx.translate(s.x, s.y);
+
+      groundAO(-10, 28, 20, 10, 0.1);
+
+      ctx.fillStyle = "rgba(40,46,58,0.92)";
+      roundRect(-4, -16, 8, 48, 6);
       ctx.fill();
-      ctx.stroke();
-      glossyHighlight(x, y, boxW, boxH, 0.12);
 
       ctx.fillStyle = "rgba(10,14,24,0.92)";
-      ctx.font = "1200 26px system-ui";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(`표지판임 >> ${text}`, x + boxW / 2, y + boxH / 2 + 1);
+      roundRect(-14, -42, 28, 28, 10);
+      ctx.fill();
+
+      const dot = (yy, on, col) => {
+        ctx.save();
+        ctx.globalAlpha = on ? 1 : 0.25;
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.arc(0, yy, 4.6, 0, Math.PI * 2);
+        ctx.fill();
+        if (on) {
+          ctx.globalAlpha = 0.18;
+          ctx.fillStyle = col;
+          ctx.beginPath();
+          ctx.arc(0, yy, 10, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      };
+
+      dot(-34, redOn, "#ff3b30");
+      dot(-28, yellowOn, "#ffcc00");
+      dot(-22, greenOn, "#34c759");
+
       ctx.restore();
     }
 
-    /* ----------------------- LEGO Building (facade) ----------------------- */
-    function legoStyle() {
+    /* ----------------------- LEGO Building style (from your photo) ----------------------- */
+    function legoStyleForType(type) {
+      // 사진 느낌: 베이지 벽 + 빨간 간판(흰 글씨) + 심플 포인트 컬러(문/창 프레임)
+      const wall = "#f2d9b3";   // warm beige (LEGO-ish)
+      const wall2 = "#eacb9a";  // shadow beige
+      const base = "#6b717d";   // dark base trim
+      const grass = "#57c957";  // green plate edge
+      const sign = "#e12a2a";   // red plaque
+      const signEdge = "rgba(0,0,0,0.14)";
+      const frame = "#1f242d";  // dark window frame
+      const glassA = "#bfeeff"; // sky-blue glass
+      const glassB = "#86dcff";
+      const knob = "#1f242d";
+
+      // shop accents
+      const accentBy = {
+        arcade: "#ff5aa5",
+        tower: "#0a84ff",
+        dojo: "#42e7a5",
+        gym: "#ffd66b",
+        igloo: "#bfe9ff",
+        cafe: "#b889ff",
+        mcd: "#ffcc00",
+        hospital: "#0a84ff",
+        pharmacy: "#34c759",
+        chicken: "#ff2d55"
+      };
+
       return {
-        wall: "#f2d9b3",
-        wall2: "#eacb9a",
-        frame: "#1f242d",
-        glassA: "#bfeeff",
-        glassB: "#86dcff",
-        knob: "#1f242d",
+        wall,
+        wall2,
+        base,
+        grass,
+        sign,
+        signEdge,
+        frame,
+        glassA,
+        glassB,
+        knob,
+        accent: accentBy[type] || "#0a84ff"
       };
     }
 
+    function drawLegoStudRow(x, y, w, count, color) {
+      ctx.save();
+      ctx.fillStyle = color;
+      const r = 6;
+      const step = w / count;
+      for (let i = 0; i < count; i++) {
+        const cx = x + step * (i + 0.5);
+        ctx.beginPath();
+        ctx.arc(cx, y, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalAlpha = 0.18;
+        ctx.fillStyle = "rgba(255,255,255,0.92)";
+        ctx.beginPath();
+        ctx.arc(cx - 1.6, y - 1.8, r * 0.55, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = color;
+      }
+      ctx.restore();
+    }
+
     function drawLegoBrickGrid(x, y, w, h) {
+      // subtle brick seams like LEGO blocks
       ctx.save();
       ctx.globalAlpha = 0.14;
       ctx.strokeStyle = "rgba(0,0,0,0.22)";
       ctx.lineWidth = 1;
 
+      // horizontal seams
       const rowH = 22;
       for (let yy = y + rowH; yy < y + h; yy += rowH) {
         ctx.beginPath();
@@ -941,6 +1350,7 @@
         ctx.stroke();
       }
 
+      // vertical seams with alternating offsets
       const colW = 40;
       let alt = false;
       for (let yy = y; yy < y + h; yy += rowH) {
@@ -953,20 +1363,23 @@
         }
         alt = !alt;
       }
+
       ctx.restore();
     }
 
-    function drawLegoSignPlaque(x, y, w, h, text, textSize, signColor) {
+    function drawLegoSignPlaque(x, y, w, h, text, textSize) {
+      // red rounded plaque with white letters (like the photo)
       softShadow(x + 2, y + 4, w, h, 0.12);
-      ctx.save();
 
-      ctx.fillStyle = signColor || "#e12a2a";
+      ctx.save();
+      ctx.fillStyle = "#e12a2a";
       ctx.strokeStyle = "rgba(0,0,0,0.12)";
       ctx.lineWidth = 2;
       roundRect(x, y, w, h, 18);
       ctx.fill();
       ctx.stroke();
 
+      // subtle highlight
       ctx.globalAlpha = 0.16;
       ctx.fillStyle = "rgba(255,255,255,0.92)";
       roundRect(x + 8, y + 6, w - 16, Math.max(10, h * 0.35), 14);
@@ -980,7 +1393,7 @@
       ctx.textBaseline = "middle";
       ctx.fillText(text, x + w * 0.5, y + h * 0.55);
 
-      // letter shadow
+      // small “emboss” shadow behind letters
       ctx.globalAlpha = 0.12;
       ctx.fillStyle = "rgba(0,0,0,0.85)";
       ctx.fillText(text, x + w * 0.5 + 1.2, y + h * 0.55 + 1.2);
@@ -989,24 +1402,26 @@
       ctx.restore();
     }
 
-    function drawLegoWindow(x, y, w, h, S) {
+    function drawLegoWindow(x, y, w, h, frameCol, glassA, glassB) {
       ctx.save();
+      // outer frame
       ctx.fillStyle = "rgba(0,0,0,0.18)";
       roundRect(x - 2, y - 2, w + 4, h + 4, 14);
       ctx.fill();
 
-      ctx.fillStyle = S.frame;
+      ctx.fillStyle = frameCol;
       roundRect(x, y, w, h, 14);
       ctx.fill();
 
+      // glass
       const g = ctx.createLinearGradient(x, y, x + w, y + h);
-      g.addColorStop(0, S.glassA);
+      g.addColorStop(0, glassA);
       g.addColorStop(1, "rgba(10,14,24,0.14)");
       ctx.fillStyle = g;
       roundRect(x + 4, y + 4, w - 8, h - 8, 10);
       ctx.fill();
 
-      // mullion
+      // cross mullion (like the photo)
       ctx.globalAlpha = 0.22;
       ctx.strokeStyle = "rgba(255,255,255,0.72)";
       ctx.lineWidth = 2;
@@ -1023,13 +1438,13 @@
       ctx.restore();
     }
 
-    function drawLegoDoor(x, y, w, h, doorCol, S) {
+    function drawLegoDoor(x, y, w, h, doorCol, frameCol, knobCol) {
       ctx.save();
       ctx.fillStyle = "rgba(0,0,0,0.18)";
       roundRect(x - 2, y - 2, w + 4, h + 4, 14);
       ctx.fill();
 
-      ctx.fillStyle = S.frame;
+      ctx.fillStyle = frameCol;
       roundRect(x, y, w, h, 14);
       ctx.fill();
 
@@ -1040,106 +1455,23 @@
       glossyHighlight(x + 2, y + 2, w - 4, h - 4, 0.12);
 
       // knob
-      ctx.fillStyle = S.knob;
+      ctx.fillStyle = knobCol;
       roundRect(x + w * 0.72, y + h * 0.46, 7, 12, 5);
       ctx.fill();
-      ctx.restore();
-    }
-
-    /* ----------------------- Community Logos (vector icons) ----------------------- */
-    function drawLogo(kind, cx, cy, size, color = "rgba(255,255,255,0.95)") {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.fillStyle = color;
-      ctx.strokeStyle = color;
-      ctx.lineWidth = Math.max(2, size * 0.08);
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-
-      const s = size;
-
-      if (kind === "twitter") {
-        // simple bird-like mark
-        ctx.beginPath();
-        ctx.moveTo(-0.35*s, 0.05*s);
-        ctx.quadraticCurveTo(-0.10*s, -0.45*s, 0.20*s, -0.20*s);
-        ctx.quadraticCurveTo(0.55*s, -0.15*s, 0.45*s, 0.10*s);
-        ctx.quadraticCurveTo(0.35*s, 0.35*s, 0.05*s, 0.30*s);
-        ctx.quadraticCurveTo(-0.15*s, 0.45*s, -0.35*s, 0.20*s);
-        ctx.closePath();
-        ctx.fill();
-      } else if (kind === "telegram") {
-        // paper plane
-        ctx.beginPath();
-        ctx.moveTo(-0.55*s, -0.10*s);
-        ctx.lineTo(0.60*s, -0.55*s);
-        ctx.lineTo(0.10*s, 0.55*s);
-        ctx.lineTo(-0.05*s, 0.10*s);
-        ctx.closePath();
-        ctx.fill();
-        ctx.globalAlpha = 0.85;
-        ctx.beginPath();
-        ctx.moveTo(-0.05*s, 0.10*s);
-        ctx.lineTo(0.18*s, -0.04*s);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-      } else if (kind === "wallet") {
-        // wallet
-        ctx.beginPath();
-        roundRect(-0.55*s, -0.25*s, 1.10*s, 0.70*s, 0.18*s);
-        ctx.fill();
-        ctx.globalAlpha = 0.25;
-        ctx.fillStyle = "rgba(0,0,0,0.65)";
-        roundRect(-0.55*s, -0.25*s, 1.10*s, 0.22*s, 0.18*s);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(0.30*s, 0.05*s, 0.07*s, 0, Math.PI*2);
-        ctx.fill();
-      } else if (kind === "market") {
-        // cart
-        ctx.beginPath();
-        ctx.moveTo(-0.55*s, -0.25*s);
-        ctx.lineTo(-0.35*s, -0.25*s);
-        ctx.lineTo(-0.20*s, 0.25*s);
-        ctx.lineTo(0.45*s, 0.25*s);
-        ctx.lineTo(0.55*s, -0.10*s);
-        ctx.lineTo(-0.10*s, -0.10*s);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(-0.05*s, 0.42*s, 0.09*s, 0, Math.PI*2);
-        ctx.arc(0.35*s, 0.42*s, 0.09*s, 0, Math.PI*2);
-        ctx.fill();
-      } else if (kind === "support") {
-        // headset
-        ctx.beginPath();
-        ctx.arc(0, 0.02*s, 0.45*s, Math.PI, 0);
-        ctx.stroke();
-        ctx.beginPath();
-        roundRect(-0.60*s, 0.05*s, 0.20*s, 0.30*s, 0.10*s);
-        roundRect(0.40*s, 0.05*s, 0.20*s, 0.30*s, 0.10*s);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(0.25*s, 0.38*s);
-        ctx.quadraticCurveTo(0.45*s, 0.42*s, 0.48*s, 0.55*s);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(0.48*s, 0.56*s, 0.05*s, 0, Math.PI*2);
-        ctx.fill();
-      }
 
       ctx.restore();
     }
 
     function drawPortalBuilding(p, t) {
-      const S = legoStyle();
+      // LEGO facade style
+      const S = legoStyleForType(p.type);
       const isActive = activePortal === p;
       const pulse = 0.55 + 0.45 * Math.sin(t * 3.0 + hash01(p.key) * 6);
 
+      // ground AO
       groundAO(p.x + 8, p.y + p.h - 18, p.w - 16, 30, 0.22);
 
-      // active halo near door
+      // active halo at door
       ctx.save();
       ctx.globalAlpha = 0.08 + (isActive ? 0.12 * pulse : 0.0);
       ctx.fillStyle = isActive ? "rgba(10,132,255,0.92)" : "rgba(255,255,255,0.18)";
@@ -1148,14 +1480,31 @@
       ctx.fill();
       ctx.restore();
 
-      // body
+      // base plate (purple-ish like toy base, optional)
+      const baseH = 18;
+      ctx.save();
+      ctx.fillStyle = "rgba(120,94,255,0.55)";
+      roundRect(p.x + 6, p.y + p.h - baseH + 6, p.w - 12, baseH, 12);
+      ctx.fill();
+      ctx.restore();
+
+      // green strip (like studs base)
+      ctx.save();
+      ctx.fillStyle = S.grass;
+      roundRect(p.x + 10, p.y + p.h - baseH + 2, p.w - 20, 14, 10);
+      ctx.fill();
+      ctx.restore();
+
+      // main building body (beige)
       const bodyX = p.x + 10;
       const bodyY = p.y + 54;
       const bodyW = p.w - 20;
       const bodyH = p.h - 70;
 
+      // body shadow
       softShadow(bodyX + 2, bodyY + 8, bodyW, bodyH, 0.12);
 
+      // body
       ctx.save();
       ctx.fillStyle = S.wall;
       ctx.strokeStyle = "rgba(0,0,0,0.14)";
@@ -1164,54 +1513,74 @@
       ctx.fill();
       ctx.stroke();
 
-      // top cap
-      ctx.fillStyle = "rgba(255,255,255,0.18)";
+      // top lip / cap
+      ctx.fillStyle = shade(S.wall, +12);
       roundRect(bodyX, bodyY - 14, bodyW, 22, 18);
       ctx.fill();
+      ctx.globalAlpha = 0.14;
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      roundRect(bodyX + 10, bodyY - 10, bodyW - 20, 8, 10);
+      ctx.fill();
+      ctx.globalAlpha = 1;
 
-      // brick seams
+      // brick grid seams
       drawLegoBrickGrid(bodyX + 8, bodyY + 10, bodyW - 16, bodyH - 20);
+
       ctx.restore();
 
-      // sign
+      // studs row on roof
+      drawLegoStudRow(bodyX + 14, bodyY - 16, bodyW - 28, Math.max(4, Math.round(bodyW / 70)), shade(S.wall, +22));
+
+      // sign plaque (big)
       const signPad = 10;
       const signW = bodyW - signPad * 2;
       const signH = 56;
       const signX = bodyX + signPad;
       const signY = p.y + 10;
-      const textSize = 30;
-      drawLegoSignPlaque(signX, signY, signW, signH, p.label, textSize, p.signColor);
+      const textSize = p.size === "L" ? 34 : p.size === "M" ? 30 : 28;
+      drawLegoSignPlaque(signX, signY, signW, signH, p.label, textSize);
 
-      // door & window
+      // door & window positions (like photo)
       const doorW = bodyW * 0.36;
       const doorH = bodyH * 0.44;
       const doorX = bodyX + bodyW * 0.14;
       const doorY = bodyY + bodyH * 0.48;
-      const doorColor = "#c46b25";
-      drawLegoDoor(doorX, doorY, doorW, doorH, doorColor, S);
 
+      // per-type door color for variety but still LEGO-ish
+      const doorColor = (type) => {
+        if (type === "hospital" || type === "pharmacy") return "#ffffff";
+        if (type === "mcd") return "#c46b25";
+        if (type === "igloo") return "#bfe9ff";
+        if (type === "cafe") return "#8b5cf6";
+        if (type === "chicken") return "#ffcc00";
+        if (type === "dojo") return "#2ad49a";
+        if (type === "tower") return "#0a84ff";
+        if (type === "arcade") return "#ff5aa5";
+        if (type === "gym") return "#ffd66b";
+        return "#c46b25";
+      };
+
+      // door
+      drawLegoDoor(doorX, doorY, doorW, doorH, doorColor(p.type), S.frame, S.knob);
+
+      // window (right)
       const winW = bodyW * 0.38;
       const winH = doorH * 0.72;
       const winX = bodyX + bodyW * 0.56;
       const winY = bodyY + bodyH * 0.54;
-      drawLegoWindow(winX, winY, winW, winH, S);
+      drawLegoWindow(winX, winY, winW, winH, S.frame, S.glassA, S.glassB);
 
-      // community logo on facade (window 위/옆)
-      if (p.group === "community" && p.logo) {
-        const lx = winX + winW * 0.5;
-        const ly = signY + signH + 32;
-        // small dark plate behind logo
-        ctx.save();
-        ctx.globalAlpha = 0.86;
-        ctx.fillStyle = "rgba(10,14,24,0.78)";
-        roundRect(lx - 32, ly - 22, 64, 44, 16);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-        drawLogo(p.logo, lx, ly, 26, "rgba(255,255,255,0.95)");
-        ctx.restore();
-      }
+      // tiny accent bricks on roof corners
+      ctx.save();
+      ctx.globalAlpha = 0.95;
+      ctx.fillStyle = shade(S.accent, +0);
+      roundRect(bodyX + 6, bodyY - 22, 34, 18, 6);
+      ctx.fill();
+      roundRect(bodyX + bodyW - 40, bodyY - 22, 34, 18, 6);
+      ctx.fill();
+      ctx.restore();
 
-      // "오픈 준비중" badge
+      // status badge for soon (small, clean)
       if (p.status !== "open" || !p.url) {
         ctx.save();
         ctx.globalAlpha = 0.92;
@@ -1229,11 +1598,62 @@
       }
     }
 
-    /* ----------------------- Simple props (flowers + lamps) ----------------------- */
+    /* ----------------------- Tree / Lamp / Bench / Flower ----------------------- */
+    function drawTree(o) {
+      const x = o.x,
+        y = o.y,
+        s = o.s;
+
+      groundAO(x - 34 * s, y + 20 * s, 68 * s, 20 * s, 0.13);
+
+      ctx.save();
+      ctx.fillStyle = "#a55a22";
+      roundRect(x - 10 * s, y - 22 * s, 20 * s, 48 * s, 10 * s);
+      ctx.fill();
+      glossyHighlight(x - 10 * s, y - 22 * s, 20 * s, 48 * s, 0.1);
+
+      const base = "#1fb462";
+      const dark = "#168a4a";
+
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(0,0,0,0.16)";
+      ctx.fillStyle = base;
+
+      function blob(cx, cy, rx, ry) {
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+      blob(x - 24 * s, y - 46 * s, 26 * s, 22 * s);
+      blob(x + 6 * s, y - 60 * s, 32 * s, 26 * s);
+      blob(x + 30 * s, y - 44 * s, 26 * s, 22 * s);
+      blob(x + 2 * s, y - 40 * s, 34 * s, 24 * s);
+
+      ctx.globalAlpha = 0.16;
+      ctx.fillStyle = dark;
+      ctx.beginPath();
+      ctx.ellipse(x + 8 * s, y - 44 * s, 30 * s, 22 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.globalAlpha = 0.1;
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.beginPath();
+      ctx.ellipse(x - 6 * s, y - 66 * s, 18 * s, 12 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.restore();
+    }
+
     function drawLamp(o, t) {
-      const x = o.x, y = o.y, s = o.s;
+      const x = o.x,
+        y = o.y,
+        s = o.s;
       const pulse = 0.5 + 0.5 * Math.sin(t * 3.0 + x * 0.01);
-      groundAO(x - 18 * s, y + 18 * s, 36 * s, 18 * s, 0.10);
+
+      groundAO(x - 18 * s, y + 18 * s, 36 * s, 18 * s, 0.1);
 
       ctx.save();
       ctx.fillStyle = "#3f4656";
@@ -1253,9 +1673,32 @@
       ctx.restore();
     }
 
+    function drawBench(o) {
+      const x = o.x,
+        y = o.y,
+        s = o.s;
+      groundAO(x - 40 * s, y + 12 * s, 80 * s, 18 * s, 0.09);
+
+      ctx.save();
+      ctx.fillStyle = "#ffcc00";
+      roundRect(x - 42 * s, y - 2 * s, 84 * s, 18 * s, 10 * s);
+      ctx.fill();
+      glossyHighlight(x - 42 * s, y - 2 * s, 84 * s, 18 * s, 0.12);
+
+      ctx.fillStyle = "rgba(0,0,0,0.22)";
+      roundRect(x - 34 * s, y + 14 * s, 14 * s, 10 * s, 5 * s);
+      ctx.fill();
+      roundRect(x + 20 * s, y + 14 * s, 14 * s, 10 * s, 5 * s);
+      ctx.fill();
+      ctx.restore();
+    }
+
     function drawFlower(o, t) {
-      const x = o.x, y = o.y, s = o.s;
+      const x = o.x,
+        y = o.y,
+        s = o.s;
       const wig = Math.sin(t * 2.1 + x * 0.02) * 1.0;
+
       ctx.save();
       groundAO(x - 10 * s, y + 10 * s, 20 * s, 10 * s, 0.07);
 
@@ -1281,7 +1724,208 @@
       ctx.restore();
     }
 
-    /* ----------------------- Player (minifig fallback) ----------------------- */
+    function drawSign(s) {
+      ctx.save();
+      ctx.translate(s.x, s.y);
+
+      groundAO(-28, 18, 56, 16, 0.1);
+
+      ctx.fillStyle = "#404756";
+      roundRect(-4, -10, 8, 38, 6);
+      ctx.fill();
+
+      softShadow(-72, -62, 144, 44, 0.1);
+
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.strokeStyle = "rgba(0,0,0,0.10)";
+      ctx.lineWidth = 2;
+      roundRect(-72, -62, 144, 44, 18);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(10,14,24,0.92)";
+      ctx.font = "1200 18px system-ui";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(s.text, 0, -40);
+
+      ctx.restore();
+    }
+
+    /* ----------------------- Emblems ----------------------- */
+    function drawEmblem(e) {
+      const x = e.x,
+        y = e.y;
+      const p = portalsByKey(e.key);
+      const S = legoStyleForType(p ? p.type : "arcade");
+      groundAO(x - 22, y + 6, 44, 18, 0.1);
+
+      ctx.save();
+      ctx.translate(x, y);
+
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.strokeStyle = "rgba(0,0,0,0.12)";
+      ctx.lineWidth = 2;
+      roundRect(-20, -6, 40, 18, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      // small dot icon
+      ctx.fillStyle = S.accent;
+      ctx.beginPath();
+      ctx.arc(0, -18, 6.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    /* ----------------------- Cars ----------------------- */
+    function drawCar(c) {
+      const bounce = Math.sin(c.bob) * 0.35;
+      ctx.save();
+      ctx.translate(c.x, c.y + bounce);
+
+      const w = c.w,
+        h = c.h;
+      const base = c.color;
+
+      ctx.save();
+      ctx.globalAlpha = 0.2;
+      ctx.fillStyle = "rgba(10,14,24,0.40)";
+      ctx.beginPath();
+      ctx.ellipse(0, h * 0.58, w * 0.56, h * 0.34, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      if (c.axis === "h") {
+        if (c.dir < 0) ctx.scale(-1, 1);
+
+        ctx.fillStyle = base;
+        roundRect(-w * 0.52, -h * 0.4, w * 1.04, h * 0.8, 12);
+        ctx.fill();
+        glossyHighlight(-w * 0.52, -h * 0.4, w * 1.04, h * 0.8, 0.1);
+
+        ctx.fillStyle = shade(base, +16);
+        roundRect(-w * 0.2, -h * 0.58, w * 0.4, h * 0.28, 10);
+        ctx.fill();
+
+        const g = ctx.createLinearGradient(-w * 0.12, -h * 0.5, w * 0.2, -h * 0.18);
+        g.addColorStop(0, "rgba(210,250,255,0.92)");
+        g.addColorStop(1, "rgba(10,14,24,0.10)");
+        ctx.fillStyle = g;
+        roundRect(-w * 0.18, -h * 0.34, w * 0.36, h * 0.26, 8);
+        ctx.fill();
+
+        ctx.fillStyle = "rgba(10,14,24,0.16)";
+        roundRect(-w * 0.54, h * 0.14, w * 1.08, h * 0.18, 10);
+        ctx.fill();
+
+        ctx.fillStyle = "rgba(10,14,24,0.72)";
+        ctx.beginPath();
+        ctx.arc(-w * 0.3, h * 0.38, h * 0.16, 0, Math.PI * 2);
+        ctx.arc(w * 0.3, h * 0.38, h * 0.16, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.ellipse(w * 0.49, -h * 0.05, w * 0.06, h * 0.12, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        ctx.restore();
+        return;
+      }
+
+      const goingDown = c.dir > 0;
+
+      ctx.fillStyle = base;
+      roundRect(-w * 0.55, -h * 0.5, w * 1.1, h * 1.0, 12);
+      ctx.fill();
+      glossyHighlight(-w * 0.55, -h * 0.5, w * 1.1, h * 1.0, 0.1);
+
+      ctx.fillStyle = shade(base, +16);
+      roundRect(-w * 0.34, -h * 0.62, w * 0.68, h * 0.26, 10);
+      ctx.fill();
+
+      const gg = ctx.createLinearGradient(0, -h * 0.4, 0, h * 0.2);
+      gg.addColorStop(0, "rgba(210,250,255,0.92)");
+      gg.addColorStop(1, "rgba(10,14,24,0.10)");
+      ctx.fillStyle = gg;
+      roundRect(-w * 0.32, -h * 0.3, w * 0.64, h * 0.52, 10);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(10,14,24,0.16)";
+      roundRect(-w * 0.56, h * 0.32, w * 1.12, h * 0.16, 10);
+      ctx.fill();
+
+      if (goingDown) {
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.ellipse(-w * 0.22, h * 0.5, w * 0.12, h * 0.08, 0, 0, Math.PI * 2);
+        ctx.ellipse(w * 0.22, h * 0.5, w * 0.12, h * 0.08, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      } else {
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = "#ff3b30";
+        ctx.beginPath();
+        ctx.ellipse(-w * 0.22, -h * 0.5, w * 0.12, h * 0.08, 0, 0, Math.PI * 2);
+        ctx.ellipse(w * 0.22, -h * 0.5, w * 0.12, h * 0.08, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
+      ctx.restore();
+    }
+
+    /* ----------------------- Footprints ----------------------- */
+    function drawFootprints() {
+      ctx.save();
+      for (const f of footprints) {
+        const a = 0.18 * (1 - f.age / f.life);
+        ctx.globalAlpha = a;
+        ctx.fillStyle = "rgba(10,14,24,0.65)";
+        ctx.beginPath();
+        ctx.ellipse(f.x, f.y, 5.2, 2.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    /* ----------------------- MINIFIG / SPRITE ----------------------- */
+    function drawCapOnHead(hatColor) {
+      ctx.save();
+      ctx.translate(0, -20);
+
+      ctx.fillStyle = hatColor;
+      roundRect(-14, -20, 28, 15, 9);
+      ctx.fill();
+
+      ctx.globalAlpha = 0.14;
+      ctx.fillStyle = "rgba(255,255,255,0.95)";
+      roundRect(-10, -17, 20, 5, 6);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = shade(hatColor, -10);
+      ctx.beginPath();
+      ctx.moveTo(-16, -8);
+      ctx.quadraticCurveTo(0, -2, 16, -8);
+      ctx.quadraticCurveTo(0, -12, -16, -8);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.globalAlpha = 0.16;
+      ctx.fillStyle = "rgba(10,14,24,0.55)";
+      roundRect(-12, -6, 24, 4, 3);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.restore();
+    }
+
     function drawSpriteCharacter(x, y) {
       if (!sprite.loaded || !sprite.img) return false;
 
@@ -1300,20 +1944,24 @@
       ctx.save();
       ctx.translate(x, y + bob);
       if (player.dir === "left") ctx.scale(-1, 1);
+
       const s = player.moving ? 0.98 + 0.02 * Math.sin(player.animT * 10) : 1;
       ctx.scale(s, 1);
+
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
       ctx.drawImage(sprite.img, -baseW / 2, -72, baseW, baseH);
-      ctx.restore();
 
+      ctx.restore();
       return true;
     }
 
-    function drawMinifig(x, y) {
-      const moving = player.moving;
-      const bob = moving ? Math.sin(player.bobT) * 0.14 : 0;
-      const swing = moving ? Math.sin(player.animT * 10) : 0;
+    // 옆모습: 몸통/다리 1개만 보이도록 + 걷는 모션
+    function drawMinifig(x, y, opts = null) {
+      const moving = opts?.moving ?? player.moving;
+      const bob = moving ? Math.sin((opts?.bobT ?? player.bobT)) * 0.14 : 0;
+      const dir = opts?.dir ?? player.dir;
+      const swing = moving ? Math.sin((opts?.animT ?? player.animT) * 10) : 0;
 
       ctx.save();
       ctx.globalAlpha = 0.24;
@@ -1326,13 +1974,16 @@
       ctx.save();
       ctx.translate(x, y + bob);
 
-      const skin = "#ffd66b";
-      const torso = "#0a84ff";
-      const pants = "#3b4251";
-      const hat = "#ff3b30";
+      const side = dir === "left" || dir === "right";
+      if (dir === "left") ctx.scale(-1, 1);
+
+      const skin = opts?.skin || "#ffd66b";
+      const torso = opts?.torso || "#0a84ff";
+      const pants = opts?.pants || "#3b4251";
+      const hat = opts?.hat || "#ff3b30";
       const outline = "rgba(0,0,0,0.18)";
 
-      // head
+      // HEAD
       ctx.save();
       const headG = ctx.createRadialGradient(-6, -24, 6, 0, -18, 22);
       headG.addColorStop(0, "rgba(255,255,255,0.95)");
@@ -1348,69 +1999,185 @@
       ctx.arc(0, -20, 16, 0, Math.PI * 2);
       ctx.stroke();
 
-      // cap
-      ctx.fillStyle = hat;
-      roundRect(-14, -40, 28, 15, 9);
-      ctx.fill();
-      ctx.globalAlpha = 0.16;
-      ctx.fillStyle = "rgba(255,255,255,0.95)";
-      roundRect(-10, -37, 20, 5, 6);
-      ctx.fill();
-      ctx.globalAlpha = 1;
+      drawCapOnHead(hat);
 
       // face
-      ctx.fillStyle = "rgba(10,14,24,0.72)";
-      ctx.beginPath();
-      ctx.arc(-5, -22, 2.2, 0, Math.PI * 2);
-      ctx.arc(5, -22, 2.2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "rgba(10,14,24,0.62)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(0, -18, 6, 0, Math.PI);
-      ctx.stroke();
+      if (dir === "down") {
+        ctx.fillStyle = "rgba(10,14,24,0.72)";
+        ctx.beginPath();
+        ctx.arc(-5, -22, 2.2, 0, Math.PI * 2);
+        ctx.arc(5, -22, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(10,14,24,0.62)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, -18, 6, 0, Math.PI);
+        ctx.stroke();
+      } else if (dir === "up") {
+        ctx.globalAlpha = 0.22;
+        ctx.fillStyle = "rgba(10,14,24,0.78)";
+        roundRect(-9, -26, 18, 10, 6);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      } else {
+        ctx.fillStyle = "rgba(10,14,24,0.72)";
+        ctx.beginPath();
+        ctx.arc(7, -22, 2.1, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(10,14,24,0.62)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(9, -18, 6, -0.25, Math.PI - 0.55);
+        ctx.stroke();
+
+        ctx.globalAlpha = 0.14;
+        ctx.fillStyle = "rgba(10,14,24,0.20)";
+        ctx.beginPath();
+        ctx.ellipse(14.5, -18.5, 2.6, 1.9, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
       ctx.restore();
 
-      // body
       const armSwing = 2.2 * swing;
       const legSwing = 3.0 * swing;
 
-      ctx.fillStyle = torso;
-      roundRect(-14, -4, 28, 28, 12);
-      ctx.fill();
-      glossyHighlight(-14, -4, 28, 28, 0.10);
+      if (!side) {
+        ctx.fillStyle = torso;
+        roundRect(-14, -4, 28, 28, 12);
+        ctx.fill();
+        glossyHighlight(-14, -4, 28, 28, 0.1);
 
-      ctx.fillStyle = torso;
-      roundRect(-22, 2, 10, 18, 8);
-      ctx.fill();
-      roundRect(12, 2, 10, 18, 8);
-      ctx.fill();
+        ctx.fillStyle = torso;
+        roundRect(-22, 2, 10, 18, 8);
+        ctx.fill();
+        roundRect(12, 2, 10, 18, 8);
+        ctx.fill();
 
-      ctx.fillStyle = skin;
-      roundRect(-22, 16 + armSwing, 10, 8, 6);
-      ctx.fill();
-      roundRect(12, 16 - armSwing, 10, 8, 6);
-      ctx.fill();
+        ctx.fillStyle = skin;
+        roundRect(-22, 16 + armSwing, 10, 8, 6);
+        ctx.fill();
+        roundRect(12, 16 - armSwing, 10, 8, 6);
+        ctx.fill();
 
-      ctx.fillStyle = pants;
-      roundRect(-12, 22, 11, 16, 6);
-      ctx.fill();
-      roundRect(1, 22, 11, 16, 6);
-      ctx.fill();
+        ctx.fillStyle = pants;
+        roundRect(-12, 22, 11, 16, 6);
+        ctx.fill();
+        roundRect(1, 22, 11, 16, 6);
+        ctx.fill();
 
-      ctx.fillStyle = "rgba(10,14,24,0.72)";
-      ctx.beginPath();
-      ctx.ellipse(-6, 40 + legSwing, 6, 3, 0, 0, Math.PI * 2);
-      ctx.ellipse(6, 40 - legSwing, 6, 3, 0, 0, Math.PI * 2);
-      ctx.fill();
+        ctx.fillStyle = "rgba(10,14,24,0.72)";
+        ctx.beginPath();
+        ctx.ellipse(-6, 40 + legSwing, 6, 3, 0, 0, Math.PI * 2);
+        ctx.ellipse(6, 40 - legSwing, 6, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // 측면은 "다리 1개만" + 슬림 실루엣
+        ctx.fillStyle = torso;
+        roundRect(-9, -4, 18, 28, 12);
+        ctx.fill();
+        glossyHighlight(-9, -4, 18, 28, 0.1);
+
+        // back arm hint
+        ctx.save();
+        ctx.globalAlpha = 0.22;
+        ctx.fillStyle = shade(torso, -10);
+        roundRect(-16, 4, 8, 14, 8);
+        ctx.fill();
+        ctx.restore();
+
+        // front arm
+        ctx.fillStyle = torso;
+        roundRect(9, 3, 10, 18, 8);
+        ctx.fill();
+        ctx.fillStyle = skin;
+        roundRect(9, 15 + armSwing, 10, 8, 6);
+        ctx.fill();
+
+        // ONE leg
+        ctx.fillStyle = pants;
+        roundRect(2, 22, 12, 16, 6);
+        ctx.fill();
+
+        // foot
+        ctx.fillStyle = "rgba(10,14,24,0.72)";
+        ctx.beginPath();
+        ctx.ellipse(9, 40 + legSwing, 6.2, 3.0, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // subtle edge
+        ctx.globalAlpha = 0.08;
+        ctx.fillStyle = "rgba(10,14,24,0.75)";
+        roundRect(7, -2, 3, 24, 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
 
       ctx.restore();
     }
 
-    /* ----------------------- Title + MiniMap ----------------------- */
+    function drawNPC(key, x, y) {
+      const theme =
+        {
+          archery: { torso: "#34c759", pants: "#3b4251", hat: "#ffcc00", acc: "bow" },
+          janggi: { torso: "#b889ff", pants: "#2a2f3b", hat: "#ff3b30", acc: "stone" },
+          omok: { torso: "#ffffff", pants: "#3b4251", hat: "#0a84ff", acc: "stone2" }
+        }[key] || { torso: "#ffffff", pants: "#3b4251", hat: "#ff3b30", acc: "none" };
+
+      drawMinifig(x, y, { moving: false, dir: "right", torso: theme.torso, pants: theme.pants, hat: theme.hat });
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(-1, 1);
+      if (theme.acc === "bow") {
+        ctx.strokeStyle = "rgba(10,14,24,0.55)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(22, 12, 12, -1.2, 1.2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(12, 12);
+        ctx.lineTo(32, 12);
+        ctx.stroke();
+      } else if (theme.acc === "stone") {
+        ctx.fillStyle = "rgba(10,14,24,0.20)";
+        roundRect(16, 18, 14, 10, 5);
+        ctx.fill();
+        ctx.fillStyle = "#ffffff";
+        roundRect(18, 20, 10, 6, 4);
+        ctx.fill();
+      } else if (theme.acc === "stone2") {
+        ctx.fillStyle = "rgba(255,255,255,0.98)";
+        ctx.beginPath();
+        ctx.arc(22, 22, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(10,14,24,0.92)";
+        ctx.beginPath();
+        ctx.arc(32, 22, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawRoamer(n, palette) {
+      const c = palette[n.colorIdx % palette.length];
+      drawMinifig(n.x, n.y, {
+        moving: true,
+        dir: n.dir,
+        animT: n.t,
+        bobT: n.t * 0.9,
+        torso: c.torso,
+        pants: c.pants,
+        hat: c.hat
+      });
+    }
+
+    /* ----------------------- Title ----------------------- */
     function drawWorldTitle() {
-      const text = "FA 미니월드";
+      const text = "FA미니월드";
       const padX = 18;
+
       ctx.save();
       ctx.globalAlpha = 0.94;
       ctx.font = "1100 20px system-ui";
@@ -1419,6 +2186,7 @@
       const bh = 40;
       const x = VIEW.w * 0.5 - bw * 0.5;
       const y = 14;
+
       ctx.fillStyle = "rgba(255,255,255,0.86)";
       ctx.strokeStyle = "rgba(0,0,0,0.10)";
       ctx.lineWidth = 2;
@@ -1426,11 +2194,13 @@
       ctx.fill();
       ctx.stroke();
       glossyHighlight(x, y, bw, bh, 0.12);
+
       ctx.fillStyle = "rgba(10,14,24,0.92)";
       ctx.fillText(text, x + padX, y + 27);
       ctx.restore();
     }
 
+    /* ----------------------- MiniMap ----------------------- */
     function drawMiniMap() {
       const pad = 16;
       const mw = 220;
@@ -1446,10 +2216,17 @@
       roundRect(x, y, mw, mh, 18);
       ctx.fill();
       ctx.stroke();
-      ctx.restore();
 
-      const ix = x + 10, iy = y + 10, iw = mw - 20, ih = mh - 20;
+      ctx.globalAlpha = 0.1;
+      ctx.fillStyle = "rgba(10,14,24,0.85)";
+      roundRect(x + 10, y + mh - 16, mw - 20, 8, 8);
+      ctx.fill();
+      ctx.globalAlpha = 1;
 
+      const ix = x + 10,
+        iy = y + 10,
+        iw = mw - 20,
+        ih = mh - 20;
       ctx.save();
       roundRect(ix, iy, iw, ih, 14);
       ctx.clip();
@@ -1460,32 +2237,64 @@
       const ox = ix + (iw - WORLD.w * s) * 0.5;
       const oy = iy + (ih - WORLD.h * s) * 0.5;
 
-      const mx = (wx) => ox + wx * s;
-      const my = (wy) => oy + wy * s;
+      function mx(wx) {
+        return ox + wx * s;
+      }
+      function my(wy) {
+        return oy + wy * s;
+      }
 
-      // zones
       ctx.globalAlpha = 0.55;
       ctx.fillStyle = "rgba(38,44,55,0.85)";
-      [zones.game, zones.community].forEach((z) => {
-        roundRect(mx(z.x), my(z.y), z.w * s, z.h * s, 10);
+      for (const r of roads) {
+        roundRect(mx(r.x), my(r.y), r.w * s, r.h * s, 8);
         ctx.fill();
-      });
+      }
       ctx.globalAlpha = 1;
 
-      // portals
       for (const p of portals) {
+        const SS = legoStyleForType(p.type);
         const cx = mx(p.x + p.w * 0.5);
         const cy = my(p.y + p.h * 0.5);
+
         ctx.save();
-        ctx.fillStyle = p.signColor || "rgba(10,132,255,1)";
+        ctx.fillStyle = SS.accent;
         ctx.globalAlpha = 0.95;
         ctx.beginPath();
         ctx.arc(cx, cy, 4.6, 0, Math.PI * 2);
         ctx.fill();
+
+        ctx.globalAlpha = 0.8;
+        ctx.fillStyle = "rgba(10,14,24,0.85)";
+        ctx.font = "900 9px system-ui";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        const short =
+          p.key === "avoid"
+            ? "피"
+            : p.key === "archery"
+              ? "양"
+              : p.key === "janggi"
+                ? "장"
+                : p.key === "omok"
+                  ? "오"
+                  : p.key === "jump"
+                    ? "점"
+                    : p.key === "snow"
+                      ? "눈"
+                      : p.key === "mcd"
+                        ? "맥"
+                        : p.key === "hospital"
+                          ? "병"
+                          : p.key === "pharmacy"
+                            ? "약"
+                            : p.key === "chicken"
+                              ? "치"
+                              : "•";
+        ctx.fillText(short, cx + 6, cy);
         ctx.restore();
       }
 
-      // player
       const px = mx(player.x);
       const py = my(player.y);
       ctx.save();
@@ -1500,15 +2309,35 @@
       ctx.restore();
 
       ctx.restore();
+      ctx.restore();
+    }
+
+    /* ----------------------- Depth sorting ----------------------- */
+    function getFootY(entity) {
+      if (entity.kind === "building") return entity.y + entity.h;
+      if (entity.kind === "car") return entity.y + entity.h;
+      if (entity.kind === "tree") return entity.y + 64 * entity.s;
+      if (entity.kind === "lamp") return entity.y + 68 * entity.s;
+      if (entity.kind === "bench") return entity.y + 32 * entity.s;
+      if (entity.kind === "flower") return entity.y + 12 * entity.s;
+      if (entity.kind === "sign") return entity.y + 40;
+      if (entity.kind === "npc") return entity.y + 30;
+      if (entity.kind === "emblem") return entity.y + 12;
+      if (entity.kind === "signal") return entity.y + 40;
+      if (entity.kind === "roamer") return entity.y + 30;
+      if (entity.kind === "player") return entity.y + 30;
+      return entity.y;
     }
 
     /* ----------------------- Update / Draw loop ----------------------- */
     let lastT = performance.now();
-    let acc = 0, framesCount = 0;
+    let acc = 0,
+      framesCount = 0;
     let lastMobileZoneKey = "";
 
     function update(dt, t) {
-      let ax = 0, ay = 0;
+      let ax = 0,
+        ay = 0;
 
       if (!dragging && !modalState.open) {
         if (keys.has("a") || keys.has("arrowleft")) ax -= 1;
@@ -1539,15 +2368,54 @@
       }
 
       player.bobT += dt * 6.0;
+      addFootprint(dt);
 
-      // active portal
+      for (const c of cars) {
+        c.bob += dt * 3.0;
+        const r = roads.find((rr) => rr._id === c.roadId) || roads[0];
+        if (!r) continue;
+
+        if (c.axis === "h") {
+          c.x += c.dir * c.speed * dt;
+          if (c.dir > 0 && c.x > r.x + r.w + 140) c.x = r.x - 140;
+          if (c.dir < 0 && c.x < r.x - 140) c.x = r.x + r.w + 140;
+        } else {
+          c.y += c.dir * c.speed * dt;
+          if (c.dir > 0 && c.y > r.y + r.h + 140) c.y = r.y - 140;
+          if (c.dir < 0 && c.y < r.y - 140) c.y = r.y + r.h + 140;
+        }
+      }
+
+      for (const c of clouds) {
+        c.x += c.v * (c.layer === 0 ? 1.0 : 0.75) * dt;
+        if (c.x > WORLD.w + 420) {
+          c.x = -420;
+          c.y = 40 + Math.random() * 280;
+          c.s = 0.7 + Math.random() * 1.2;
+          c.v = 9 + Math.random() * 18;
+          c.layer = Math.random() < 0.5 ? 0 : 1;
+        }
+      }
+      for (const b of birds) {
+        b.x += b.v * dt;
+        b.p += dt * 4.2;
+        if (b.x > WORLD.w + 240) {
+          b.x = -200;
+          b.y = 70 + Math.random() * 170;
+          b.v = 22 + Math.random() * 22;
+          b.p = Math.random() * 10;
+        }
+      }
+
       activePortal = null;
       for (const p of portals) {
         const z = portalEnterZone(p);
-        if (circleRectHit(player.x, player.y, player.r, z)) { activePortal = p; break; }
+        if (circleRectHit(player.x, player.y, player.r, z)) {
+          activePortal = p;
+          break;
+        }
       }
 
-      // mobile auto prompt when entering zone
       if (isTouchDevice() && activePortal && !modalState.open) {
         if (lastMobileZoneKey !== activePortal.key) {
           lastMobileZoneKey = activePortal.key;
@@ -1556,62 +2424,83 @@
       }
       if (!activePortal) lastMobileZoneKey = "";
 
-      // toast
+      // 안내 문구
       if (!modalState.open && activePortal) {
         UI.toast.hidden = false;
         const p = activePortal;
         if (p.status === "open" && p.url) {
-          UI.toast.innerHTML = blockSpan(
-            `🧱 <b>${p.label}</b><br/>포탈 앞이에요. <b>Enter</b>를 입력해주세요 (또는 <b>E</b>)`,
-            { bg: "rgba(10,14,24,0.86)" }
-          );
+          UI.toast.innerHTML = blockSpan(`🧱 <b>${p.label}</b><br/>포탈 앞이에요. <b>Enter</b>를 입력해주세요 (또는 <b>E</b>)`, { bg: "rgba(10,14,24,0.86)" });
         } else {
-          UI.toast.innerHTML = blockSpan(
-            `🧱 <b>${p.label}</b><br/>오픈 준비중입니다`,
-            { bg: "rgba(10,14,24,0.82)" }
-          );
+          UI.toast.innerHTML = blockSpan(`🧱 <b>${p.label}</b><br/>오픈 준비중입니다`, { bg: "rgba(10,14,24,0.82)" });
         }
       } else if (!modalState.open) {
         UI.toast.hidden = true;
       }
 
+      for (let i = footprints.length - 1; i >= 0; i--) {
+        footprints[i].age += dt;
+        if (footprints[i].age >= footprints[i].life) footprints.splice(i, 1);
+      }
+
+      const roamerPalette = stepRoamers(dt);
+
       updateCamera(dt);
 
       UI.coord.textContent = `x: ${Math.round(player.x)} · y: ${Math.round(player.y)}`;
+
       acc += dt;
       framesCount++;
       if (acc >= 0.45) {
         UI.fps.textContent = `fps: ${Math.round(framesCount / acc)}`;
-        acc = 0; framesCount = 0;
+        acc = 0;
+        framesCount = 0;
       }
+
+      return roamerPalette;
     }
 
-    function draw(t, dt) {
+    function draw(t, roamerPalette) {
       ctx.clearRect(0, 0, VIEW.w, VIEW.h);
 
       ctx.save();
       ctx.translate(-cam.x, -cam.y);
 
-      drawSkyWorld();
-      drawCloudsWorld(dt);
+      drawSkyWorld(t);
+      drawCloudsWorld();
       drawGroundWorld();
+      drawRoadsAndSidewalks();
+      drawFootprints();
 
-      // zones labels inside (깔끔하게 작은 텍스트)
-      drawZoneLabel(zones.game);
-      drawZoneLabel(zones.community);
+      const items = [];
+      for (const p of portals) items.push({ kind: "building", ref: p, footY: getFootY({ kind: "building", y: p.y, h: p.h }) });
+      for (const c of cars) items.push({ kind: "car", ref: c, footY: getFootY(c) });
+      for (const pr of props) items.push({ kind: pr.kind, ref: pr, footY: getFootY(pr) });
+      for (const s of signs) items.push({ kind: "sign", ref: s, footY: getFootY({ kind: "sign", y: s.y }) });
+      for (const e of portalEmblems) items.push({ kind: "emblem", ref: e, footY: getFootY(e) });
+      for (const n of portalNPCs) items.push({ kind: "npc", ref: n, footY: getFootY(n) });
+      for (const sg of signals) items.push({ kind: "signal", ref: sg, footY: getFootY({ kind: "signal", y: sg.y }) });
+      for (const r of roamers) items.push({ kind: "roamer", ref: r, footY: getFootY({ kind: "roamer", y: r.y }) });
+      items.push({ kind: "player", ref: player, footY: getFootY({ kind: "player", y: player.y }) });
 
-      // buildings
-      for (const p of portals) drawPortalBuilding(p, t);
+      items.sort((a, b) => a.footY - b.footY);
 
-      // props
-      for (const pr of props) {
-        if (pr.kind === "lamp") drawLamp(pr, t);
-        else if (pr.kind === "flower") drawFlower(pr, t);
-      }
-
-      // player
-      if (!(SPRITE_SRC && USE_SPRITE_IF_LOADED && drawSpriteCharacter(player.x, player.y))) {
-        drawMinifig(player.x, player.y);
+      for (const it of items) {
+        if (it.kind === "building") drawPortalBuilding(it.ref, t);
+        else if (it.kind === "car") drawCar(it.ref);
+        else if (it.kind === "tree") drawTree(it.ref);
+        else if (it.kind === "lamp") drawLamp(it.ref, t);
+        else if (it.kind === "bench") drawBench(it.ref);
+        else if (it.kind === "flower") drawFlower(it.ref, t);
+        else if (it.kind === "sign") drawSign(it.ref);
+        else if (it.kind === "emblem") drawEmblem(it.ref);
+        else if (it.kind === "npc") drawNPC(it.ref.key, it.ref.x, it.ref.y);
+        else if (it.kind === "signal") drawSignal(it.ref, t);
+        else if (it.kind === "roamer") drawRoamer(it.ref, roamerPalette);
+        else if (it.kind === "player") {
+          if (!(SPRITE_SRC && USE_SPRITE_IF_LOADED && drawSpriteCharacter(player.x, player.y))) {
+            drawMinifig(player.x, player.y);
+          }
+        }
       }
 
       ctx.restore();
@@ -1620,36 +2509,20 @@
       drawWorldTitle();
       drawMiniMap();
 
-      // vignette
+      // subtle vignette
       ctx.save();
       const vg = ctx.createRadialGradient(
-        VIEW.w * 0.5, VIEW.h * 0.45, Math.min(VIEW.w, VIEW.h) * 0.25,
-        VIEW.w * 0.5, VIEW.h * 0.5, Math.max(VIEW.w, VIEW.h) * 0.72
+        VIEW.w * 0.5,
+        VIEW.h * 0.45,
+        Math.min(VIEW.w, VIEW.h) * 0.25,
+        VIEW.w * 0.5,
+        VIEW.h * 0.5,
+        Math.max(VIEW.w, VIEW.h) * 0.72
       );
       vg.addColorStop(0, "rgba(10,14,24,0.00)");
       vg.addColorStop(1, "rgba(10,14,24,0.06)");
       ctx.fillStyle = vg;
       ctx.fillRect(0, 0, VIEW.w, VIEW.h);
-      ctx.restore();
-    }
-
-    function drawZoneLabel(z) {
-      const text = z.title;
-      const x = z.x + 24;
-      const y = z.y + 22;
-      ctx.save();
-      ctx.globalAlpha = 0.95;
-      ctx.fillStyle = "rgba(255,255,255,0.88)";
-      ctx.strokeStyle = "rgba(0,0,0,0.10)";
-      ctx.lineWidth = 2;
-      roundRect(x, y, 160, 42, 16);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "rgba(10,14,24,0.92)";
-      ctx.font = "1100 18px system-ui";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(text, x + 80, y + 22);
       ctx.restore();
     }
 
@@ -1662,8 +2535,8 @@
       lastT = now;
 
       try {
-        update(dt, t);
-        draw(t, dt);
+        const roamerPalette = update(dt, t);
+        draw(t, roamerPalette);
       } catch (err) {
         console.error(err);
         UI.toast.hidden = false;
@@ -1674,28 +2547,35 @@
     }
 
     /* ----------------------- Portal click ----------------------- */
-    canvas.addEventListener("pointerdown", (e) => {
-      const p = getPointer(e);
-      const w = screenToWorld(p.x, p.y);
-
-      // PC: 포탈 존 클릭하면 모달
-      if (activePortal && !modalState.open) {
-        const z = portalEnterZone(activePortal);
-        if (w.x >= z.x - 20 && w.x <= z.x + z.w + 20 && w.y >= z.y - 20 && w.y <= z.y + z.h + 20) {
-          openPortalUI(activePortal);
+    canvas.addEventListener(
+      "pointerdown",
+      (e) => {
+        // PC: 포탈 존 클릭하면 모달
+        const p = getPointer(e);
+        const w = screenToWorld(p.x, p.y);
+        if (activePortal && !modalState.open) {
+          const z = portalEnterZone(activePortal);
+          if (w.x >= z.x - 20 && w.x <= z.x + z.w + 20 && w.y >= z.y - 20 && w.y <= z.y + z.h + 20) {
+            openPortalUI(activePortal);
+          }
         }
-      }
 
-      // mobile double tap while modal open -> enter
-      if (isTouchDevice() && modalState.open && modalState.portal) {
-        const nowT = performance.now();
-        if (nowT - lastMobileTap < 320) confirmEnter(modalState.portal);
-        lastMobileTap = nowT;
-      }
-    }, { passive: true });
+        // mobile double tap on canvas while modal open -> enter
+        if (isTouchDevice() && modalState.open && modalState.portal) {
+          const now = performance.now();
+          if (now - lastMobileTap < 320) confirmEnter(modalState.portal);
+          lastMobileTap = now;
+        }
+      },
+      { passive: true }
+    );
 
     /* ----------------------- Start ----------------------- */
     resize();
+    for (const b of birds) {
+      b.x = Math.random() * WORLD.w;
+      b.y = 70 + Math.random() * 170;
+    }
     requestAnimationFrame(loop);
   });
 })();
