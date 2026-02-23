@@ -489,9 +489,20 @@ function inZoneName(x, y) {
       };
 
       for (const r of roads) {
-        const n = r.axis === "h" ? 3 + ((Math.random() * 2) | 0) : 2 + ((Math.random() * 2) | 0);
-        for (let i = 0; i < n; i++) cars.push(makeCar(r, r.axis));
-      }
+
+  // 🚫 존 내부 도로는 차량 생성 안함
+  if (
+  (ZONES.game && rectsOverlap(r, ZONES.game, 18)) ||
+  (ZONES.community && rectsOverlap(r, ZONES.community, 18)) ||
+  (ZONES.ads && rectsOverlap(r, ZONES.ads, 18))
+) continue;
+
+  const n = r.axis === "h"
+    ? 3 + ((Math.random() * 2) | 0)
+    : 2 + ((Math.random() * 2) | 0);
+
+  for (let i = 0; i < n; i++) cars.push(makeCar(r, r.axis));
+}
     }
 
     /* ----------------------- Props / Signs / NPCs ----------------------- */
