@@ -1859,7 +1859,6 @@ ctx.globalAlpha = 0.95;
 
 // 방향별로 도로쪽으로 확장
 if (gate.side === "road_left") {
-
   ctx.fillStyle = "rgba(255,255,255,0.85)";
   roundRect(gate.x + gate.w, gate.y + gate.h * 0.35, 48, plazaDepth, 8);
   ctx.fill();
@@ -1871,7 +1870,7 @@ if (gate.side === "road_left") {
 }
 
 if (gate.side === "road_right") {
-
+  ctx.globalAlpha = 0.95;
   ctx.fillStyle = "rgba(255,255,255,0.85)";
   roundRect(gate.x - 48, gate.y + gate.h * 0.35, 48, plazaDepth, 8);
   ctx.fill();
@@ -1883,7 +1882,7 @@ if (gate.side === "road_right") {
 }
 
 if (gate.side === "top") {
-
+  ctx.globalAlpha = 0.95;
   ctx.fillStyle = "rgba(255,255,255,0.85)";
   roundRect(gate.x + gate.w * 0.35, gate.y + gate.h, gate.w * 0.3, 48, 8);
   ctx.fill();
