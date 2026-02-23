@@ -1262,16 +1262,16 @@ paris:  { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.
 
     function drawGroundWorld() {
       ctx.save();
-      ctx.fillStyle = grassPattern || "#35d572";
-      ctx.fillRect(0, WORLD.h * 0.3, WORLD.w, WORLD.h * 0.7);
+      ctx.fillStyle = grassPattern || "#2f6f45";
+      ctx.fillRect(0, 0, WORLD.w, WORLD.h);
       ctx.restore();
 
       ctx.save();
-      const sh = ctx.createLinearGradient(0, WORLD.h * 0.3, 0, WORLD.h);
+      const sh = ctx.createLinearGradient(0, 0, 0, WORLD.h);
       sh.addColorStop(0, "rgba(10,14,24,0.00)");
       sh.addColorStop(1, "rgba(10,14,24,0.08)");
       ctx.fillStyle = sh;
-      ctx.fillRect(0, WORLD.h * 0.3, WORLD.w, WORLD.h * 0.7);
+      ctx.fillRect(0, 0, WORLD.w, WORLD.h);
       ctx.restore();
 
       ctx.save();
