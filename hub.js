@@ -1858,44 +1858,43 @@ const plazaDepth = 36;
 ctx.globalAlpha = 0.95;
 
 // 방향별로 도로쪽으로 확장
-if (g.side === "road_left") {
+if (gate.side === "road_left") {
 
   ctx.fillStyle = "rgba(255,255,255,0.85)";
-  roundRect(g.x + g.w, g.y + g.h * 0.35, 48, plazaDepth, 8);
+  roundRect(gate.x + gate.w, gate.y + gate.h * 0.35, 48, plazaDepth, 8);
   ctx.fill();
 
   ctx.globalAlpha = 0.35;
   ctx.fillStyle = "#262c37";
-  roundRect(g.x + g.w + 4, g.y + g.h * 0.35 + 4, 40, plazaDepth - 8, 6);
+  roundRect(gate.x + gate.w + 4, gate.y + gate.h * 0.35 + 4, 40, plazaDepth - 8, 6);
   ctx.fill();
 }
 
-if (g.side === "road_right") {
+if (gate.side === "road_right") {
 
   ctx.fillStyle = "rgba(255,255,255,0.85)";
-  roundRect(g.x - 48, g.y + g.h * 0.35, 48, plazaDepth, 8);
+  roundRect(gate.x - 48, gate.y + gate.h * 0.35, 48, plazaDepth, 8);
   ctx.fill();
 
   ctx.globalAlpha = 0.35;
   ctx.fillStyle = "#262c37";
-  roundRect(g.x - 44, g.y + g.h * 0.35 + 4, 40, plazaDepth - 8, 6);
+  roundRect(gate.x - 44, gate.y + gate.h * 0.35 + 4, 40, plazaDepth - 8, 6);
   ctx.fill();
 }
 
-if (g.side === "top") {
+if (gate.side === "top") {
 
   ctx.fillStyle = "rgba(255,255,255,0.85)";
-  roundRect(g.x + g.w * 0.35, g.y + g.h, g.w * 0.3, 48, 8);
+  roundRect(gate.x + gate.w * 0.35, gate.y + gate.h, gate.w * 0.3, 48, 8);
   ctx.fill();
 
   ctx.globalAlpha = 0.35;
   ctx.fillStyle = "#262c37";
-  roundRect(g.x + g.w * 0.35 + 4, g.y + g.h + 4, g.w * 0.3 - 8, 40, 6);
+  roundRect(gate.x + gate.w * 0.35 + 4, gate.y + gate.h + 4, gate.w * 0.3 - 8, 40, 6);
   ctx.fill();
 }
 
 ctx.restore();
-}
 
     function drawPortalBuilding(p, t) {
       // LEGO facade style
