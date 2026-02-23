@@ -518,12 +518,41 @@ function inZoneName(x, y) {
     }
 
     function isInsideBuildingBuffer(x, y) {
-      for (const p of portals) {
-        const pad = 120;
-        if (x >= p.x - pad && x <= p.x + p.w + pad && y >= p.y - pad && y <= p.y + p.h + pad) return true;
-      }
-      return false;
-    }
+  // 기존 포탈 버퍼
+  for (const p of portals) {
+    const pad = 120;
+    if (x >= p.x - pad && x <= p.x + p.w + pad &&
+        y >= p.y - pad && y <= p.y + p.h + pad) return true;
+  }
+
+  // AD 게이트 주변 비우기
+  const adKeys = new Set(["mcd", "bbq", "baskin", "paris"]);
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  let found = false;
+
+  for (const p of portals) {
+    if (!adKeys.has(p.key)) continue;
+    found = true;
+    minX = Math.min(minX, p.x);
+    minY = Math.min(minY, p.y);
+    maxX = Math.max(maxX, p.x + p.w);
+    maxY = Math.max(maxY, p.y + p.h);
+  }
+
+  if (found) {
+    const gateBuffer = {
+      x: (minX + maxX) * 0.5 - 220,
+      y: minY - 220,
+      w: 440,
+      h: 220
+    };
+
+    if (x >= gateBuffer.x && x <= gateBuffer.x + gateBuffer.w &&
+        y >= gateBuffer.y && y <= gateBuffer.y + gateBuffer.h) return true;
+  }
+
+  return false;
+}
 
     function seedProps() {
       props.length = 0;
