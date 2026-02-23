@@ -1433,7 +1433,7 @@ paris:  { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.
     // entrance (upgrade) — AD is premium gate, others keep simple
 if (z.label === "AD ZONE") {
   const cx = z.x + z.w / 2;
-  const baseY = z.y + z.h - 26;
+  const baseY = z.y + 22;
 
   // carpet / ramp
   ctx.save();
@@ -1470,7 +1470,7 @@ if (z.label === "AD ZONE") {
   const pH = 110;
   const topH = 42;
   const gX = cx - gateW / 2;
-  const gY = z.y + z.h - 26 - pH - 10;
+  const gY = z.y - 10;
 
   ctx.save();
   softShadow(gX + 12, gY + 18, gateW - 24, pH + topH, 0.10);
