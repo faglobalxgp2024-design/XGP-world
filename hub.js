@@ -1851,6 +1851,50 @@ paris:  { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.
     ctx.fillRect(rampX + 10 + i * 24, rampY + 3, 12, 10);
   }
   ctx.restore();
+      // ===== road connection plaza =====
+ctx.save();
+
+const plazaDepth = 36;
+ctx.globalAlpha = 0.95;
+
+// 방향별로 도로쪽으로 확장
+if (g.side === "road_left") {
+
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  roundRect(g.x + g.w, g.y + g.h * 0.35, 48, plazaDepth, 8);
+  ctx.fill();
+
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = "#262c37";
+  roundRect(g.x + g.w + 4, g.y + g.h * 0.35 + 4, 40, plazaDepth - 8, 6);
+  ctx.fill();
+}
+
+if (g.side === "road_right") {
+
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  roundRect(g.x - 48, g.y + g.h * 0.35, 48, plazaDepth, 8);
+  ctx.fill();
+
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = "#262c37";
+  roundRect(g.x - 44, g.y + g.h * 0.35 + 4, 40, plazaDepth - 8, 6);
+  ctx.fill();
+}
+
+if (g.side === "top") {
+
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  roundRect(g.x + g.w * 0.35, g.y + g.h, g.w * 0.3, 48, 8);
+  ctx.fill();
+
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = "#262c37";
+  roundRect(g.x + g.w * 0.35 + 4, g.y + g.h + 4, g.w * 0.3 - 8, 40, 6);
+  ctx.fill();
+}
+
+ctx.restore();
 }
 
     function drawPortalBuilding(p, t) {
