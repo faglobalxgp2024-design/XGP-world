@@ -591,6 +591,11 @@ function inZoneName(x, y) {
         if (Math.random() < 0.65) props.push({ kind: "flower", x: p.x + p.w * 0.8, y: p.y + p.h + 18, s: 1.0 });
       }
 
+      const arch = portalsByKey("archery");
+      const jang = portalsByKey("janggi");
+      if (arch) signs.push({ x: arch.x + arch.w * 0.5 - 10, y: arch.y + arch.h + 90, text: "양궁 →" });
+      if (jang) signs.push({ x: jang.x + jang.w * 0.5 + 10, y: jang.y + jang.h + 90, text: "← 장기" });
+
       for (const p of portals) {
         const ex = p.x + p.w * 0.5;
         const ey = p.y + p.h * 0.92;
@@ -1749,36 +1754,21 @@ if (z.label === "AD ZONE") {
       ctx.fill();
       ctx.globalAlpha = 1;
 
-      // text (force bigger + auto-fit)
-ctx.save();
+      // text
+      ctx.fillStyle = "rgba(255,255,255,0.98)";
+      ctx.font = `1200 ${textSize}px system-ui`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, x + w * 0.5, y + h * 0.55);
 
-ctx.textAlign = "center";
-ctx.textBaseline = "middle";
+      // small “emboss” shadow behind letters
+      ctx.globalAlpha = 0.12;
+      ctx.fillStyle = "rgba(0,0,0,0.85)";
+      ctx.fillText(text, x + w * 0.5 + 1.2, y + h * 0.55 + 1.2);
+      ctx.globalAlpha = 1;
 
-const cx = x + w * 0.5;
-const cy = y + h * 0.56;
-
-let fs = textSize + 6;   // 시작 폰트 크게
-const maxW = w - 22;
-
-ctx.font = `1200 ${fs}px system-ui`;
-while (ctx.measureText(text).width > maxW && fs > 16) {
-  fs -= 1;
-  ctx.font = `1200 ${fs}px system-ui`;
-}
-
-// main
-ctx.fillStyle = "rgba(255,255,255,0.98)";
-ctx.fillText(text, cx, cy);
-
-// embossed shadow
-ctx.globalAlpha = 0.14;
-ctx.fillStyle = "rgba(0,0,0,0.85)";
-ctx.fillText(text, cx + 1.2, cy + 1.2);
-ctx.globalAlpha = 1;
-
-ctx.restore();
-      }
+      ctx.restore();
+    }
 
     function drawLegoWindow(x, y, w, h, frameCol, glassA, glassB) {
       ctx.save();
@@ -1925,7 +1915,7 @@ if (p.key === "paris")    S.sign = "#0a84ff";
       const signH = 56;
       const signX = bodyX + signPad;
       const signY = p.y + 10;
-      const textSize = p.size === "L" ? 34 : p.size === "M" ? 46 : 44;
+      const textSize = p.size === "L" ? 34 : p.size === "M" ? 30 : 28;
       drawLegoSignPlaque(signX, signY, signW, signH, p.label, textSize, S.sign);
 
       // door & window positions (like photo)
