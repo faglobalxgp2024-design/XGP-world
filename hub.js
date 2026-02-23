@@ -3022,5 +3022,4 @@ if (p.key === "paris")    S.sign = "#0a84ff";
       b.y = 70 + Math.random() * 170;
     }
     requestAnimationFrame(loop);
-  });
-})();
+  })();
