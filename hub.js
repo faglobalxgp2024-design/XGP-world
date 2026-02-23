@@ -1030,7 +1030,18 @@ ZONES.ads = {
       buildPatterns();
       layoutRoadNetwork();
 
+      const ZONE_OF = {
+  // GAME
+  jump: "game", archery: "game", omok: "game", avoid: "game", janggi: "game", snow: "game",
+
+  // COMMUNITY
+  twitter: "community", telegram: "community", wallet: "community", market: "community", support: "community",
+
+  // ADS
+  mcd: "ads", bbq: "ads", baskin: "ads", paris: "ads",
+};
       const desired = {
+      
 // ---------------- GAME ZONE (left) : 6 games ----------------
 jump:    { x: ZONES.game.x + ZONES.game.w * 0.20, y: ZONES.game.y + ZONES.game.h * 0.30 },
 archery: { x: ZONES.game.x + ZONES.game.w * 0.50, y: ZONES.game.y + ZONES.game.h * 0.30 },
@@ -1058,11 +1069,25 @@ paris:  { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.
 };
 
       for (const p of portals) {
-        const d = desired[p.key] || { x: WORLD.w * 0.5, y: WORLD.h * 0.5 };
-        const rect = placePortalAvoidRoad(p, d.x, d.y);
-        p.x = clamp(rect.x, WORLD.margin, WORLD.w - WORLD.margin - p.w);
-        p.y = clamp(rect.y, WORLD.margin, WORLD.h - WORLD.margin - p.h);
-      }
+  const d = desired[p.key] || { x: WORLD.w * 0.5, y: WORLD.h * 0.5 };
+
+  const zn = ZONE_OF[p.key];
+  const z = zn ? ZONES[zn] : null;
+
+  if (z) {
+    // ✅ ZONE 안 포탈은 "도로 회피"로 튀지 않게: 존 내부에서만 고정 배치
+    const pad = 18;
+
+    p.x = clamp(d.x - p.w / 2, z.x + pad, z.x + z.w - pad - p.w);
+    p.y = clamp(d.y - p.h / 2, z.y + pad, z.y + z.h - pad - p.h);
+
+  } else {
+    // ZONE 밖 포탈만 도로 회피 적용
+    const rect = placePortalAvoidRoad(p, d.x, d.y);
+    p.x = clamp(rect.x, WORLD.margin, WORLD.w - WORLD.margin - p.w);
+    p.y = clamp(rect.y, WORLD.margin, WORLD.h - WORLD.margin - p.h);
+  }
+}
 
       buildGroundPatches();
       seedCars();
