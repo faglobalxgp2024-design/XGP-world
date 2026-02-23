@@ -1910,7 +1910,7 @@ if (p.key === "paris")    S.sign = "#0a84ff";
       const signH = 56;
       const signX = bodyX + signPad;
       const signY = p.y + 10;
-      const textSize = p.size === "L" ? 34 : p.size === "M" ? 38 : 36;
+      const textSize = p.size === "L" ? 34 : p.size === "M" ? 46 : 44;
       drawLegoSignPlaque(signX, signY, signW, signH, p.label, textSize, S.sign);
 
       // door & window positions (like photo)
