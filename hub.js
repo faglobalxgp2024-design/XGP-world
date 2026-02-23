@@ -333,11 +333,11 @@ const portals = [
   { key: "jump",    label: "JUMP",      status: "soon", url: "",                                                         type: "gym",     size: "M", x: 0, y: 0, w: 0, h: 0 },
 
   // ---------- COMMUNITY ZONE (5) ----------
-  { key: "twitter",   label: "TWITTER",   status: "soon", url: "", type: "social",  size: "M", x: 0, y: 0, w: 0, h: 0 },
-  { key: "telegram",  label: "TELEGRAM",  status: "soon", url: "", type: "social",  size: "M", x: 0, y: 0, w: 0, h: 0 },
-  { key: "wallet",    label: "WALLET",    status: "soon", url: "", type: "wallet",  size: "M", x: 0, y: 0, w: 0, h: 0 },
-  { key: "market",    label: "MARKET",    status: "soon", url: "", type: "market",  size: "M", x: 0, y: 0, w: 0, h: 0 },
-  { key: "support",   label: "SUPPORT",   status: "soon", url: "", type: "support", size: "M", x: 0, y: 0, w: 0, h: 0 },
+  { key: "twitter", label: "TWITTER", status: "open", url: "https://x.com/FAGLOBAL_", type: "social", size: "M", x: 0, y: 0, w: 0, h: 0 },
+  { key: "telegram", label: "TELEGRAM", status: "open", url: "https://t.me/faglobalgp", type: "social", size: "M", x: 0, y: 0, w: 0, h: 0 },
+  { key: "wallet", label: "WALLET", status: "open", url: "https://faglobal.site/", type: "wallet", size: "M", x: 0, y: 0, w: 0, h: 0 },
+  { key: "market", label: "MARKET", status: "open", url: "https://famarket.store/", type: "market", size: "M", x: 0, y: 0, w: 0, h: 0 },
+  { key: "support", label: "SUPPORT", status: "open", url: "", message: "문의: faglobal.xgp2024@gmail.com", type: "support", size: "M", x: 0, y: 0, w: 0, h: 0 },
 
   // ---------- AD ZONE (4) ----------
   { key: "mcd",     label: "McDonald's", status: "soon", url: "", type: "mcd",     size: "M", x: 0, y: 0, w: 0, h: 0 },
