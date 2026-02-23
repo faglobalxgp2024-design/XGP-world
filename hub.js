@@ -591,11 +591,6 @@ function inZoneName(x, y) {
         if (Math.random() < 0.65) props.push({ kind: "flower", x: p.x + p.w * 0.8, y: p.y + p.h + 18, s: 1.0 });
       }
 
-      const arch = portalsByKey("archery");
-      const jang = portalsByKey("janggi");
-      if (arch) signs.push({ x: arch.x + arch.w * 0.5 - 10, y: arch.y + arch.h + 90, text: "양궁 →" });
-      if (jang) signs.push({ x: jang.x + jang.w * 0.5 + 10, y: jang.y + jang.h + 90, text: "← 장기" });
-
       for (const p of portals) {
         const ex = p.x + p.w * 0.5;
         const ey = p.y + p.h * 0.92;
