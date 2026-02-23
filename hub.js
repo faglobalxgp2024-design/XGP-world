@@ -1851,10 +1851,10 @@ paris:  { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.
     ctx.fillRect(rampX + 10 + i * 24, rampY + 3, 12, 10);
   }
   ctx.restore();
+      
       // ===== road connection plaza =====
-ctx.save();
-
 const plazaDepth = 36;
+ctx.save();
 ctx.globalAlpha = 0.95;
 
 // 방향별로 도로쪽으로 확장
