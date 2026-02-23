@@ -1778,6 +1778,7 @@ ctx.fillText(text, cx + 1.2, cy + 1.2);
 ctx.globalAlpha = 1;
 
 ctx.restore();
+      }
 
     function drawLegoWindow(x, y, w, h, frameCol, glassA, glassB) {
       ctx.save();
