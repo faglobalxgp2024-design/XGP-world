@@ -1040,11 +1040,32 @@ function makeGateRect(side, z, opt = {}) {
   return { x: z.x + z.w * 0.5 - w / 2, y: z.y + (opt.inset ?? 8), w, h, side: "top" };
 }
 
-// game: entrance on RIGHT edge (faces center road)
-ZONES.game.gate = makeGateRect("right", ZONES.game, { w: 240, h: 180, cyFrac: 0.52, inset: 10 });
+// ---- Road-facing gates (no roads[] needed) ----
+const gateW = 260;
+const gateH = 180;
 
-// community: entrance on LEFT edge (faces center road)
-ZONES.community.gate = makeGateRect("left", ZONES.community, { w: 240, h: 180, cyFrac: 0.52, inset: 10 });
+// center vertical road is near WORLD.w * 0.5, road width is about 124, so half ~62
+const centerRoadHalf = 62;
+
+const gateY = (WORLD.h * 0.50) - gateH / 2;
+
+// GAME gate: left of center road
+ZONES.game.gate = {
+  x: (WORLD.w * 0.5) - centerRoadHalf - 18 - gateW,
+  y: gateY,
+  w: gateW,
+  h: gateH,
+  side: "road_left",
+};
+
+// COMMUNITY gate: right of center road
+ZONES.community.gate = {
+  x: (WORLD.w * 0.5) + centerRoadHalf + 18,
+  y: gateY,
+  w: gateW,
+  h: gateH,
+  side: "road_right",
+};
 
 // ads: entrance on TOP edge for now (we'll adjust later with screenshot)
 ZONES.ads.gate = makeGateRect("top", ZONES.ads, { w: 260, h: 190, inset: 10 });
