@@ -341,7 +341,7 @@ const portals = [
 
   // ---------- AD ZONE (4) ----------
   { key: "mcd",     label: "McDonald's", status: "soon", url: "", type: "mcd",     size: "M", x: 0, y: 0, w: 0, h: 0 },
-  { key: "bbq",     label: "BBQ",        status: "soon", url: "", type: "bbq",     size: "M", x: 0, y: 0, w: 0, h: 0 },
+  { key: "bbq", label: "BBQ", status: "open", url: "https://youtu.be/CP28c0QvRig", type: "bbq", size: "M", x: 0, y: 0, w: 0, h: 0 },
   { key: "baskin",  label: "BASKIN",     status: "soon", url: "", type: "baskin",  size: "M", x: 0, y: 0, w: 0, h: 0 },
   { key: "paris",   label: "PARIS",      status: "soon", url: "", type: "paris",   size: "M", x: 0, y: 0, w: 0, h: 0 },
 ];
