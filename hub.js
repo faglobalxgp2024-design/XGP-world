@@ -1472,6 +1472,10 @@ paris:  { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.
   drawZone(ZONES.game);
   drawZone(ZONES.community);
   drawZone(ZONES.ads);
+// gates (entrances)
+  drawLegoGate(ZONES.game.gate, "GAME ZONE", ZONES.game.color);
+  drawLegoGate(ZONES.community.gate, "COMMUNITY", ZONES.community.color);
+  drawLegoGate(ZONES.ads.gate, "AD ZONE", ZONES.ads.color);
 }
 
     function drawSignal(s, t) {
