@@ -1749,21 +1749,35 @@ if (z.label === "AD ZONE") {
       ctx.fill();
       ctx.globalAlpha = 1;
 
-      // text
-      ctx.fillStyle = "rgba(255,255,255,0.98)";
-      ctx.font = `1200 ${textSize}px system-ui`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(text, x + w * 0.5, y + h * 0.55);
+      // text (force bigger + auto-fit)
+ctx.save();
 
-      // small “emboss” shadow behind letters
-      ctx.globalAlpha = 0.12;
-      ctx.fillStyle = "rgba(0,0,0,0.85)";
-      ctx.fillText(text, x + w * 0.5 + 1.2, y + h * 0.55 + 1.2);
-      ctx.globalAlpha = 1;
+ctx.textAlign = "center";
+ctx.textBaseline = "middle";
 
-      ctx.restore();
-    }
+const cx = x + w * 0.5;
+const cy = y + h * 0.56;
+
+let fs = textSize + 6;   // 시작 폰트 크게
+const maxW = w - 22;
+
+ctx.font = `1200 ${fs}px system-ui`;
+while (ctx.measureText(text).width > maxW && fs > 16) {
+  fs -= 1;
+  ctx.font = `1200 ${fs}px system-ui`;
+}
+
+// main
+ctx.fillStyle = "rgba(255,255,255,0.98)";
+ctx.fillText(text, cx, cy);
+
+// embossed shadow
+ctx.globalAlpha = 0.14;
+ctx.fillStyle = "rgba(0,0,0,0.85)";
+ctx.fillText(text, cx + 1.2, cy + 1.2);
+ctx.globalAlpha = 1;
+
+ctx.restore();
 
     function drawLegoWindow(x, y, w, h, frameCol, glassA, glassB) {
       ctx.save();
