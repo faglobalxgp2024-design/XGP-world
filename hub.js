@@ -74,6 +74,35 @@
     canvas.style.userSelect = "none";
     canvas.style.webkitUserSelect = "none";
     canvas.style.imageRendering = "auto";
+    canvas.style.imageRendering = "auto";
+
+// ===== UI CLEANUP PATCH =====
+const topbar =
+  document.querySelector("header.topbar") ||
+  document.querySelector("#topbar") ||
+  document.querySelector("header");
+
+if (topbar) topbar.style.display = "none";
+
+document.documentElement.style.margin = "0";
+document.documentElement.style.padding = "0";
+document.body.style.margin = "0";
+document.body.style.padding = "0";
+document.body.style.overflow = "hidden";
+
+const wrap = document.querySelector("main.wrap") || document.querySelector(".wrap");
+if (wrap) {
+  wrap.style.margin = "0";
+  wrap.style.padding = "0";
+  wrap.style.maxWidth = "none";
+  wrap.style.width = "100%";
+}
+
+canvas.style.width = "100vw";
+canvas.style.height = "100vh";
+canvas.style.borderRadius = "0";
+
+// Portal 안내(토스트)
 
     // Portal 안내(토스트): 중앙쪽(상단-중앙) / 블러/백드롭 제거 / 가독성 크게
     const toast = ensureEl("toast", "div");
