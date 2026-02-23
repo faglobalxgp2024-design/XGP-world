@@ -1430,11 +1430,121 @@ paris:  { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.
     ctx.textBaseline = "middle";
     ctx.fillText(z.label, z.x + z.w / 2, z.y - 30);
 
-    // entrance strip
-    ctx.fillStyle = "#ffffff";
-    ctx.globalAlpha = 0.9;
-    roundRect(z.x + z.w / 2 - 60, z.y + z.h - 16, 120, 8, 4);
-    ctx.fill();
+    // entrance (upgrade) — AD is premium gate, others keep simple
+if (z.label === "AD ZONE") {
+  const cx = z.x + z.w / 2;
+  const baseY = z.y + z.h - 26;
+
+  // carpet / ramp
+  ctx.save();
+  groundAO(cx - 150, baseY - 10, 300, 56, 0.16);
+  ctx.globalAlpha = 0.95;
+  ctx.fillStyle = "rgba(255,255,255,0.18)";
+  roundRect(cx - 152, baseY - 6, 304, 44, 16);
+  ctx.fill();
+
+  // red carpet
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "#d81b36";
+  roundRect(cx - 140, baseY - 2, 280, 36, 16);
+  ctx.fill();
+
+  // carpet highlight
+  ctx.globalAlpha = 0.14;
+  ctx.fillStyle = "rgba(255,255,255,0.92)";
+  roundRect(cx - 132, baseY + 2, 264, 10, 12);
+  ctx.fill();
+
+  // gold trim lines
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = "#ffd66b";
+  roundRect(cx - 140, baseY - 2, 10, 36, 8);
+  ctx.fill();
+  roundRect(cx + 130, baseY - 2, 10, 36, 8);
+  ctx.fill();
+  ctx.restore();
+
+  // gate pillars
+  const gateW = 320;
+  const pW = 44;
+  const pH = 110;
+  const topH = 42;
+  const gX = cx - gateW / 2;
+  const gY = z.y + z.h - 26 - pH - 10;
+
+  ctx.save();
+  softShadow(gX + 12, gY + 18, gateW - 24, pH + topH, 0.10);
+
+  // left pillar
+  ctx.fillStyle = "#f2d9b3";
+  ctx.strokeStyle = "rgba(0,0,0,0.14)";
+  ctx.lineWidth = 2;
+  roundRect(gX, gY + topH, pW, pH, 16);
+  ctx.fill();
+  ctx.stroke();
+
+  // right pillar
+  roundRect(gX + gateW - pW, gY + topH, pW, pH, 16);
+  ctx.fill();
+  ctx.stroke();
+
+  // pillar seams
+  ctx.globalAlpha = 0.10;
+  ctx.strokeStyle = "rgba(0,0,0,0.28)";
+  for (let i = 1; i < 5; i++) {
+    const yy = gY + topH + (pH / 5) * i;
+    ctx.beginPath();
+    ctx.moveTo(gX + 8, yy);
+    ctx.lineTo(gX + pW - 8, yy);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(gX + gateW - pW + 8, yy);
+    ctx.lineTo(gX + gateW - 8, yy);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // top beam
+  ctx.fillStyle = "#111827";
+  roundRect(gX + 18, gY, gateW - 36, topH, 18);
+  ctx.fill();
+
+  // gold studs
+  if (typeof drawLegoStudRow === "function") {
+    drawLegoStudRow(gX + 34, gY - 2, gateW - 68, Math.max(4, Math.round((gateW - 68) / 70)), "#ffd66b");
+  }
+
+  // badge
+  ctx.fillStyle = "#ffd66b";
+  roundRect(cx - 74, gY + 8, 148, 26, 13);
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(10,14,24,0.92)";
+  ctx.font = "1200 14px system-ui";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("AD GATE", cx, gY + 21);
+
+  // lights
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = "#ffd66b";
+  ctx.beginPath();
+  ctx.arc(gX + pW / 2, gY + topH + 14, 6, 0, Math.PI * 2);
+  ctx.arc(gX + gateW - pW / 2, gY + topH + 14, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+
+} else {
+  // simple entrance for other zones (temporary)
+  ctx.fillStyle = "#ffffff";
+  ctx.globalAlpha = 0.9;
+  roundRect(z.x + z.w / 2 - 60, z.y + z.h - 16, 120, 8, 4);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
 
     ctx.restore();
   }
