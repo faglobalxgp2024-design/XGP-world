@@ -1018,57 +1018,6 @@ ZONES.ads = {
   label: "AD ZONE",
   color: "#ff2d55",
 };
-      // ----------- GATES (entrances) geometry -----------
-function makeGateRect(side, z, opt = {}) {
-  const w = opt.w ?? 220;
-  const h = opt.h ?? 170;
-
-  // gate is placed on zone boundary, centered vertically around mid of zone
-  const cy = z.y + z.h * (opt.cyFrac ?? 0.52);
-  const y = cy - h / 2;
-
-  if (side === "right") {
-    return { x: z.x + z.w - w - (opt.inset ?? 8), y, w, h, side };
-  }
-  if (side === "left") {
-    return { x: z.x + (opt.inset ?? 8), y, w, h, side };
-  }
-  if (side === "bottom") {
-    return { x: z.x + z.w * 0.5 - w / 2, y: z.y + z.h - h - (opt.inset ?? 8), w, h, side };
-  }
-  // top
-  return { x: z.x + z.w * 0.5 - w / 2, y: z.y + (opt.inset ?? 8), w, h, side: "top" };
-}
-
-// ---- Road-facing gates (no roads[] needed) ----
-const gateW = 260;
-const gateH = 180;
-
-// center vertical road is near WORLD.w * 0.5, road width is about 124, so half ~62
-const centerRoadHalf = 62;
-
-const gateY = (WORLD.h * 0.50) - gateH / 2;
-
-// GAME gate: left of center road
-ZONES.game.gate = {
-  x: (WORLD.w * 0.5) - centerRoadHalf - 18 - gateW,
-  y: gateY,
-  w: gateW,
-  h: gateH,
-  side: "road_left",
-};
-
-// COMMUNITY gate: right of center road
-ZONES.community.gate = {
-  x: (WORLD.w * 0.5) + centerRoadHalf + 18,
-  y: gateY,
-  w: gateW,
-  h: gateH,
-  side: "road_right",
-};
-
-// ads: entrance on TOP edge for now (we'll adjust later with screenshot)
-ZONES.ads.gate = makeGateRect("top", ZONES.ads, { w: 260, h: 190, inset: 10 });
 
       const base = 220;
       const mul = { S: 0.82, M: 1.0, L: 1.22 };
@@ -1493,10 +1442,6 @@ paris:  { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.
   drawZone(ZONES.game);
   drawZone(ZONES.community);
   drawZone(ZONES.ads);
-// gates (entrances)
-  drawLegoGate(ZONES.game.gate, "GAME ZONE", ZONES.game.color);
-  drawLegoGate(ZONES.community.gate, "COMMUNITY", ZONES.community.color);
-  drawLegoGate(ZONES.ads.gate, "AD ZONE", ZONES.ads.color);
 }
 
     function drawSignal(s, t) {
@@ -1734,166 +1679,6 @@ paris:  { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.
 
       ctx.restore();
     }
-    function drawLegoGate(gate, zoneLabel, zoneColor) {
-  if (!gate) return;
-
-  const x = gate.x, y = gate.y, w = gate.w, h = gate.h;
-
-  // gate shadow base
-  groundAO(x + 10, y + h - 18, w - 20, 30, 0.22);
-
-  // --- base platform (LEGO plate) ---
-  ctx.save();
-  softShadow(x + 4, y + h - 20, w - 8, 18, 0.14);
-  ctx.fillStyle = "rgba(120,94,255,0.45)";
-  roundRect(x + 6, y + h - 22, w - 12, 18, 12);
-  ctx.fill();
-
-  ctx.fillStyle = "#57c957";
-  roundRect(x + 12, y + h - 20, w - 24, 14, 10);
-  ctx.fill();
-  ctx.restore();
-
-  // --- side walls (beige bricks) ---
-  const wallCol = "#f2d9b3";
-  const wallW = Math.max(34, Math.round(w * 0.18));
-  const archW = w - wallW * 2;
-  const archTopH = Math.round(h * 0.30);
-
-  // left wall
-  ctx.save();
-  softShadow(x + 2, y + 8, wallW, h - 26, 0.12);
-  ctx.fillStyle = wallCol;
-  ctx.strokeStyle = "rgba(0,0,0,0.14)";
-  ctx.lineWidth = 2;
-  roundRect(x, y + 18, wallW, h - 30, 16);
-  ctx.fill();
-  ctx.stroke();
-  drawLegoBrickGrid(x + 6, y + 26, wallW - 12, h - 46);
-  ctx.restore();
-
-  // right wall
-  ctx.save();
-  softShadow(x + w - wallW + 2, y + 8, wallW, h - 26, 0.12);
-  ctx.fillStyle = wallCol;
-  ctx.strokeStyle = "rgba(0,0,0,0.14)";
-  ctx.lineWidth = 2;
-  roundRect(x + w - wallW, y + 18, wallW, h - 30, 16);
-  ctx.fill();
-  ctx.stroke();
-  drawLegoBrickGrid(x + w - wallW + 6, y + 26, wallW - 12, h - 46);
-  ctx.restore();
-
-  // --- arch top beam ---
-  const beamX = x + wallW;
-  const beamY = y + 16;
-  const beamW = archW;
-  const beamH = archTopH;
-
-  ctx.save();
-  softShadow(beamX + 2, beamY + 6, beamW, beamH, 0.12);
-  ctx.fillStyle = shade(wallCol, +10);
-  ctx.strokeStyle = "rgba(0,0,0,0.14)";
-  ctx.lineWidth = 2;
-  roundRect(beamX, beamY, beamW, beamH, 18);
-  ctx.fill();
-  ctx.stroke();
-
-  // studs on top of beam
-  drawLegoStudRow(
-    beamX + 14,
-    beamY - 6,
-    beamW - 28,
-    Math.max(4, Math.round(beamW / 70)),
-    shade(wallCol, +22)
-  );
-  ctx.restore();
-
-  // --- inner passage (dark tunnel) ---
-  const tunnelX = x + wallW + 10;
-  const tunnelY = y + archTopH + 18;
-  const tunnelW = archW - 20;
-  const tunnelH = h - archTopH - 44;
-
-  ctx.save();
-  ctx.fillStyle = "rgba(10,14,24,0.82)";
-  roundRect(tunnelX, tunnelY, tunnelW, tunnelH, 18);
-  ctx.fill();
-
-  // tunnel floor highlight
-  ctx.globalAlpha = 0.18;
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
-  roundRect(tunnelX + 10, tunnelY + 10, tunnelW - 20, Math.max(16, tunnelH * 0.20), 14);
-  ctx.fill();
-  ctx.globalAlpha = 1;
-  ctx.restore();
-
-  // --- sign plaque on beam (zone label) ---
-  const plaqueW = Math.min(beamW - 24, 280);
-  const plaqueH = 44;
-  const plaqueX = beamX + beamW / 2 - plaqueW / 2;
-  const plaqueY = beamY + beamH / 2 - plaqueH / 2 + 6;
-
-  drawLegoSignPlaque(plaqueX, plaqueY, plaqueW, plaqueH, zoneLabel, 20, zoneColor);
-
-  // --- entry ramp stripes ---
-  ctx.save();
-  ctx.globalAlpha = 0.85;
-  const rampY = y + h - 26;
-  const rampX = x + w * 0.5 - 80;
-  roundRect(rampX, rampY, 160, 16, 8);
-  ctx.fillStyle = "rgba(255,255,255,0.90)";
-  ctx.fill();
-
-  ctx.globalAlpha = 0.9;
-  for (let i = 0; i < 6; i++) {
-    ctx.fillStyle = i % 2 === 0 ? "rgba(10,14,24,0.10)" : "rgba(255,255,255,0.0)";
-    ctx.fillRect(rampX + 10 + i * 24, rampY + 3, 12, 10);
-  }
-  ctx.restore();
-      
-      // ===== road connection plaza =====
-const plazaDepth = 36;
-ctx.save();
-ctx.globalAlpha = 0.95;
-
-// 방향별로 도로쪽으로 확장
-if (gate.side === "road_left") {
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
-  roundRect(gate.x + gate.w, gate.y + gate.h * 0.35, 48, plazaDepth, 8);
-  ctx.fill();
-
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = "#262c37";
-  roundRect(gate.x + gate.w + 4, gate.y + gate.h * 0.35 + 4, 40, plazaDepth - 8, 6);
-  ctx.fill();
-}
-
-if (gate.side === "road_right") {
-  ctx.globalAlpha = 0.95;
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
-  roundRect(gate.x - 48, gate.y + gate.h * 0.35, 48, plazaDepth, 8);
-  ctx.fill();
-
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = "#262c37";
-  roundRect(gate.x - 44, gate.y + gate.h * 0.35 + 4, 40, plazaDepth - 8, 6);
-  ctx.fill();
-}
-
-if (gate.side === "top") {
-  ctx.globalAlpha = 0.95;
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
-  roundRect(gate.x + gate.w * 0.35, gate.y + gate.h, gate.w * 0.3, 48, 8);
-  ctx.fill();
-
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = "#262c37";
-  roundRect(gate.x + gate.w * 0.35 + 4, gate.y + gate.h + 4, gate.w * 0.3 - 8, 40, 6);
-  ctx.fill();
-}
-
-ctx.restore();
 
     function drawPortalBuilding(p, t) {
       // LEGO facade style
@@ -3021,4 +2806,5 @@ if (p.key === "paris")    S.sign = "#0a84ff";
       b.y = 70 + Math.random() * 170;
     }
     requestAnimationFrame(loop);
-  })();
+  });
+})();
