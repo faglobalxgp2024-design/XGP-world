@@ -353,7 +353,7 @@ canvas.style.borderRadius = "0";
 const portals = [
   // ---------- GAME ZONE (6) ----------
   { key: "avoid",   label: "DODGE",     status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/",       type: "arcade",  size: "L", x: 0, y: 0, w: 0, h: 0 },
-  { key: "archery", label: "ARCHERY",   status: "open", url: "https://ttjdwls777-eng.github.io/XGP-MINI-GAME2/",           type: "tower",   size: "M", x: 0, y: 0, w: 0, h: 0 },
+  { key: "archery", label: "ARCHERY", status: "open", url: "https://faglobalxgp2024-design.github.io/-/", type: "tower", size: "M", x: 0, y: 0, w: 0, h: 0 },
   { key: "janggi",  label: "JANGGI",    status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/",         type: "dojo",    size: "L", x: 0, y: 0, w: 0, h: 0 },
 
   // URL 아직 없으면 오픈준비중
