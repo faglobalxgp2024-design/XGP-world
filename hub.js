@@ -2466,7 +2466,7 @@
         ctx.globalAlpha = 1;
 
         // ✅ (2) 히어로 장비(갑옷/검/방패)
-        if (isHero) drawHeroGear(dir, swing);
+        if (isHero) drawHeroGear(dir, swing, opts?.time ?? 0);
 
       } else {
         // side torso slimmer
@@ -2846,7 +2846,7 @@
         else if (it.kind === "player") {
           if (!(SPRITE_SRC && USE_SPRITE_IF_LOADED && drawSpriteCharacter(player.x, player.y))) {
             // ✅ (2) 플레이어는 히어로 장비 적용
-            drawMinifig(player.x, player.y, { isHero: true });
+            drawMinifig(player.x, player.y, { isHero: true, time: t });
           }
         }
       }
