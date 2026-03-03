@@ -2014,72 +2014,100 @@
     }
 
     function drawHeroGear(dir, swing) {
-      // 무기(검) + 방패 + 갑옷 어깨패드/가슴판
-      const metal = "#d7dde7";
-      const dark = "rgba(10,14,24,0.60)";
-      const glow = "rgba(255,255,255,0.22)";
 
-      // 갑옷 가슴판
-      ctx.save();
-      ctx.globalAlpha = 0.92;
-      ctx.fillStyle = metal;
-      roundRect(-13, 1, 26, 16, 7);
-      ctx.fill();
-      ctx.globalAlpha = 0.16;
-      ctx.fillStyle = glow;
-      roundRect(-11, 3, 22, 5, 6);
-      ctx.fill();
-      ctx.globalAlpha = 0.25;
-      ctx.strokeStyle = dark;
-      ctx.lineWidth = 2;
-      roundRect(-13, 1, 26, 16, 7);
-      ctx.stroke();
-      ctx.restore();
+  const metal = "#d7dde7";
+  const steel = "#c8cfdb";
+  const dark = "rgba(10,14,24,0.68)";
+  const gold = "#ffcc00";
+  const gem = "#0a84ff";
 
-      // 어깨 패드
-      ctx.save();
-      ctx.fillStyle = shade(metal, -8);
-      roundRect(-20, 2, 10, 10, 6);
-      ctx.fill();
-      roundRect(10, 2, 10, 10, 6);
-      ctx.fill();
-      ctx.restore();
+  /* ================= 갑옷 가슴판 ================= */
+  ctx.save();
 
-      // 방패(왼손 기준, 방향에 따라 좌우)
-      const shieldSide = (dir === "left") ? -1 : (dir === "right") ? 1 : 1;
-      ctx.save();
-      ctx.translate(18 * shieldSide, 18);
-      ctx.rotate(0.10 * shieldSide);
-      ctx.fillStyle = "#0a84ff";
-      roundRect(-10, -10, 20, 24, 10);
-      ctx.fill();
-      ctx.globalAlpha = 0.18;
-      ctx.fillStyle = "rgba(255,255,255,0.92)";
-      roundRect(-7, -7, 14, 7, 8);
-      ctx.fill();
-      ctx.globalAlpha = 0.28;
-      ctx.strokeStyle = "rgba(10,14,24,0.55)";
-      ctx.lineWidth = 2;
-      roundRect(-10, -10, 20, 24, 10);
-      ctx.stroke();
-      ctx.restore();
+  ctx.globalAlpha = 0.95;
+  ctx.fillStyle = metal;
+  roundRect(-14, 0, 28, 18, 8);
+  ctx.fill();
 
-      // 검(오른손)
-      const swordSide = (dir === "left") ? -1 : 1;
-      ctx.save();
-      ctx.translate(-18 * swordSide, 18 - swing * 1.6);
-      ctx.rotate((-0.35 * swordSide) + swing * 0.08);
-      ctx.fillStyle = shade(metal, +2);
-      roundRect(-2, -22, 4, 24, 2);
-      ctx.fill();
-      ctx.fillStyle = "#ffcc00";
-      roundRect(-6, 1, 12, 4, 2);
-      ctx.fill();
-      ctx.fillStyle = "rgba(10,14,24,0.70)";
-      roundRect(-2, 5, 4, 10, 2);
-      ctx.fill();
-      ctx.restore();
-    }
+  // 중앙 라인 음영
+  ctx.globalAlpha = 0.2;
+  ctx.fillStyle = dark;
+  roundRect(-2, 2, 4, 14, 2);
+  ctx.fill();
+
+  // 위쪽 하이라이트
+  ctx.globalAlpha = 0.15;
+  ctx.fillStyle = "white";
+  roundRect(-12, 2, 24, 5, 6);
+  ctx.fill();
+
+  ctx.restore();
+
+  /* ================= 어깨 갑옷 ================= */
+  ctx.save();
+  ctx.fillStyle = shade(metal, -10);
+  roundRect(-22, 2, 12, 10, 6);
+  ctx.fill();
+  roundRect(10, 2, 12, 10, 6);
+  ctx.fill();
+  ctx.restore();
+
+  /* ================= 방패 ================= */
+  const shieldSide = (dir === "left") ? -1 : 1;
+
+  ctx.save();
+  ctx.translate(20 * shieldSide, 18);
+  ctx.rotate(0.12 * shieldSide);
+
+  const sg = ctx.createLinearGradient(-10, -10, 10, 20);
+  sg.addColorStop(0, "#3aa0ff");
+  sg.addColorStop(1, gem);
+
+  ctx.fillStyle = sg;
+  roundRect(-10, -10, 20, 24, 10);
+  ctx.fill();
+
+  // 테두리
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(255,255,255,0.5)";
+  roundRect(-10, -10, 20, 24, 10);
+  ctx.stroke();
+
+  // 중앙 엠블럼
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  ctx.arc(0, 2, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+
+  /* ================= 검 ================= */
+  const swordSide = (dir === "left") ? -1 : 1;
+
+  ctx.save();
+  ctx.translate(-20 * swordSide, 18 - swing * 1.5);
+  ctx.rotate((-0.4 * swordSide) + swing * 0.1);
+
+  const bladeGrad = ctx.createLinearGradient(0, -26, 0, 2);
+  bladeGrad.addColorStop(0, "#f4f7ff");
+  bladeGrad.addColorStop(1, steel);
+
+  ctx.fillStyle = bladeGrad;
+  roundRect(-2.5, -26, 5, 28, 2.5);
+  ctx.fill();
+
+  // 손잡이 가드
+  ctx.fillStyle = gold;
+  roundRect(-7, 1, 14, 4, 2);
+  ctx.fill();
+
+  // 손잡이
+  ctx.fillStyle = "rgba(10,14,24,0.8)";
+  roundRect(-2, 5, 4, 10, 2);
+  ctx.fill();
+
+  ctx.restore();
+}
 
     function drawMinifig(x, y, opts = null) {
       const moving = opts?.moving ?? player.moving;
@@ -2126,18 +2154,39 @@
 
       // 헬멧 느낌(히어로)
       if (isHero) {
-        ctx.save();
-        ctx.fillStyle = "#d7dde7";
-        roundRect(-16, -34, 32, 16, 9);
-        ctx.fill();
-        ctx.globalAlpha = 0.18;
-        ctx.fillStyle = "rgba(10,14,24,0.55)";
-        roundRect(-10, -26, 20, 6, 6);
-        ctx.fill();
-        ctx.restore();
-      } else {
-        drawCapOnHead(hat);
-      }
+  ctx.save();
+
+  const hg = ctx.createLinearGradient(-16, -36, 16, -14);
+  hg.addColorStop(0, "#f4f7ff");
+  hg.addColorStop(1, "#c8cfdb");
+  ctx.fillStyle = hg;
+  roundRect(-16, -36, 32, 18, 10);
+  ctx.fill();
+
+  // visor
+  ctx.fillStyle = "rgba(0,0,0,0.4)";
+  roundRect(-10, -28, 20, 6, 6);
+  ctx.fill();
+
+  // left horn
+  ctx.fillStyle = "#e9e2d2";
+  ctx.beginPath();
+  ctx.moveTo(-15, -30);
+  ctx.quadraticCurveTo(-28, -40, -18, -50);
+  ctx.quadraticCurveTo(-8, -40, -15, -30);
+  ctx.fill();
+
+  // right horn
+  ctx.beginPath();
+  ctx.moveTo(15, -30);
+  ctx.quadraticCurveTo(28, -40, 18, -50);
+  ctx.quadraticCurveTo(8, -40, 15, -30);
+  ctx.fill();
+
+  ctx.restore();
+} else {
+  drawCapOnHead(hat);
+}
 
       // face
       ctx.fillStyle = "rgba(10,14,24,0.74)";
