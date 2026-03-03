@@ -302,8 +302,46 @@
     joy.addEventListener("pointerup", joyPointerUp, { passive: false });
     joy.addEventListener("pointercancel", joyPointerUp, { passive: false });
 
-    return { canvas, toast, coord, fps, fade, modal, modalTitle, modalBody, modalHint, joyState };
-  }
+        /* ---------- Inventory UI (toggle Sword/Shield) ---------- */
+    const inv = ensureEl("inventory", "div");
+    inv.style.position = "fixed";
+    inv.style.left = "18px";
+    inv.style.bottom = "18px";
+    inv.style.zIndex = "10002";
+    inv.style.display = "none";
+    inv.style.padding = "12px";
+    inv.style.borderRadius = "16px";
+    inv.style.background = "rgba(255,255,255,0.90)";
+    inv.style.border = "1px solid rgba(0,0,0,0.10)";
+    inv.style.boxShadow = "0 18px 44px rgba(0,0,0,0.16)";
+    inv.style.backdropFilter = "blur(8px)";
+    inv.style.font = "900 13px system-ui";
+    inv.style.color = "rgba(10,14,24,0.88)";
+    inv.style.userSelect = "none";
+    inv.style.webkitUserSelect = "none";
+    inv.style.touchAction = "none";
+
+    inv.innerHTML = `
+      <div style="font:1200 14px system-ui; margin-bottom:8px;">🎒 아이템</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button id="btn_sword"
+          style="all:unset; cursor:pointer; padding:10px 12px; border-radius:12px;
+                 background:rgba(10,14,24,0.86); color:white;">
+          🗡️ 검: ON
+        </button>
+        <button id="btn_shield"
+          style="all:unset; cursor:pointer; padding:10px 12px; border-radius:12px;
+                 background:rgba(10,14,24,0.86); color:white;">
+          🛡️ 방패: ON
+        </button>
+      </div>
+      <div style="margin-top:8px; opacity:.7;">단축키: I (열기/닫기)</div>
+    `;
+
+    const btnSword = inv.querySelector("#btn_sword");
+    const btnShield = inv.querySelector("#btn_shield");
+    
+    return { canvas, toast, coord, fps, fade, modal, modalTitle, modalBody, modalHint, joyState, inv, btnSword, btnShield };
 
   /* ----------------------- Start ----------------------- */
   window.addEventListener("DOMContentLoaded", () => {
@@ -386,8 +424,11 @@
     }
 
     /* ----------------------- Player ----------------------- */
-    const player = { x: 360, y: 360, r: 18, speed: 250, moving: false, animT: 0, bobT: 0, dir: "down" };
-    if (isTouchDevice()) player.speed = 185;
+    const player = {
+  x: 360, y: 360, r: 18, speed: 250,
+  moving: false, animT: 0, bobT: 0, dir: "down",
+  equip: { sword: true, shield: true }   // ✅ 추가
+};
 
     let activePortal = null;
     let entering = false;
@@ -405,6 +446,7 @@
         else if (activePortal) openPortalUI(activePortal);
       }
       if (k === "escape") closeModal();
+            if (k === "i") toggleInv();
     });
     window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
 
@@ -2013,7 +2055,7 @@
       ctx.restore();
     }
 
-    function drawHeroGear(dir, swing) {
+    function drawHeroGear(dir, swing, time = 0, equip = { sword: true, shield: true }) {
   // Black + Red premium knight kit + shield shape + dark particle glow accents
   const metalDark = "#1a1d24";
   const metalMid  = "#2a2f3b";
@@ -2483,7 +2525,7 @@
         ctx.restore();
 
         // ✅ hero gear (time 전달)
-        if (isHero) drawHeroGear(dir, swing, opts?.time ?? 0);
+        if (isHero) drawHeroGear(dir, swing, opts?.time ?? 0, opts?.equip ?? player.equip);
       }
 
       ctx.restore();
@@ -2827,7 +2869,7 @@
         else if (it.kind === "player") {
           if (!(SPRITE_SRC && USE_SPRITE_IF_LOADED && drawSpriteCharacter(player.x, player.y))) {
             // ✅ (2) 플레이어는 히어로 장비 적용
-            drawMinifig(player.x, player.y, { isHero: true });
+            drawMinifig(player.x, player.y, { isHero: true, time: t, equip: player.equip });
           }
         }
       }
