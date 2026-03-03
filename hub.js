@@ -2418,7 +2418,8 @@
         // ✅ (2) 히어로 장비(갑옷/검/방패)
         if (isHero) drawHeroGear(dir, swing);
 
-      } else {
+            } else {
+        // ---------- SIDE VIEW (LEGS CENTER FIX + WALK) ----------
         // side torso slimmer
         ctx.fillStyle = torso;
         roundRect(-9, -4, 18, 28, 12);
@@ -2441,18 +2442,48 @@
         roundRect(9, 15 + armSwing, 10, 8, 6);
         ctx.fill();
 
-        // ONE leg
-        ctx.fillStyle = pants;
-        roundRect(2, 22, 12, 16, 6);
+        // ✅ FIX: side legs centered + 2 legs visible (walk feel)
+        const legCenterX = 0.5;  // 중앙 보정 (필요시 0 ~ 1.5로 조절)
+        const legGap = 3.2;
+        const backA = 0.55;
+
+        // back leg
+        ctx.save();
+        ctx.globalAlpha = backA;
+        ctx.fillStyle = shade(pants, -10);
+        roundRect(legCenterX - legGap - 1.5, 22, 11, 16, 6);
         ctx.fill();
 
-        // shoe
+        // back shoe
+        ctx.fillStyle = "rgba(10,14,24,0.78)";
+        ctx.beginPath();
+        ctx.ellipse(legCenterX - legGap + 3.5, 40 - legSwing, 6.2, 3.0, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // front leg
+        ctx.save();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = pants;
+        roundRect(legCenterX + legGap - 1.5, 22, 11, 16, 6);
+        ctx.fill();
+
+        // front shoe
         ctx.fillStyle = "rgba(10,14,24,0.82)";
         ctx.beginPath();
-        ctx.ellipse(9, 40 + legSwing, 6.6, 3.1, 0, 0, Math.PI * 2);
+        ctx.ellipse(legCenterX + legGap + 3.5, 40 + legSwing, 6.6, 3.1, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        if (isHero) drawHeroGear(dir, swing);
+        // shoe highlight
+        ctx.globalAlpha = 0.14;
+        ctx.fillStyle = "rgba(255,255,255,0.92)";
+        ctx.beginPath();
+        ctx.ellipse(legCenterX + legGap + 2.2, 39.2 + legSwing, 2.4, 1.1, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // ✅ hero gear (time 전달)
+        if (isHero) drawHeroGear(dir, swing, opts?.time ?? 0);
       }
 
       ctx.restore();
