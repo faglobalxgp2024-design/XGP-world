@@ -2794,50 +2794,12 @@
         else if (it.kind === "signal") drawSignal(it.ref, t);
         else if (it.kind === "roamer") drawRoamer(it.ref, roamerPalette);
         else if (it.kind === "player") {
-  if (!(SPRITE_SRC && USE_SPRITE_IF_LOADED && drawSpriteCharacter(player.x, player.y))) {
-
-    // 🔥 Dark aura particles
-    ctx.save();
-    ctx.globalAlpha = 0.18;
-
-    const g = ctx.createRadialGradient(player.x, player.y + 10, 6, player.x, player.y + 10, 46);
-    g.addColorStop(0, "rgba(10,14,24,0.55)");
-    g.addColorStop(0.45, "rgba(10,14,24,0.22)");
-    g.addColorStop(1, "rgba(10,14,24,0)");
-    ctx.fillStyle = g;
-
-    ctx.beginPath();
-    ctx.ellipse(player.x, player.y + 12, 46, 32, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    for (let i = 0; i < 16; i++) {
-      const a = (i / 16) * Math.PI * 2 + t * 0.9;
-      const r = 10 + (i % 8) * 3 + (Math.sin(t * 2.1 + i) * 2);
-      const px = player.x + Math.cos(a) * r;
-      const py = player.y + 8 + Math.sin(a) * (r * 0.55);
-
-      const flick = 0.6 + 0.4 * Math.sin(t * 6 + i * 1.7);
-      ctx.globalAlpha = 0.06 + 0.18 * flick;
-
-      ctx.fillStyle = "rgba(0,0,0,0.9)";
-      ctx.beginPath();
-      ctx.arc(px, py, 1.3 + (i % 3) * 0.7, 0, Math.PI * 2);
-      ctx.fill();
-
-      // tiny sparkle
-      ctx.globalAlpha *= 0.5;
-      ctx.fillStyle = "rgba(255,255,255,0.10)";
-      ctx.beginPath();
-      ctx.arc(px - 0.6, py - 0.8, 0.8, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.restore();
-
-    // ✅ 플레이어 그리기 (이 줄이 없어서 지금 안 보였던 거)
-    drawMinifig(player.x, player.y, { isHero: true });
-  }
-}
+          if (!(SPRITE_SRC && USE_SPRITE_IF_LOADED && drawSpriteCharacter(player.x, player.y))) {
+            // ✅ (2) 플레이어는 히어로 장비 적용
+            drawMinifig(player.x, player.y, { isHero: true });
+          }
+        }
+      }
 
       ctx.restore();
 
