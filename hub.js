@@ -2014,96 +2014,192 @@
     }
 
     function drawHeroGear(dir, swing) {
-
-  const metal = "#d7dde7";
+  // Black + Red premium knight kit + shield shape + dark particle glow accents
+  const metalDark = "#1a1d24";
+  const metalMid  = "#2a2f3b";
+  const red1 = "#ff2d55";
+  const red2 = "#b00024";
   const steel = "#c8cfdb";
-  const dark = "rgba(10,14,24,0.68)";
   const gold = "#ffcc00";
-  const gem = "#0a84ff";
+  const dark = "rgba(10,14,24,0.72)";
 
-  /* ================= 갑옷 가슴판 ================= */
+  // ===== Chest Armor (black base + red accents) =====
   ctx.save();
 
+  // base plate
+  const cg = ctx.createLinearGradient(-14, 0, 14, 18);
+  cg.addColorStop(0, metalMid);
+  cg.addColorStop(1, "rgba(10,14,24,0.28)");
+  ctx.globalAlpha = 0.98;
+  ctx.fillStyle = cg;
+  roundRect(-15, 0, 30, 19, 9);
+  ctx.fill();
+
+  // inner plate
   ctx.globalAlpha = 0.95;
-  ctx.fillStyle = metal;
-  roundRect(-14, 0, 28, 18, 8);
+  ctx.fillStyle = metalDark;
+  roundRect(-12.5, 2.5, 25, 14, 8);
   ctx.fill();
 
-  // 중앙 라인 음영
-  ctx.globalAlpha = 0.2;
-  ctx.fillStyle = dark;
-  roundRect(-2, 2, 4, 14, 2);
+  // red cross / stripe
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = red1;
+  roundRect(-2.2, 2.5, 4.4, 14, 2.2);
+  ctx.fill();
+  roundRect(-10, 8.2, 20, 3.8, 2.2);
   ctx.fill();
 
-  // 위쪽 하이라이트
-  ctx.globalAlpha = 0.15;
-  ctx.fillStyle = "white";
-  roundRect(-12, 2, 24, 5, 6);
-  ctx.fill();
+  // tiny rivets
+  ctx.globalAlpha = 0.8;
+  ctx.fillStyle = "rgba(255,255,255,0.45)";
+  ctx.beginPath(); ctx.arc(-9.5, 4.5, 1.2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc( 9.5, 4.5, 1.2, 0, Math.PI*2); ctx.fill();
 
-  ctx.restore();
-
-  /* ================= 어깨 갑옷 ================= */
-  ctx.save();
-  ctx.fillStyle = shade(metal, -10);
-  roundRect(-22, 2, 12, 10, 6);
-  ctx.fill();
-  roundRect(10, 2, 12, 10, 6);
-  ctx.fill();
-  ctx.restore();
-
-  /* ================= 방패 ================= */
-  const shieldSide = (dir === "left") ? -1 : 1;
-
-  ctx.save();
-  ctx.translate(20 * shieldSide, 18);
-  ctx.rotate(0.12 * shieldSide);
-
-  const sg = ctx.createLinearGradient(-10, -10, 10, 20);
-  sg.addColorStop(0, "#3aa0ff");
-  sg.addColorStop(1, gem);
-
-  ctx.fillStyle = sg;
-  roundRect(-10, -10, 20, 24, 10);
-  ctx.fill();
-
-  // 테두리
+  // edge stroke
+  ctx.globalAlpha = 0.3;
+  ctx.strokeStyle = dark;
   ctx.lineWidth = 2;
-  ctx.strokeStyle = "rgba(255,255,255,0.5)";
-  roundRect(-10, -10, 20, 24, 10);
+  roundRect(-15, 0, 30, 19, 9);
   ctx.stroke();
 
-  // 중앙 엠블럼
-  ctx.fillStyle = "white";
-  ctx.beginPath();
-  ctx.arc(0, 2, 3, 0, Math.PI * 2);
+  ctx.restore();
+
+  // ===== Pauldrons (black + red trim) =====
+  ctx.save();
+  ctx.globalAlpha = 0.98;
+  ctx.fillStyle = metalMid;
+  roundRect(-23, 2, 12, 10, 7);
+  ctx.fill();
+  roundRect(11, 2, 12, 10, 7);
+  ctx.fill();
+
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = red2;
+  roundRect(-22, 10, 10, 2.8, 2);
+  ctx.fill();
+  roundRect(12, 10, 10, 2.8, 2);
   ctx.fill();
 
   ctx.restore();
 
-  /* ================= 검 ================= */
-  const swordSide = (dir === "left") ? -1 : 1;
-
+  // ===== Shield (real shield silhouette + rim + boss + emblem) =====
+  const shieldSide = (dir === "left") ? -1 : 1;
   ctx.save();
-  ctx.translate(-20 * swordSide, 18 - swing * 1.5);
-  ctx.rotate((-0.4 * swordSide) + swing * 0.1);
+  ctx.translate(22 * shieldSide, 18);
+  ctx.rotate(0.12 * shieldSide);
 
-  const bladeGrad = ctx.createLinearGradient(0, -26, 0, 2);
-  bladeGrad.addColorStop(0, "#f4f7ff");
-  bladeGrad.addColorStop(1, steel);
-
-  ctx.fillStyle = bladeGrad;
-  roundRect(-2.5, -26, 5, 28, 2.5);
+  // shadow
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = "rgba(10,14,24,0.55)";
+  roundRect(-14, -10, 28, 30, 12);
   ctx.fill();
 
-  // 손잡이 가드
+  // shield path (top round, bottom point)
+  function shieldPath() {
+    ctx.beginPath();
+    ctx.moveTo(0, -12);
+    ctx.quadraticCurveTo(14, -12, 14, -2);
+    ctx.lineTo(14, 10);
+    ctx.quadraticCurveTo(14, 20, 0, 24);
+    ctx.quadraticCurveTo(-14, 20, -14, 10);
+    ctx.lineTo(-14, -2);
+    ctx.quadraticCurveTo(-14, -12, 0, -12);
+    ctx.closePath();
+  }
+
+  // body gradient (black + red glow edge)
+  const sg = ctx.createLinearGradient(-14, -12, 14, 24);
+  sg.addColorStop(0, metalMid);
+  sg.addColorStop(0.6, metalDark);
+  sg.addColorStop(1, "rgba(10,14,24,0.22)");
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = sg;
+  shieldPath();
+  ctx.fill();
+
+  // rim
+  ctx.globalAlpha = 0.55;
+  ctx.strokeStyle = "rgba(255,255,255,0.35)";
+  ctx.lineWidth = 2.2;
+  shieldPath();
+  ctx.stroke();
+
+  // red edge glow
+  ctx.globalAlpha = 0.22;
+  ctx.strokeStyle = red1;
+  ctx.lineWidth = 4;
+  shieldPath();
+  ctx.stroke();
+
+  // center boss
+  ctx.globalAlpha = 0.95;
+  ctx.fillStyle = steel;
+  ctx.beginPath();
+  ctx.arc(0, 6, 4.2, 0, Math.PI*2);
+  ctx.fill();
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = "rgba(255,255,255,0.92)";
+  ctx.beginPath();
+  ctx.arc(-1.2, 5.2, 1.8, 0, Math.PI*2);
+  ctx.fill();
+
+  // emblem (small red diamond)
+  ctx.globalAlpha = 0.92;
+  ctx.fillStyle = red1;
+  ctx.beginPath();
+  ctx.moveTo(0, -2);
+  ctx.lineTo(4, 2);
+  ctx.lineTo(0, 6);
+  ctx.lineTo(-4, 2);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+
+  // ===== Sword (steel blade + red rune) =====
+  const swordSide = (dir === "left") ? -1 : 1;
+  ctx.save();
+  ctx.translate(-22 * swordSide, 18 - swing * 1.6);
+  ctx.rotate((-0.42 * swordSide) + swing * 0.11);
+
+  const bladeGrad = ctx.createLinearGradient(0, -28, 0, 4);
+  bladeGrad.addColorStop(0, "#f4f7ff");
+  bladeGrad.addColorStop(0.65, steel);
+  bladeGrad.addColorStop(1, "rgba(10,14,24,0.22)");
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = bladeGrad;
+  roundRect(-2.6, -28, 5.2, 30, 2.6);
+  ctx.fill();
+
+  // blade highlight edge
+  ctx.globalAlpha = 0.22;
+  ctx.strokeStyle = "rgba(255,255,255,0.9)";
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(-1.2, -26);
+  ctx.lineTo(-1.2, 1);
+  ctx.stroke();
+
+  // red rune line
+  ctx.globalAlpha = 0.55;
+  ctx.fillStyle = red1;
+  roundRect(-0.8, -18, 1.6, 10, 1);
+  ctx.fill();
+
+  // guard + grip
+  ctx.globalAlpha = 1;
   ctx.fillStyle = gold;
   roundRect(-7, 1, 14, 4, 2);
   ctx.fill();
 
-  // 손잡이
-  ctx.fillStyle = "rgba(10,14,24,0.8)";
-  roundRect(-2, 5, 4, 10, 2);
+  ctx.fillStyle = "rgba(10,14,24,0.82)";
+  roundRect(-2, 5, 4, 11, 2);
+  ctx.fill();
+
+  // pommel
+  ctx.fillStyle = red2;
+  ctx.beginPath();
+  ctx.arc(0, 18, 3.0, 0, Math.PI*2);
   ctx.fill();
 
   ctx.restore();
@@ -2156,31 +2252,66 @@
       if (isHero) {
   ctx.save();
 
+  const black1 = "#1a1d24";
+  const black2 = "#2a2f3b";
+  const red1 = "#ff2d55";
+  const bone = "#e9e2d2";
+
+  // helmet shell (black)
   const hg = ctx.createLinearGradient(-16, -36, 16, -14);
-  hg.addColorStop(0, "#f4f7ff");
-  hg.addColorStop(1, "#c8cfdb");
+  hg.addColorStop(0, black2);
+  hg.addColorStop(0.7, black1);
+  hg.addColorStop(1, "rgba(10,14,24,0.25)");
   ctx.fillStyle = hg;
   roundRect(-16, -36, 32, 18, 10);
   ctx.fill();
 
+  // red crest stripe
+  ctx.globalAlpha = 0.95;
+  ctx.fillStyle = red1;
+  roundRect(-2.2, -36, 4.4, 18, 2.2);
+  ctx.fill();
+
   // visor
-  ctx.fillStyle = "rgba(0,0,0,0.4)";
+  ctx.globalAlpha = 0.28;
+  ctx.fillStyle = "rgba(0,0,0,0.85)";
   roundRect(-10, -28, 20, 6, 6);
   ctx.fill();
 
+  // horns (more “horned helmet”)
+  ctx.globalAlpha = 0.98;
+  ctx.fillStyle = bone;
+
   // left horn
-  ctx.fillStyle = "#e9e2d2";
+  ctx.save();
+  ctx.translate(-15, -30);
+  ctx.rotate(-0.25);
   ctx.beginPath();
-  ctx.moveTo(-15, -30);
-  ctx.quadraticCurveTo(-28, -40, -18, -50);
-  ctx.quadraticCurveTo(-8, -40, -15, -30);
+  ctx.moveTo(0, 0);
+  ctx.quadraticCurveTo(-12, -6, -14, -20);
+  ctx.quadraticCurveTo(-8, -16, 2, -10);
+  ctx.quadraticCurveTo(-2, -6, 0, 0);
+  ctx.closePath();
   ctx.fill();
+  ctx.restore();
 
   // right horn
+  ctx.save();
+  ctx.translate(15, -30);
+  ctx.rotate(0.25);
   ctx.beginPath();
-  ctx.moveTo(15, -30);
-  ctx.quadraticCurveTo(28, -40, 18, -50);
-  ctx.quadraticCurveTo(8, -40, 15, -30);
+  ctx.moveTo(0, 0);
+  ctx.quadraticCurveTo(12, -6, 14, -20);
+  ctx.quadraticCurveTo(8, -16, -2, -10);
+  ctx.quadraticCurveTo(2, -6, 0, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // highlight
+  ctx.globalAlpha = 0.14;
+  ctx.fillStyle = "rgba(255,255,255,0.92)";
+  roundRect(-12, -34, 24, 6, 8);
   ctx.fill();
 
   ctx.restore();
