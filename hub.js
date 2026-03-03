@@ -2086,11 +2086,14 @@
   // - 방패: 왼손(좌측) 쪽에 고정
   // - 검: 오른손(우측) 쪽에 고정 (걷기 스윙만 반영)
   // ------------------------------------------------------------
-
+  // screen-facing handedness fix (DOWN에서 좌/우 반전)
+let shieldX = -18;
+let swordX  =  18;
+if (dir === "down") { shieldX = 18; swordX = -18; }
   // ===== Shield (left hand) =====
   ctx.save();
   // 왼손 쪽(좌측). dir이 left면 ctx가 이미 반전되어 "왼쪽"이 화면상 왼쪽 유지됨.
-  ctx.translate(-18, 18);
+  ctx.translate(shieldX, 18);
   ctx.rotate(-0.10);
 
   // shadow
@@ -2167,7 +2170,7 @@
   const swingY = -swing * 2.0;
   const swingRot = swing * 0.16;
 
-  ctx.translate(18, 18 + swingY);
+  ctx.translate(swordX, 18 + swingY);
   ctx.rotate(0.55 + swingRot);
 
   // blade
@@ -2179,6 +2182,15 @@
   ctx.fillStyle = bladeGrad;
   roundRect(-2.6, -28, 5.2, 30, 2.6);
   ctx.fill();
+
+  // subtle blade edge (reduce "rubber" roundRect 느낌)
+ctx.save();
+ctx.globalAlpha = 0.18;
+ctx.strokeStyle = "rgba(10,14,24,0.65)";
+ctx.lineWidth = 1.1;
+roundRect(-2.6, -28, 5.2, 30, 2.6);
+ctx.stroke();
+ctx.restore();    
 
   // edge highlight
   ctx.globalAlpha = 0.22;
