@@ -2013,8 +2013,8 @@
       ctx.restore();
     }
 
-    function drawHeroGear(dir, swing, tNow = 0) {
-  // Premium knight kit (Black + Red) + sword particles
+    function drawHeroGear(dir, swing) {
+  // Black + Red premium knight kit + shield shape + dark particle glow accents
   const metalDark = "#1a1d24";
   const metalMid  = "#2a2f3b";
   const red1 = "#ff2d55";
@@ -2023,14 +2023,10 @@
   const gold = "#ffcc00";
   const dark = "rgba(10,14,24,0.72)";
 
-  // NOTE:
-  // drawMinifig에서 dir === "left"일 때 ctx.scale(-1,1)로 이미 좌우 반전됨.
-  // 그래서 여기서는 dir 기반 좌우 분기 최소화하고 "손 위치" 기준으로 장비를 붙임.
-  // (검이 손에서 떨어져 보이던 문제 해결)
-
-  // ===== Chest Armor =====
+  // ===== Chest Armor (black base + red accents) =====
   ctx.save();
 
+  // base plate
   const cg = ctx.createLinearGradient(-14, 0, 14, 18);
   cg.addColorStop(0, metalMid);
   cg.addColorStop(1, "rgba(10,14,24,0.28)");
@@ -2039,11 +2035,13 @@
   roundRect(-15, 0, 30, 19, 9);
   ctx.fill();
 
+  // inner plate
   ctx.globalAlpha = 0.95;
   ctx.fillStyle = metalDark;
   roundRect(-12.5, 2.5, 25, 14, 8);
   ctx.fill();
 
+  // red cross / stripe
   ctx.globalAlpha = 0.9;
   ctx.fillStyle = red1;
   roundRect(-2.2, 2.5, 4.4, 14, 2.2);
@@ -2051,11 +2049,13 @@
   roundRect(-10, 8.2, 20, 3.8, 2.2);
   ctx.fill();
 
+  // tiny rivets
   ctx.globalAlpha = 0.8;
   ctx.fillStyle = "rgba(255,255,255,0.45)";
   ctx.beginPath(); ctx.arc(-9.5, 4.5, 1.2, 0, Math.PI*2); ctx.fill();
   ctx.beginPath(); ctx.arc( 9.5, 4.5, 1.2, 0, Math.PI*2); ctx.fill();
 
+  // edge stroke
   ctx.globalAlpha = 0.3;
   ctx.strokeStyle = dark;
   ctx.lineWidth = 2;
@@ -2064,7 +2064,7 @@
 
   ctx.restore();
 
-  // ===== Pauldrons =====
+  // ===== Pauldrons (black + red trim) =====
   ctx.save();
   ctx.globalAlpha = 0.98;
   ctx.fillStyle = metalMid;
@@ -2079,22 +2079,14 @@
   ctx.fill();
   roundRect(12, 10, 10, 2.8, 2);
   ctx.fill();
+
   ctx.restore();
 
-  // ------------------------------------------------------------
-  // 손 위치(상대좌표) 기반 장착:
-  // - 방패: 왼손(좌측) 쪽에 고정
-  // - 검: 오른손(우측) 쪽에 고정 (걷기 스윙만 반영)
-  // ------------------------------------------------------------
-  // screen-facing handedness fix (DOWN에서 좌/우 반전)
-let shieldX = -18;
-let swordX  =  18;
-if (dir === "down") { shieldX = 18; swordX = -18; }
-  // ===== Shield (left hand) =====
+  // ===== Shield (real shield silhouette + rim + boss + emblem) =====
+  const shieldSide = (dir === "left") ? -1 : 1;
   ctx.save();
-  // 왼손 쪽(좌측). dir이 left면 ctx가 이미 반전되어 "왼쪽"이 화면상 왼쪽 유지됨.
-  ctx.translate(shieldX, 18);
-  ctx.rotate(-0.10);
+  ctx.translate(22 * shieldSide, 18);
+  ctx.rotate(0.12 * shieldSide);
 
   // shadow
   ctx.globalAlpha = 0.18;
@@ -2102,6 +2094,7 @@ if (dir === "down") { shieldX = 18; swordX = -18; }
   roundRect(-14, -10, 28, 30, 12);
   ctx.fill();
 
+  // shield path (top round, bottom point)
   function shieldPath() {
     ctx.beginPath();
     ctx.moveTo(0, -12);
@@ -2114,42 +2107,43 @@ if (dir === "down") { shieldX = 18; swordX = -18; }
     ctx.closePath();
   }
 
+  // body gradient (black + red glow edge)
   const sg = ctx.createLinearGradient(-14, -12, 14, 24);
   sg.addColorStop(0, metalMid);
   sg.addColorStop(0.6, metalDark);
   sg.addColorStop(1, "rgba(10,14,24,0.22)");
-
   ctx.globalAlpha = 1;
   ctx.fillStyle = sg;
   shieldPath();
   ctx.fill();
 
+  // rim
   ctx.globalAlpha = 0.55;
   ctx.strokeStyle = "rgba(255,255,255,0.35)";
   ctx.lineWidth = 2.2;
   shieldPath();
   ctx.stroke();
 
+  // red edge glow
   ctx.globalAlpha = 0.22;
   ctx.strokeStyle = red1;
   ctx.lineWidth = 4;
   shieldPath();
   ctx.stroke();
 
-  // boss
+  // center boss
   ctx.globalAlpha = 0.95;
   ctx.fillStyle = steel;
   ctx.beginPath();
   ctx.arc(0, 6, 4.2, 0, Math.PI*2);
   ctx.fill();
-
   ctx.globalAlpha = 0.25;
   ctx.fillStyle = "rgba(255,255,255,0.92)";
   ctx.beginPath();
   ctx.arc(-1.2, 5.2, 1.8, 0, Math.PI*2);
   ctx.fill();
 
-  // emblem
+  // emblem (small red diamond)
   ctx.globalAlpha = 0.92;
   ctx.fillStyle = red1;
   ctx.beginPath();
@@ -2162,18 +2156,12 @@ if (dir === "down") { shieldX = 18; swordX = -18; }
 
   ctx.restore();
 
-  // ===== Sword (right hand) =====
+  // ===== Sword (steel blade + red rune) =====
+  const swordSide = (dir === "left") ? -1 : 1;
   ctx.save();
+  ctx.translate(-22 * swordSide, 18 - swing * 1.6);
+  ctx.rotate((-0.42 * swordSide) + swing * 0.11);
 
-  // 오른손 위치로 "딱 붙게" 고정 (검이 손에서 떨어져 보이는 문제 해결)
-  // 팔/손 스윙과 동기화
-  const swingY = -swing * 2.0;
-  const swingRot = swing * 0.16;
-
-  ctx.translate(swordX, 18 + swingY);
-  ctx.rotate(0.55 + swingRot);
-
-  // blade
   const bladeGrad = ctx.createLinearGradient(0, -28, 0, 4);
   bladeGrad.addColorStop(0, "#f4f7ff");
   bladeGrad.addColorStop(0.65, steel);
@@ -2183,16 +2171,7 @@ if (dir === "down") { shieldX = 18; swordX = -18; }
   roundRect(-2.6, -28, 5.2, 30, 2.6);
   ctx.fill();
 
-  // subtle blade edge (reduce "rubber" roundRect 느낌)
-ctx.save();
-ctx.globalAlpha = 0.18;
-ctx.strokeStyle = "rgba(10,14,24,0.65)";
-ctx.lineWidth = 1.1;
-roundRect(-2.6, -28, 5.2, 30, 2.6);
-ctx.stroke();
-ctx.restore();    
-
-  // edge highlight
+  // blade highlight edge
   ctx.globalAlpha = 0.22;
   ctx.strokeStyle = "rgba(255,255,255,0.9)";
   ctx.lineWidth = 1.2;
@@ -2201,13 +2180,13 @@ ctx.restore();
   ctx.lineTo(-1.2, 1);
   ctx.stroke();
 
-  // rune
+  // red rune line
   ctx.globalAlpha = 0.55;
   ctx.fillStyle = red1;
   roundRect(-0.8, -18, 1.6, 10, 1);
   ctx.fill();
 
-  // guard + grip + pommel
+  // guard + grip
   ctx.globalAlpha = 1;
   ctx.fillStyle = gold;
   roundRect(-7, 1, 14, 4, 2);
@@ -2217,54 +2196,13 @@ ctx.restore();
   roundRect(-2, 5, 4, 11, 2);
   ctx.fill();
 
+  // pommel
   ctx.fillStyle = red2;
   ctx.beginPath();
   ctx.arc(0, 18, 3.0, 0, Math.PI*2);
   ctx.fill();
 
-  // ---- Sword glow + particles (화려한 빛/파티클) ----
-  // 검 주위 글로우
-  ctx.save();
-  const glowPulse = 0.55 + 0.45 * Math.sin(tNow * 10.0 + 1.7);
-  ctx.globalAlpha = 0.10 + 0.10 * glowPulse;
-  ctx.fillStyle = red1;
-  ctx.beginPath();
-  ctx.ellipse(0, -14, 12, 30, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.globalAlpha = 0.08 + 0.10 * glowPulse;
-  ctx.fillStyle = "#ffffff";
-  ctx.beginPath();
-  ctx.ellipse(0, -16, 8, 22, 0, 0, Math.PI * 2);
-  ctx.fill();
   ctx.restore();
-
-  // 파티클: blade 라인 따라 반짝
-  ctx.save();
-  for (let i = 0; i < 10; i++) {
-    const p = (i / 10);
-    const phase = tNow * 6.0 + i * 0.9;
-    const jitterX = Math.sin(phase) * (0.8 + 0.4 * p);
-    const jitterY = Math.cos(phase * 1.2) * (1.0 + 0.6 * p);
-
-    const px = jitterX;
-    const py = -26 + p * 26 + jitterY;
-
-    const r = 0.9 + 0.9 * (0.5 + 0.5 * Math.sin(phase * 1.6));
-    ctx.globalAlpha = 0.18 + 0.20 * (0.5 + 0.5 * Math.sin(phase));
-    ctx.fillStyle = (i % 2 === 0) ? red1 : "#ffffff";
-    ctx.beginPath();
-    ctx.arc(px, py, r, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.globalAlpha *= 0.35;
-    ctx.beginPath();
-    ctx.arc(px, py, r * 3.2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-
-  ctx.restore(); // end sword
 }
 
     function drawMinifig(x, y, opts = null) {
@@ -2478,7 +2416,7 @@ ctx.restore();
         ctx.globalAlpha = 1;
 
         // ✅ (2) 히어로 장비(갑옷/검/방패)
-        if (isHero) drawHeroGear(dir, swing, opts?.time ?? 0);
+        if (isHero) drawHeroGear(dir, swing);
 
       } else {
         // side torso slimmer
@@ -2858,7 +2796,7 @@ ctx.restore();
         else if (it.kind === "player") {
           if (!(SPRITE_SRC && USE_SPRITE_IF_LOADED && drawSpriteCharacter(player.x, player.y))) {
             // ✅ (2) 플레이어는 히어로 장비 적용
-            drawMinifig(player.x, player.y, { isHero: true, time: t });
+            drawMinifig(player.x, player.y, { isHero: true });
           }
         }
       }
