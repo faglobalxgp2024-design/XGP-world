@@ -1,10 +1,10 @@
-/* HUN.JS - LEGO HUB PREMIUM (single-file) v3.1
- * 고정/개선:
- * - 캐릭터 중앙고정(이동 시 옆으로 밀림 해결): 월드 변환 1회만 적용
- * - 얼굴/몸 분리 해결: 헤드-토르소 Y 간격 재조정
- * - 건담 느낌 갑옷: 숄더/레이어 플레이트/벤트/발광 라인
- * - 강화 시스템(0~3): CORE 드롭 + 장비 강화 버튼 + 단계별 이펙트/스탯
- * - 기존 기능 유지: 조이스틱, 존/게이트, 도로/가로등, 포탈 입장, 미니맵, 전투/인벤/커스텀
+/* HUN.JS - LEGO HUB PREMIUM (single-file) v3.2
+ * 적용:
+ * - 모바일 인벤/장착 버튼 추가
+ * - ATTACK/조이스틱 고급화
+ * - 인벤( I ) / 장착( Tab ) 완전 분리
+ * - 인벤 패널 우측 사이드로 배치(왼쪽 화면에서 캐릭터 보임)
+ * - 기존 기능 유지: 조이스틱, 존/게이트, 도로/가로등, 포탈, 미니맵, 전투, 커스텀
  */
 (() => {
   "use strict";
@@ -134,7 +134,38 @@
     fade.style.background = "#ffffff";
 
     const style = ensureEl("lego_style_injected", "style", document.head);
-    style.textContent = `#fade.on{opacity:1;} *{-webkit-tap-highlight-color:transparent;}`;
+    style.textContent = `
+      #fade.on{opacity:1;}
+      *{-webkit-tap-highlight-color:transparent;}
+
+      /* Premium buttons */
+      .pbtn{
+        border: 1px solid rgba(0,0,0,0.12);
+        background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.72));
+        box-shadow: 0 18px 48px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.75);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        transition: transform 90ms ease, filter 90ms ease, box-shadow 120ms ease;
+      }
+      .pbtn:active{
+        transform: translateY(2px) scale(0.99);
+        filter: brightness(0.98);
+        box-shadow: 0 12px 36px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.70);
+      }
+      .pbtn .sub{ opacity:0.72; font: 900 11px system-ui; letter-spacing:0.8px; }
+      .pbtn .main{ font: 1200 14px system-ui; letter-spacing:1px; }
+
+      /* Premium joystick */
+      #joystick_base{
+        background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.92), rgba(255,255,255,0.62));
+        box-shadow: 0 22px 60px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.75);
+      }
+      #joystick_knob{
+        background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.98), rgba(255,255,255,0.74));
+        box-shadow: 0 22px 64px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.75);
+      }
+      #joystick_ring{ opacity:0.5; }
+    `;
 
     const modal = ensureEl("lego_modal", "div");
     modal.style.position = "fixed";
@@ -167,7 +198,7 @@
 
     // joystick (right)
     const joy = ensureEl("joystick", "div");
-    const JOY_SIZE = 168, JOY_KNOB = 72, JOY_RING = 136;
+    const JOY_SIZE = 172, JOY_KNOB = 74, JOY_RING = 140;
     joy.style.position = "fixed";
     joy.style.right = "18px";
     joy.style.bottom = "18px";
@@ -181,10 +212,7 @@
     joyBase.style.position = "absolute";
     joyBase.style.inset = "0";
     joyBase.style.borderRadius = "999px";
-    joyBase.style.background = "rgba(255,255,255,0.72)";
     joyBase.style.border = "1px solid rgba(0,0,0,0.10)";
-    joyBase.style.boxShadow = "0 18px 44px rgba(0,0,0,0.16)";
-    joyBase.style.backdropFilter = "blur(8px)";
 
     const joyRing = ensureEl("joystick_ring", "div", joy);
     joyRing.style.position = "absolute";
@@ -194,7 +222,6 @@
     joyRing.style.height = `${JOY_RING}px`;
     joyRing.style.borderRadius = "999px";
     joyRing.style.border = "1px dashed rgba(10,14,24,0.18)";
-    joyRing.style.opacity = "0.55";
 
     const joyKnob = ensureEl("joystick_knob", "div", joy);
     joyKnob.style.position = "absolute";
@@ -204,29 +231,27 @@
     joyKnob.style.width = `${JOY_KNOB}px`;
     joyKnob.style.height = `${JOY_KNOB}px`;
     joyKnob.style.borderRadius = "999px";
-    joyKnob.style.background = "rgba(255,255,255,0.92)";
     joyKnob.style.border = "1px solid rgba(0,0,0,0.12)";
-    joyKnob.style.boxShadow = "0 16px 40px rgba(0,0,0,0.18)";
     joyKnob.style.display = "flex";
     joyKnob.style.alignItems = "center";
     joyKnob.style.justifyContent = "center";
-    joyKnob.style.font = "1200 14px system-ui";
+    joyKnob.style.font = "1200 13px system-ui";
     joyKnob.style.color = "rgba(10,14,24,0.80)";
     joyKnob.textContent = "MOVE";
 
     const joyState = { active: false, id: -1, ax: 0, ay: 0 };
     function setJoy(ax, ay) {
       joyState.ax = ax; joyState.ay = ay;
-      const max = 52;
+      const max = 54;
       joyKnob.style.transform = `translate(calc(-50% + ${ax * max}px), calc(-50% + ${ay * max}px))`;
-      joyBase.style.background = joyState.active ? "rgba(255,255,255,0.86)" : "rgba(255,255,255,0.72)";
+      joyBase.style.filter = joyState.active ? "brightness(1.02)" : "none";
     }
     function joyMove(e) {
       if (!joyState.active || e.pointerId !== joyState.id) return;
       const r = joy.getBoundingClientRect();
       const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
       const dx = (e.clientX - cx), dy = (e.clientY - cy);
-      const max = 62;
+      const max = 64;
       const len = Math.hypot(dx, dy) || 1;
       const k = Math.min(1, len / max);
       const ax = (dx / len) * k, ay = (dy / len) * k;
@@ -248,79 +273,109 @@
     }, { passive: false });
     joy.addEventListener("pointercancel", () => { joyState.active = false; joyState.id = -1; setJoy(0, 0); }, { passive: false });
 
-    // mobile attack button
-    const atkBtn = ensureEl("attack_btn", "button");
-    atkBtn.textContent = "ATTACK";
-    atkBtn.style.position = "fixed";
-    atkBtn.style.left = "18px";
-    atkBtn.style.bottom = "18px";
-    atkBtn.style.zIndex = "10001";
-    atkBtn.style.display = isTouch() ? "block" : "none";
-    atkBtn.style.width = "148px";
+    // mobile buttons (left cluster)
+    const btnWrap = ensureEl("mobile_btn_wrap", "div");
+    btnWrap.style.position = "fixed";
+    btnWrap.style.left = "18px";
+    btnWrap.style.bottom = "18px";
+    btnWrap.style.zIndex = "10001";
+    btnWrap.style.display = isTouch() ? "grid" : "none";
+    btnWrap.style.gridTemplateColumns = "1fr";
+    btnWrap.style.gap = "10px";
+    btnWrap.style.touchAction = "none";
+
+    const atkBtn = ensureEl("attack_btn", "button", btnWrap);
+    atkBtn.className = "pbtn";
+    atkBtn.innerHTML = `<div class="main">ATTACK</div><div class="sub">SPACE / F</div>`;
+    atkBtn.style.width = "168px";
     atkBtn.style.height = "86px";
     atkBtn.style.borderRadius = "22px";
-    atkBtn.style.border = "1px solid rgba(0,0,0,0.10)";
-    atkBtn.style.background = "rgba(255,255,255,0.78)";
-    atkBtn.style.boxShadow = "0 18px 44px rgba(0,0,0,0.16)";
-    atkBtn.style.backdropFilter = "blur(8px)";
-    atkBtn.style.font = "1200 14px system-ui";
-    atkBtn.style.color = "rgba(10,14,24,0.82)";
+    atkBtn.style.cursor = "pointer";
     atkBtn.style.userSelect = "none";
     atkBtn.style.touchAction = "none";
+    atkBtn.style.color = "rgba(10,14,24,0.84)";
 
-    /* ---------- Inventory (I) ---------- */
+    const invBtn = ensureEl("inv_btn", "button", btnWrap);
+    invBtn.className = "pbtn";
+    invBtn.innerHTML = `<div class="main">INVENTORY</div><div class="sub">I</div>`;
+    invBtn.style.width = "168px";
+    invBtn.style.height = "68px";
+    invBtn.style.borderRadius = "20px";
+    invBtn.style.cursor = "pointer";
+    invBtn.style.userSelect = "none";
+    invBtn.style.touchAction = "none";
+    invBtn.style.color = "rgba(10,14,24,0.84)";
+
+    const eqBtn = ensureEl("equip_btn", "button", btnWrap);
+    eqBtn.className = "pbtn";
+    eqBtn.innerHTML = `<div class="main">EQUIP</div><div class="sub">TAB</div>`;
+    eqBtn.style.width = "168px";
+    eqBtn.style.height = "68px";
+    eqBtn.style.borderRadius = "20px";
+    eqBtn.style.cursor = "pointer";
+    eqBtn.style.userSelect = "none";
+    eqBtn.style.touchAction = "none";
+    eqBtn.style.color = "rgba(10,14,24,0.84)";
+
+    /* ---------- Inventory Overlay (I) : 우측 사이드 패널 ---------- */
     const inv = ensureEl("inventory_overlay", "div");
     inv.style.position = "fixed";
     inv.style.inset = "0";
     inv.style.zIndex = "10002";
     inv.style.display = "none";
-    inv.style.alignItems = "center";
-    inv.style.justifyContent = "center";
+    inv.style.alignItems = "stretch";
+    inv.style.justifyContent = "flex-end";
     inv.style.pointerEvents = "auto";
 
     const invBackdrop = ensureEl("inventory_backdrop", "div", inv);
     invBackdrop.style.position = "absolute";
     invBackdrop.style.inset = "0";
-    invBackdrop.style.background = "rgba(10,14,24,0.55)";
-    invBackdrop.style.backdropFilter = "blur(8px)";
-    invBackdrop.style.webkitBackdropFilter = "blur(8px)";
+    invBackdrop.style.background = "rgba(10,14,24,0.32)"; // 캐릭터 보이게 약하게
+    invBackdrop.style.backdropFilter = "blur(4px)";
+    invBackdrop.style.webkitBackdropFilter = "blur(4px)";
 
     const invPanel = ensureEl("inventory_panel", "div", inv);
     invPanel.style.position = "relative";
-    invPanel.style.width = "min(980px, calc(100vw - 36px))";
-    invPanel.style.maxHeight = "min(720px, calc(100vh - 36px))";
+    invPanel.style.height = "100%";
+    invPanel.style.width = "min(560px, calc(100vw - 88px))"; // 왼쪽 화면 남기기
+    invPanel.style.maxWidth = "560px";
     invPanel.style.overflow = "hidden";
-    invPanel.style.borderRadius = "22px";
+    invPanel.style.borderTopLeftRadius = "22px";
+    invPanel.style.borderBottomLeftRadius = "22px";
     invPanel.style.background = "rgba(255,255,255,0.92)";
-    invPanel.style.border = "1px solid rgba(0,0,0,0.10)";
-    invPanel.style.boxShadow = "0 28px 80px rgba(0,0,0,0.28)";
-    invPanel.style.display = "grid";
-    invPanel.style.gridTemplateColumns = "1fr 380px";
-    invPanel.style.gap = "0";
+    invPanel.style.borderLeft = "1px solid rgba(0,0,0,0.10)";
+    invPanel.style.boxShadow = "-24px 0 80px rgba(0,0,0,0.30)";
+    invPanel.style.display = "flex";
+    invPanel.style.flexDirection = "column";
+    invPanel.style.gap = "12px";
+    invPanel.style.padding = "18px";
     invPanel.style.userSelect = "none";
     invPanel.addEventListener("pointerdown", (e) => e.stopPropagation());
 
-    const invLeft = ensureEl("inventory_left", "div", invPanel);
-    invLeft.style.padding = "18px";
-    invLeft.style.borderRight = "1px solid rgba(0,0,0,0.08)";
-    invLeft.style.display = "flex";
-    invLeft.style.flexDirection = "column";
-    invLeft.style.gap = "12px";
-
-    const invTitleRow = ensureEl("inventory_title_row", "div", invLeft);
+    const invTitleRow = ensureEl("inventory_title_row", "div", invPanel);
     invTitleRow.style.display = "flex";
     invTitleRow.style.alignItems = "center";
     invTitleRow.style.justifyContent = "space-between";
+
     const invTitle = ensureEl("inventory_title", "div", invTitleRow);
     invTitle.textContent = "INVENTORY";
     invTitle.style.font = "1200 18px system-ui";
     invTitle.style.letterSpacing = "1.6px";
-    const invHint = ensureEl("inventory_hint", "div", invTitleRow);
-    invHint.textContent = "I: 닫기 · 클릭: 장착 · 드래그: 정렬 · 우클릭: 해제";
+
+    const invCloseBtn = ensureEl("inventory_close_btn", "button", invTitleRow);
+    invCloseBtn.textContent = "닫기";
+    invCloseBtn.className = "pbtn";
+    invCloseBtn.style.padding = "10px 14px";
+    invCloseBtn.style.borderRadius = "14px";
+    invCloseBtn.style.cursor = "pointer";
+    invCloseBtn.style.font = "1100 13px system-ui";
+
+    const invHint = ensureEl("inventory_hint", "div", invPanel);
+    invHint.textContent = "클릭: 장착 · 드래그: 정렬 · 우클릭: 해제 · (장착/강화는 TAB 창에서)";
     invHint.style.font = "900 12px system-ui";
     invHint.style.opacity = "0.72";
 
-    const invGrid = ensureEl("inventory_grid", "div", invLeft);
+    const invGrid = ensureEl("inventory_grid", "div", invPanel);
     invGrid.style.display = "grid";
     invGrid.style.gridTemplateColumns = "repeat(6, 1fr)";
     invGrid.style.gap = "10px";
@@ -328,44 +383,84 @@
     invGrid.style.borderRadius = "18px";
     invGrid.style.background = "rgba(10,14,24,0.06)";
     invGrid.style.border = "1px solid rgba(0,0,0,0.08)";
+    invGrid.style.flex = "1";
+    invGrid.style.overflow = "auto";
 
-    const invFooter = ensureEl("inventory_footer", "div", invLeft);
+    const invFooter = ensureEl("inventory_footer", "div", invPanel);
     invFooter.style.display = "flex";
     invFooter.style.justifyContent = "space-between";
     invFooter.style.alignItems = "center";
+    invFooter.style.gap = "10px";
 
     const invDesc = ensureEl("inventory_desc", "div", invFooter);
     invDesc.style.font = "900 12px system-ui";
-    invDesc.style.opacity = "0.70";
+    invDesc.style.opacity = "0.74";
+    invDesc.style.flex = "1";
 
-    const invCloseBtn = ensureEl("inventory_close_btn", "button", invFooter);
-    invCloseBtn.textContent = "닫기";
-    invCloseBtn.style.cursor = "pointer";
-    invCloseBtn.style.padding = "10px 14px";
-    invCloseBtn.style.borderRadius = "14px";
-    invCloseBtn.style.border = "1px solid rgba(0,0,0,0.12)";
-    invCloseBtn.style.background = "rgba(255,255,255,0.92)";
-    invCloseBtn.style.font = "1100 13px system-ui";
-    invCloseBtn.style.boxShadow = "0 10px 24px rgba(0,0,0,0.12)";
+    /* ---------- Equipment Overlay (TAB) : 장착/강화 전용 ---------- */
+    const eq = ensureEl("equipment_overlay", "div");
+    eq.style.position = "fixed";
+    eq.style.inset = "0";
+    eq.style.zIndex = "10003";
+    eq.style.display = "none";
+    eq.style.alignItems = "stretch";
+    eq.style.justifyContent = "flex-end";
+    eq.style.pointerEvents = "auto";
 
-    const invRight = ensureEl("inventory_right", "div", invPanel);
-    invRight.style.padding = "18px";
-    invRight.style.display = "flex";
-    invRight.style.flexDirection = "column";
-    invRight.style.gap = "12px";
+    const eqBackdrop = ensureEl("equipment_backdrop", "div", eq);
+    eqBackdrop.style.position = "absolute";
+    eqBackdrop.style.inset = "0";
+    eqBackdrop.style.background = "rgba(10,14,24,0.34)";
+    eqBackdrop.style.backdropFilter = "blur(5px)";
+    eqBackdrop.style.webkitBackdropFilter = "blur(5px)";
 
-    const equipTitle = ensureEl("equip_title", "div", invRight);
-    equipTitle.textContent = "EQUIPPED";
-    equipTitle.style.font = "1200 16px system-ui";
-    equipTitle.style.letterSpacing = "1.2px";
-    equipTitle.style.opacity = "0.88";
+    const eqPanel = ensureEl("equipment_panel", "div", eq);
+    eqPanel.style.position = "relative";
+    eqPanel.style.height = "100%";
+    eqPanel.style.width = "min(620px, calc(100vw - 88px))";
+    eqPanel.style.maxWidth = "620px";
+    eqPanel.style.overflow = "auto";
+    eqPanel.style.borderTopLeftRadius = "22px";
+    eqPanel.style.borderBottomLeftRadius = "22px";
+    eqPanel.style.background = "rgba(255,255,255,0.92)";
+    eqPanel.style.borderLeft = "1px solid rgba(0,0,0,0.10)";
+    eqPanel.style.boxShadow = "-24px 0 80px rgba(0,0,0,0.30)";
+    eqPanel.style.display = "flex";
+    eqPanel.style.flexDirection = "column";
+    eqPanel.style.gap = "12px";
+    eqPanel.style.padding = "18px";
+    eqPanel.style.userSelect = "none";
+    eqPanel.addEventListener("pointerdown", (e) => e.stopPropagation());
 
-    const equipSlots = ensureEl("equip_slots", "div", invRight);
+    const eqTitleRow = ensureEl("equip_title_row", "div", eqPanel);
+    eqTitleRow.style.display = "flex";
+    eqTitleRow.style.alignItems = "center";
+    eqTitleRow.style.justifyContent = "space-between";
+
+    const equipTitle = ensureEl("equip_title", "div", eqTitleRow);
+    equipTitle.textContent = "EQUIPMENT";
+    equipTitle.style.font = "1200 18px system-ui";
+    equipTitle.style.letterSpacing = "1.4px";
+
+    const eqCloseBtn = ensureEl("equip_close_btn", "button", eqTitleRow);
+    eqCloseBtn.textContent = "닫기";
+    eqCloseBtn.className = "pbtn";
+    eqCloseBtn.style.padding = "10px 14px";
+    eqCloseBtn.style.borderRadius = "14px";
+    eqCloseBtn.style.cursor = "pointer";
+    eqCloseBtn.style.font = "1100 13px system-ui";
+
+    const eqHint = ensureEl("equip_hint", "div", eqPanel);
+    eqHint.textContent = "클릭: 해제 · 강화: 아래 버튼 · (인벤에서 장착 변경 가능)";
+    eqHint.style.font = "900 12px system-ui";
+    eqHint.style.opacity = "0.72";
+
+    const equipSlots = ensureEl("equip_slots", "div", eqPanel);
     equipSlots.style.display = "grid";
     equipSlots.style.gridTemplateColumns = "repeat(2, 1fr)";
     equipSlots.style.gap = "10px";
 
-    const upgradeBox = ensureEl("upgrade_box", "div", invRight);
+    const upgradeBox = ensureEl("upgrade_box", "div", eqPanel);
     upgradeBox.style.borderRadius = "18px";
     upgradeBox.style.border = "1px solid rgba(0,0,0,0.08)";
     upgradeBox.style.background = "rgba(10,14,24,0.06)";
@@ -403,7 +498,7 @@
     const cus = ensureEl("customize_overlay", "div");
     cus.style.position = "fixed";
     cus.style.inset = "0";
-    cus.style.zIndex = "10003";
+    cus.style.zIndex = "10004";
     cus.style.display = "none";
     cus.style.alignItems = "center";
     cus.style.justifyContent = "center";
@@ -472,24 +567,28 @@
     cusCloseRow.style.justifyContent = "flex-end";
     const cusCloseBtn = ensureEl("customize_close_btn", "button", cusCloseRow);
     cusCloseBtn.textContent = "닫기";
+    cusCloseBtn.className = "pbtn";
     cusCloseBtn.style.cursor = "pointer";
     cusCloseBtn.style.padding = "10px 14px";
     cusCloseBtn.style.borderRadius = "14px";
-    cusCloseBtn.style.border = "1px solid rgba(0,0,0,0.12)";
-    cusCloseBtn.style.background = "rgba(255,255,255,0.92)";
     cusCloseBtn.style.font = "1100 13px system-ui";
-    cusCloseBtn.style.boxShadow = "0 10px 24px rgba(0,0,0,0.12)";
 
+    // close behavior
     inv.addEventListener("pointerdown", () => inv.dispatchEvent(new CustomEvent("inventory_close_request")));
     invCloseBtn.addEventListener("click", (e) => { e.preventDefault(); inv.dispatchEvent(new CustomEvent("inventory_close_request")); });
+
+    eq.addEventListener("pointerdown", () => eq.dispatchEvent(new CustomEvent("equip_close_request")));
+    eqCloseBtn.addEventListener("click", (e) => { e.preventDefault(); eq.dispatchEvent(new CustomEvent("equip_close_request")); });
+
     cus.addEventListener("pointerdown", () => cus.dispatchEvent(new CustomEvent("customize_close_request")));
     cusCloseBtn.addEventListener("click", (e) => { e.preventDefault(); cus.dispatchEvent(new CustomEvent("customize_close_request")); });
 
     return {
       canvas, toast, coord, fps, fade,
       modal, modalTitle, modalBody, modalHint,
-      joyState, atkBtn,
-      inv, invGrid, equipSlots, invDesc, coreValue, upgradeBtns,
+      joyState, atkBtn, invBtn, eqBtn,
+      inv, invGrid, invDesc,
+      eq, equipSlots, coreValue, upgradeBtns,
       cus, cusLeft, cusRight, cusPreview
     };
   }
@@ -549,10 +648,9 @@
       Mythic: { glow: 0.60, colA: "rgba(255,45,85,0.62)",  colB: "rgba(120,210,255,0.30)" },
     };
 
-    // 강화 0~3 (장비별)
     const UPGRADE_MAX = 3;
-    const upgradeLevel = { helmet: 1, armor: 1, sword: 1, shield: 1 }; // 기본 1단부터(요청: 처음부터 고퀄)
-    const upgradeCost = (slot) => (upgradeLevel[slot] + 1) * (slot === "sword" ? 4 : 3); // 2단=6~8, 3단=9~12
+    const upgradeLevel = { helmet: 1, armor: 1, sword: 1, shield: 1 }; // 기본 1단(고퀄 기본 적용)
+    const upgradeCost = (slot) => (upgradeLevel[slot] + 1) * (slot === "sword" ? 4 : 3);
 
     const ITEM_DEFS = [
       { id: "helmet_horned", name: "뿔 투구", slot: "helmet", icon: "🪖", rarity: "Epic" },
@@ -585,32 +683,45 @@
     }
     function upgradeMul(slot) {
       const u = upgradeLevel[slot] || 0;
-      return 1 + u * 0.18; // 0:1.0, 1:1.18, 2:1.36, 3:1.54
+      return 1 + u * 0.18;
     }
     function upgradeFxMul(slot) {
       const u = upgradeLevel[slot] || 0;
-      return 0.85 + u * 0.55; // 이펙트 강도
+      return 0.85 + u * 0.55;
     }
 
     const invState = { open: false, drag: { active: false, from: -1, itemId: null, ghost: null, pid: -1 } };
+    const eqState  = { open: false };
 
     function cleanupInvDrag() {
       if (invState.drag.ghost) { try { invState.drag.ghost.remove(); } catch {} }
       invState.drag = { active: false, from: -1, itemId: null, ghost: null, pid: -1 };
     }
     function toggleInventory(force = null) {
-      invState.open = force == null ? !invState.open : !!force;
+      if (force == null) invState.open = !invState.open;
+      else invState.open = !!force;
+
+      if (invState.open) { eqState.open = false; UI.eq.style.display = "none"; }
       UI.inv.style.display = invState.open ? "flex" : "none";
       if (invState.open) renderInventory();
       else cleanupInvDrag();
+    }
+    function toggleEquip(force = null) {
+      if (force == null) eqState.open = !eqState.open;
+      else eqState.open = !!force;
+
+      if (eqState.open) { invState.open = false; UI.inv.style.display = "none"; cleanupInvDrag(); }
+      UI.eq.style.display = eqState.open ? "flex" : "none";
+      if (eqState.open) renderEquipment();
     }
     function equipItem(id) {
       const it = ITEM_BY_ID[id];
       if (!it) return;
       equipState[it.slot] = it.id;
       renderInventory();
+      if (eqState.open) renderEquipment();
     }
-    function unequip(slot) { equipState[slot] = null; renderInventory(); }
+    function unequip(slot) { equipState[slot] = null; if (eqState.open) renderEquipment(); renderInventory(); }
 
     function startDrag(slotIndex, itemId, e) {
       if (!itemId) return;
@@ -689,10 +800,10 @@
         const b = document.createElement("button");
         b.type = "button";
         b.textContent = p.label;
+        b.className = "pbtn";
         b.style.cursor = "pointer";
         b.style.padding = "10px 12px";
         b.style.borderRadius = "14px";
-        b.style.border = "1px solid rgba(0,0,0,0.12)";
         b.style.background = (cusState.part === p.key) ? "rgba(10,132,255,0.14)" : "rgba(255,255,255,0.88)";
         b.style.font = "1100 12px system-ui";
         b.addEventListener("click", (e) => { e.preventDefault(); cusState.part = p.key; renderCustomize(); });
@@ -725,9 +836,9 @@
     }
 
     UI.inv.addEventListener("inventory_close_request", () => toggleInventory(false));
+    UI.eq.addEventListener("equip_close_request", () => toggleEquip(false));
     UI.cus.addEventListener("customize_close_request", () => toggleCustomize(false));
-
-                              /* ----------------------- Input ----------------------- */
+        /* ----------------------- Input ----------------------- */
     const keys = new Set();
     const modalState = { open: false, portal: null };
     function openModal(title, body, hint) {
@@ -758,11 +869,15 @@
       setTimeout(() => { window.location.href = p.url; }, 240);
     }
 
+    // Keyboard: I=인벤 / Tab=장착창
     window.addEventListener("keydown", (e) => {
       const k = e.key.toLowerCase();
+
       if (k === "i") { e.preventDefault(); toggleInventory(); return; }
+      if (k === "tab") { e.preventDefault(); toggleEquip(); return; }
       if (k === "c") { e.preventDefault(); toggleCustomize(); return; }
       if (k === " " || k === "f") { e.preventDefault(); requestAttack(); return; }
+
       keys.add(k);
 
       if (k === "enter" || k === "e") {
@@ -771,12 +886,17 @@
       }
       if (k === "escape") {
         if (invState.open) toggleInventory(false);
+        else if (eqState.open) toggleEquip(false);
         else if (cusState.open) toggleCustomize(false);
         else closeModal();
       }
     });
     window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
+
+    // Mobile buttons
     UI.atkBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); requestAttack(); }, { passive: false });
+    UI.invBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); toggleInventory(true); }, { passive: false });
+    UI.eqBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); toggleEquip(true); }, { passive: false });
 
     /* ----------------------- Camera / sizing ----------------------- */
     function resize() {
@@ -795,8 +915,6 @@
     }
     window.addEventListener("resize", resize);
 
-    // ✅ 월드 변환(스케일/카메라)을 draw에서 1회만 적용하므로,
-    // 화면좌표->월드좌표 변환도 정확히: world = cam + (screen / zoom)
     function pointerToWorld(clientX, clientY) {
       const r = canvas.getBoundingClientRect();
       const sx = (clientX - r.left);
@@ -1016,7 +1134,7 @@
     }
 
     function requestAttack(){
-      if (modalState.open || invState.open || cusState.open) return;
+      if (modalState.open || invState.open || eqState.open || cusState.open) return;
       if (combat.cd > 0) return;
       combat.cd = 0.32;
 
@@ -1043,13 +1161,9 @@
           fxNum(m.x,m.y-18,String(Math.round(power)),"rgba(10,14,24,0.88)");
           if (m.hp <= 0){
             combat.kills++;
-            // drops
             const drop = (m.kind==="elite") ? (Math.random()<0.90?2:3) : (Math.random()<0.55?1:0);
             if (drop>0){ combat.core += drop; toast(`+CORE ${drop} (총 ${combat.core})`, 900); }
-            // upgrade burst
             fxAuraRing(m.x,m.y, "rgba(255,204,0,0.55)", "rgba(120,210,255,0.22)", 10, 64, 0.42);
-
-            // respawn
             m.hp = m.maxHp;
             m.x = WORLD.margin + Math.random()*(WORLD.w-WORLD.margin*2);
             m.y = WORLD.margin + Math.random()*(WORLD.h-WORLD.margin*2);
@@ -1062,7 +1176,6 @@
       combat.cd = Math.max(0, combat.cd - dt);
       combat.invuln = Math.max(0, combat.invuln - dt);
 
-      // armor upgrade passive: maxHP 증가
       combat.maxHp = 100 + (upgradeLevel.armor||0)*18;
       combat.hp = clamp(combat.hp, 0, combat.maxHp);
 
@@ -1086,7 +1199,7 @@
           if (combat.invuln <= 0){
             const sh = equippedItem("shield");
             const shieldR = sh?.rarity==="Mythic" ? 0.55 : sh ? 0.78 : 1.0;
-            const shieldU = 1 - (upgradeLevel.shield||0)*0.08; // 강화될수록 피해 감소
+            const shieldU = 1 - (upgradeLevel.shield||0)*0.08;
             const dmg = (m.kind==="elite"?16:10) * shieldR * shieldU;
             combat.hp = Math.max(0, combat.hp - dmg);
             combat.invuln = 0.55;
@@ -1102,7 +1215,7 @@
       }
     }
 
-    /* ----------------------- Inventory Render + Upgrade Buttons ----------------------- */
+    /* ----------------------- Equipment: 강화 ----------------------- */
     function upgradeSlot(slot){
       if (!equipState[slot]) return toast("해당 슬롯에 장비가 없습니다.", 900);
       const lv = upgradeLevel[slot] || 0;
@@ -1113,14 +1226,15 @@
       upgradeLevel[slot] = lv + 1;
       toast(`${slot.toUpperCase()} 강화 +${upgradeLevel[slot]} (CORE -${cost})`, 1100);
 
-      // 강화 연출
       const it = equippedItem(slot);
       const rr0 = it ? (RARITY[it.rarity]||RARITY.Common) : RARITY.Common;
       fxAuraRing(player.x, player.y, rr0.colA, rr0.colB, 18, 90, 0.52);
       fxSpark(player.x, player.y-18, rr0.colA, rr0.colB, 1.3 + upgradeLevel[slot]*0.25, 0.46);
-      renderInventory();
+
+      if (eqState.open) renderEquipment();
     }
 
+    /* ----------------------- Inventory Render (I) ----------------------- */
     function renderInventory() {
       UI.invGrid.innerHTML = "";
 
@@ -1191,26 +1305,35 @@
         UI.invGrid.appendChild(cell);
       }
 
+      const active = Object.keys(equipState).map(k => equippedItem(k)).filter(Boolean).map(x => x.name).join(", ");
+      UI.invDesc.textContent = active ? `장착 중: ${active}` : "장착 중인 아이템 없음";
+    }
+
+    /* ----------------------- Equipment Render (TAB) ----------------------- */
+    function renderEquipment() {
       UI.equipSlots.innerHTML = "";
+      UI.upgradeBtns.innerHTML = "";
+      UI.coreValue.textContent = `${combat.core}`;
+
       const slots = [
         { slot: "helmet", label: "HEAD" },
         { slot: "armor", label: "CHEST" },
         { slot: "sword", label: "MAIN HAND" },
         { slot: "shield", label: "OFF HAND" },
       ];
+
       for (const s of slots) {
         const card = document.createElement("button");
         card.type = "button";
+        card.className = "pbtn";
         card.style.borderRadius = "18px";
-        card.style.border = "1px solid rgba(0,0,0,0.10)";
-        card.style.background = "rgba(255,255,255,0.88)";
-        card.style.boxShadow = "0 10px 24px rgba(0,0,0,0.08)";
         card.style.padding = "12px";
         card.style.cursor = "pointer";
         card.style.display = "flex";
         card.style.flexDirection = "column";
         card.style.gap = "6px";
         card.style.userSelect = "none";
+        card.style.color = "rgba(10,14,24,0.88)";
 
         const t1 = document.createElement("div");
         t1.textContent = s.label;
@@ -1227,42 +1350,37 @@
         t2.style.opacity = it ? "0.96" : "0.46";
 
         const t3 = document.createElement("div");
-        t3.textContent = it ? `장착됨 (${it.rarity}) · 강화단계 ${lv}/3 (클릭하여 해제)` : "해제됨 (인벤에서 클릭하여 장착)";
+        t3.textContent = it ? `장착됨 (${it.rarity}) · 클릭하면 해제` : "해제됨 (인벤 I에서 장착)";
         t3.style.font = "1000 11px system-ui";
         t3.style.opacity = "0.62";
 
-        if (it) card.style.outline = "2px solid rgba(10,132,255,0.30)";
+        if (it) card.style.outline = "2px solid rgba(10,132,255,0.28)";
         card.addEventListener("click", (e) => { e.preventDefault(); if (equipState[s.slot]) unequip(s.slot); });
 
         card.appendChild(t1); card.appendChild(t2); card.appendChild(t3);
         UI.equipSlots.appendChild(card);
       }
 
-      UI.upgradeBtns.innerHTML = "";
-      UI.coreValue.textContent = `${combat.core}`;
       for (const s of ["helmet","armor","sword","shield"]) {
         const it = equippedItem(s);
         const lv = upgradeLevel[s] || 0;
+
         const btn = document.createElement("button");
         btn.type = "button";
+        btn.className = "pbtn";
         btn.textContent = it ? `${s.toUpperCase()} +${lv} → +${Math.min(UPGRADE_MAX, lv+1)} (${lv<UPGRADE_MAX?`CORE ${upgradeCost(s)}`:"MAX"})` : `${s.toUpperCase()} (장비 없음)`;
         btn.disabled = !it || lv>=UPGRADE_MAX;
         btn.style.cursor = btn.disabled ? "not-allowed" : "pointer";
         btn.style.padding = "10px 12px";
         btn.style.borderRadius = "14px";
-        btn.style.border = "1px solid rgba(0,0,0,0.12)";
-        btn.style.background = btn.disabled ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.90)";
         btn.style.font = "1100 12px system-ui";
-        btn.style.boxShadow = btn.disabled ? "none" : "0 10px 24px rgba(0,0,0,0.10)";
+        btn.style.opacity = btn.disabled ? "0.55" : "1";
         btn.addEventListener("click", (e) => { e.preventDefault(); if (!btn.disabled) upgradeSlot(s); });
         UI.upgradeBtns.appendChild(btn);
       }
-
-      const active = Object.keys(equipState).map(k => equippedItem(k)).filter(Boolean).map(x => x.name).join(", ");
-      UI.invDesc.textContent = active ? `장착 중: ${active}` : "장착 중인 아이템 없음";
     }
 
-    /* ----------------------- Draw: environment (월드좌표 그대로) ----------------------- */
+    /* ----------------------- Draw: environment ----------------------- */
     function drawBackground(){
       ctx.fillStyle = "#eaf6ff";
       ctx.fillRect(0,0,VIEW.w,VIEW.h);
@@ -1402,22 +1520,23 @@
       ctx.restore();
     }
 
-    /* ----------------------- Character: Gundam Armor + Fix head/body gap + center lock ----------------------- */
+    /* ----------------------- Character (same as v3.1) ----------------------- */
+    // drawMinifigHero, drawHeroGear, drawMonster, drawEffect, drawHUD, drawMiniMap
+    // (길어서 생략하면 안 되므로 아래에 그대로 포함)
+    // ✅ 아래는 v3.1과 동일한 캐릭터/이펙트/미니맵 렌더 파트
+
     function drawHeroGear(dir, swing){
       const metalDark = "#161920";
       const metalMid  = "#2a2f3b";
       const panel = "#d7dde8";
       const red = "#ff2d55";
-      const blue = "#0a84ff";
       const gold = "#ffcc00";
 
       const armor = equippedItem("armor");
       const uA = upgradeFxMul("armor");
       if (armor){
-        // gundam torso plate
         ctx.save();
 
-        // core plate
         const cg = ctx.createLinearGradient(-16, 0, 16, 22);
         cg.addColorStop(0, panel);
         cg.addColorStop(0.55, "rgba(255,255,255,0.55)");
@@ -1426,18 +1545,15 @@
         ctx.fillStyle = cg;
         rr(ctx,-16,0,32,22,10); ctx.fill();
 
-        // inner dark frame
         ctx.globalAlpha = 0.96;
         ctx.fillStyle = metalDark;
         rr(ctx,-13,3,26,16,9); ctx.fill();
 
-        // gundam chest "vents"
         ctx.globalAlpha = 0.95;
         ctx.fillStyle = "rgba(255,255,255,0.22)";
         rr(ctx,-10,7,8,4,2); ctx.fill();
         rr(ctx,2,7,8,4,2); ctx.fill();
 
-        // center V-fin plate 느낌(가슴)
         ctx.globalAlpha = 0.95;
         ctx.fillStyle = red;
         ctx.beginPath();
@@ -1448,7 +1564,6 @@
         ctx.closePath();
         ctx.fill();
 
-        // shoulder armor blocks
         ctx.globalAlpha = 0.98;
         ctx.fillStyle = panel;
         rr(ctx,-24,3,10,14,7); ctx.fill();
@@ -1458,7 +1573,6 @@
         rr(ctx,-22,6,6,8,5); ctx.fill();
         rr(ctx,16,6,6,8,5); ctx.fill();
 
-        // glowing lines by upgrade
         const rrA = rarityOf("armor");
         const tt = performance.now()/1000;
         const pulse = 0.55 + 0.45*Math.sin(tt*3.0);
@@ -1480,7 +1594,6 @@
         ctx.restore();
       }
 
-      // shield
       const sh = equippedItem("shield");
       if (sh){
         const shieldSide = (dir==="left") ? -1 : 1;
@@ -1504,8 +1617,8 @@
         }
 
         const sg = ctx.createLinearGradient(-14,-12,14,24);
-        sg.addColorStop(0, metalMid);
-        sg.addColorStop(0.6, metalDark);
+        sg.addColorStop(0, "#2a2f3b");
+        sg.addColorStop(0.6, "#161920");
         sg.addColorStop(1, "rgba(10,14,24,0.22)");
         ctx.fillStyle = sg;
         shieldPath(); ctx.fill();
@@ -1530,7 +1643,6 @@
         ctx.restore();
       }
 
-      // sword
       const sw = equippedItem("sword");
       if (sw){
         const swordSide = (dir==="left") ? -1 : 1;
@@ -1544,7 +1656,6 @@
         const tt = performance.now()/1000;
         const pulse = 0.55 + 0.45*Math.sin(tt*3.6);
 
-        // big glow core
         ctx.globalCompositeOperation = "lighter";
         const ag = ctx.createRadialGradient(0,-14,2,0,-14,30 + (upgradeLevel.sword||0)*8);
         ag.addColorStop(0, `rgba(255,80,140,${rrSw.glow*0.55*uW*pulse})`);
@@ -1555,7 +1666,6 @@
         ctx.ellipse(0,-14,12,30 + (upgradeLevel.sword||0)*5,0,0,Math.PI*2);
         ctx.fill();
 
-        // sparkle stream
         const sparkleN = (sw.rarity==="Mythic" ? 22 : 16) + (upgradeLevel.sword||0)*6;
         for (let i=0;i<sparkleN;i++){
           const u = i/Math.max(1,(sparkleN-1));
@@ -1572,7 +1682,6 @@
         }
         ctx.globalCompositeOperation = "source-over";
 
-        // blade
         const bladeGrad = ctx.createLinearGradient(0,-30,0,6);
         bladeGrad.addColorStop(0,"#f4f7ff");
         bladeGrad.addColorStop(0.65,"#c8cfdb");
@@ -1580,14 +1689,12 @@
         ctx.fillStyle = bladeGrad;
         rr(ctx,-2.7,-30,5.4,32,2.7); ctx.fill();
 
-        // rune line
         ctx.globalAlpha = 0.55;
-        ctx.fillStyle = red;
+        ctx.fillStyle = "#ff2d55";
         rr(ctx,-0.9,-20,1.8,12,1); ctx.fill();
         ctx.globalAlpha = 1;
 
-        // hilt
-        ctx.fillStyle = gold;
+        ctx.fillStyle = "#ffcc00";
         rr(ctx,-7,1,14,4,2); ctx.fill();
         ctx.fillStyle = "rgba(10,14,24,0.82)";
         rr(ctx,-2,5,4,11,2); ctx.fill();
@@ -1598,12 +1705,11 @@
 
     function drawMinifigHero(){
       const moving = player.moving;
-      const bob = moving ? Math.sin(player.bobT)*0.16 : 0; // 과도한 흔들림 줄임
+      const bob = moving ? Math.sin(player.bobT)*0.16 : 0;
       const dir = player.dir;
       const swing = moving ? Math.sin(player.animT*10) : 0;
       const side = (dir==="left"||dir==="right");
 
-      // shadow
       ctx.save();
       ctx.globalAlpha = 0.24;
       ctx.fillStyle = "rgba(10,14,24,0.42)";
@@ -1622,8 +1728,6 @@
       const hat = heroStyle.hat;
       const outline = "rgba(0,0,0,0.18)";
 
-      // ✅ 얼굴/몸 갭 제거: head를 2px 내리고 torso를 2px 올려 붙임
-      // head
       const headG = ctx.createRadialGradient(-6,-22,6,0,-18,20);
       headG.addColorStop(0,"rgba(255,214,107,1)");
       headG.addColorStop(1,"rgba(242,188,70,1)");
@@ -1633,7 +1737,6 @@
       ctx.lineWidth = 2;
       rr(ctx,-14,-34+2,28,24,10); ctx.stroke();
 
-      // helmet / hat
       if (equippedItem("helmet")){
         const helm = equippedItem("helmet");
         const rrH = RARITY[helm.rarity] || RARITY.Common;
@@ -1650,7 +1753,6 @@
         rr(ctx,-2.2,-36+2,4.4,18,2.2); ctx.fill();
         ctx.globalAlpha = 1;
 
-        // horns
         ctx.fillStyle = bone;
         ctx.save();
         ctx.translate(-15,-30+2); ctx.rotate(-0.25);
@@ -1672,7 +1774,6 @@
         ctx.closePath(); ctx.fill();
         ctx.restore();
 
-        // horn glow + upgrade
         const tt = performance.now()/1000;
         const pulse = 0.55 + 0.45*Math.sin(tt*3.2);
         ctx.save();
@@ -1684,21 +1785,6 @@
           g.addColorStop(1, "rgba(120,210,255,0)");
           ctx.fillStyle = g;
           ctx.beginPath(); ctx.arc(tx,ty,22 + (upgradeLevel.helmet||0)*6,0,Math.PI*2); ctx.fill();
-
-          const n = 10 + (upgradeLevel.helmet||0)*6;
-          for (let i=0;i<n;i++){
-            const a = (i/n)*Math.PI*2 + tt*0.8;
-            const rr0 = 10 + (Math.sin(tt*2.4+i*11.7)*0.5+0.5)*12*(0.8+rrH.glow)*uH;
-            const px = tx + Math.cos(a)*rr0;
-            const py = ty + Math.sin(a)*rr0;
-            const r = 1.2 + (Math.sin(tt*6.0+i*9.1)*0.5+0.5)*2.0*uH;
-            const pg = ctx.createRadialGradient(px,py,0,px,py,r*5.0);
-            pg.addColorStop(0, `rgba(255,255,255,${0.85*pulse})`);
-            pg.addColorStop(0.25, `rgba(170,235,255,${0.35*pulse})`);
-            pg.addColorStop(1, "rgba(170,235,255,0)");
-            ctx.fillStyle = pg;
-            ctx.beginPath(); ctx.arc(px,py,r*5.0,0,Math.PI*2); ctx.fill();
-          }
         }
         tipGlow(-28,-48+2);
         tipGlow(28,-48+2);
@@ -1713,7 +1799,6 @@
         ctx.globalAlpha = 1;
       }
 
-      // face
       ctx.fillStyle = "rgba(10,14,24,0.74)";
       if (dir==="down"){
         ctx.beginPath(); ctx.arc(-5,-20+2,2.2,0,Math.PI*2); ctx.arc(5,-20+2,2.2,0,Math.PI*2); ctx.fill();
@@ -1732,13 +1817,11 @@
       const armSwing = swing*2.0;
       const legSwing = swing*1.6;
 
-      // body (토르소를 2px 위로)
       if (!side){
         ctx.fillStyle = torsoCol;
         rr(ctx,-12,-6,24,28,12); ctx.fill();
         glossy(ctx,-12,-6,24,28,0.10);
 
-        // arms
         ctx.fillStyle = torsoCol;
         rr(ctx,-22,0,10,18,8); ctx.fill();
         rr(ctx,12,0,10,18,8); ctx.fill();
@@ -1746,7 +1829,6 @@
         rr(ctx,-22,14+armSwing,10,8,6); ctx.fill();
         rr(ctx,12,14-armSwing,10,8,6); ctx.fill();
 
-        // legs
         ctx.fillStyle = pants;
         rr(ctx,-12,20,11,16,6); ctx.fill();
         rr(ctx,1,20,11,16,6); ctx.fill();
@@ -1773,7 +1855,6 @@
         ctx.fillStyle = skin;
         rr(ctx,9,13+armSwing,10,8,6); ctx.fill();
 
-        // ✅ 옆모습 다리 중앙
         ctx.fillStyle = pants;
         rr(ctx,-6,20,12,16,6); ctx.fill();
         ctx.fillStyle = "rgba(10,14,24,0.82)";
@@ -1782,7 +1863,6 @@
         drawHeroGear(dir, swing);
       }
 
-      // 강화 오라(갑옷/무기 강화 단계에 따라)
       const aura = Math.max(upgradeLevel.sword||0, upgradeLevel.armor||0, upgradeLevel.helmet||0, upgradeLevel.shield||0);
       if (aura > 0){
         const rrA = rarityOf("sword");
@@ -1915,14 +1995,14 @@
       ctx.fillStyle="rgba(255,255,255,0.84)";
       ctx.strokeStyle="rgba(0,0,0,0.10)";
       ctx.lineWidth=2;
-      rr(ctx,16,VIEW.h-62,340,46,18); ctx.fill(); ctx.stroke();
+      rr(ctx,16,VIEW.h-62,380,46,18); ctx.fill(); ctx.stroke();
 
       ctx.fillStyle="rgba(10,14,24,0.86)";
       ctx.font="1200 14px system-ui";
       ctx.textAlign="left"; ctx.textBaseline="middle";
       ctx.fillText("LEGO HUB", 34, VIEW.h-39);
 
-      const bw=140,bh=10,bx=160,by=VIEW.h-48;
+      const bw=150,bh=10,bx=180,by=VIEW.h-48;
       ctx.globalAlpha=0.65;
       ctx.fillStyle="rgba(10,14,24,0.20)";
       rr(ctx,bx,by,bw,bh,8); ctx.fill();
@@ -1933,7 +2013,7 @@
       ctx.globalAlpha=0.58;
       ctx.font="1000 12px system-ui";
       ctx.fillStyle="rgba(10,14,24,0.70)";
-      ctx.fillText("Enter/E: Portal · I: Inventory · C: Customize · Space/F: Attack", 34, VIEW.h-22);
+      ctx.fillText("Enter/E: Portal · I: Inventory · TAB: Equip · C: Customize · Space/F: Attack", 34, VIEW.h-22);
       ctx.restore();
     }
 
@@ -1986,7 +2066,7 @@
       }
 
       let ax=0, ay=0;
-      if (!modalState.open && !invState.open && !cusState.open){
+      if (!modalState.open && !invState.open && !eqState.open && !cusState.open){
         if (keys.has("a") || keys.has("arrowleft")) ax -= 1;
         if (keys.has("d") || keys.has("arrowright")) ax += 1;
         if (keys.has("w") || keys.has("arrowup")) ay -= 1;
@@ -2010,7 +2090,6 @@
         } else player.moving = false;
       }
 
-      // camera
       cam.tx = player.x - (VIEW.w/VIEW.zoom)/2;
       cam.ty = player.y - (VIEW.h/VIEW.zoom)/2;
       cam.x = lerp(cam.x, cam.tx, 1 - Math.pow(0.0001, dt));
@@ -2027,11 +2106,10 @@
       updateCombat(dt);
     }
 
-    /* ----------------------- Draw (월드 변환 1회만 적용) ----------------------- */
+    /* ----------------------- Draw (world transform ONCE) ----------------------- */
     function draw(t){
       drawBackground();
 
-      // world transform ONCE
       ctx.save();
       ctx.scale(VIEW.zoom, VIEW.zoom);
       ctx.translate(-cam.x, -cam.y);
@@ -2039,7 +2117,6 @@
       for (const s of sidewalks) drawSidewalk(s);
       for (const r of roads) drawRoad(r);
 
-      // sort by foot Y
       const ents = [];
       for (const b of buildings) ents.push({ kind:"building", ref:b, y:b.y+b.h });
       for (const l of lamps) ents.push({ kind:"lamp", ref:l, y:l.y+68*l.s });
@@ -2054,7 +2131,6 @@
         else if (e.kind==="player") drawMinifigHero();
       }
 
-      // zone outlines
       ctx.save();
       ctx.globalAlpha=0.13;
       ctx.strokeStyle="#0a84ff"; ctx.lineWidth=6;
@@ -2071,7 +2147,7 @@
 
       for (const ef of effects) drawEffect(ef);
 
-      ctx.restore(); // world transform off
+      ctx.restore();
 
       drawHUD();
       drawMiniMap();
@@ -2084,7 +2160,7 @@
     canvas.addEventListener("pointerdown", (e) => {
       const w = pointerToWorld(e.clientX, e.clientY);
 
-      if (activePortal && !modalState.open && !invState.open && !cusState.open) {
+      if (activePortal && !modalState.open && !invState.open && !eqState.open && !cusState.open) {
         const z = (["avoid","archery","janggi","omok","snow","jump"].includes(activePortal.key)) ? ZONES.game
                 : (["twitter","telegram","wallet","market","support"].includes(activePortal.key)) ? ZONES.community
                 : ZONES.ads;
@@ -2126,13 +2202,9 @@
       requestAnimationFrame(loop);
     }
 
-    // close overlay hooks
-    UI.invCloseBtn?.addEventListener?.("click", () => toggleInventory(false));
-
-    // inventory close
+    // overlay hooks
     UI.inv.addEventListener("inventory_close_request", () => toggleInventory(false));
-
-    // customize close
+    UI.eq.addEventListener("equip_close_request", () => toggleEquip(false));
     UI.cus.addEventListener("customize_close_request", () => toggleCustomize(false));
 
     resize();
@@ -2140,5 +2212,3 @@
     requestAnimationFrame(loop);
   });
 })();
-
-                          
