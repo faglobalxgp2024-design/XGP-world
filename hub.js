@@ -1,3 +1,4 @@
+/* ===================== [PART 1 / 3] ===================== */
 /* HUN.JS - LEGO PREMIUM (single-file) v2.6
  * 적용:
  * 1) 모바일 조이스틱: 오른쪽으로 이동 + 살짝 크게
@@ -5,6 +6,11 @@
  * 3) 존 입구: 고급스러운 “게이트/입구” 생성 + 시각적 강조
  * 4) 도로: 존 바깥 정렬 + 도로가 끊겨 보이지 않게 연장/연결 개선 + 차량 라인 안 잘리도록
  * 5) 가로등: 랜덤 → 도로를 따라 규칙적으로 정렬 배치
+ *
+ * (추가 적용)
+ * 6) 검/투구뿔: 고퀄 빛나는(글로우+파티클) 효과
+ * 7) 옆모습 다리 중심 정렬(좌/우 이동시 다리 붙는 문제 해결)
+ * 8) 인벤토리(I): 실제 인벤토리 느낌 UI + 장착/해제 즉시 반영
  *
  * 사용법: 이 파일 전체를 hub.js에 그대로 붙여넣기
  */
@@ -190,6 +196,123 @@
     modalHint.style.font = "900 13px system-ui";
     modalHint.style.opacity = "0.72";
 
+    /* ---------- Inventory UI (I key) ---------- */
+    const inv = ensureEl("inventory_overlay", "div");
+    inv.style.position = "fixed";
+    inv.style.inset = "0";
+    inv.style.zIndex = "10002";
+    inv.style.display = "none";
+    inv.style.alignItems = "center";
+    inv.style.justifyContent = "center";
+    inv.style.pointerEvents = "auto";
+
+    const invBackdrop = ensureEl("inventory_backdrop", "div", inv);
+    invBackdrop.style.position = "absolute";
+    invBackdrop.style.inset = "0";
+    invBackdrop.style.background = "rgba(10,14,24,0.55)";
+    invBackdrop.style.backdropFilter = "blur(8px)";
+    invBackdrop.style.webkitBackdropFilter = "blur(8px)";
+
+    const invPanel = ensureEl("inventory_panel", "div", inv);
+    invPanel.style.position = "relative";
+    invPanel.style.width = "min(980px, calc(100vw - 36px))";
+    invPanel.style.maxHeight = "min(720px, calc(100vh - 36px))";
+    invPanel.style.overflow = "hidden";
+    invPanel.style.borderRadius = "22px";
+    invPanel.style.background = "rgba(255,255,255,0.92)";
+    invPanel.style.border = "1px solid rgba(0,0,0,0.10)";
+    invPanel.style.boxShadow = "0 28px 80px rgba(0,0,0,0.28)";
+    invPanel.style.display = "grid";
+    invPanel.style.gridTemplateColumns = "1fr 360px";
+    invPanel.style.gap = "0";
+    invPanel.style.userSelect = "none";
+    invPanel.style.webkitUserSelect = "none";
+
+    const invLeft = ensureEl("inventory_left", "div", invPanel);
+    invLeft.style.padding = "18px 18px 16px";
+    invLeft.style.borderRight = "1px solid rgba(0,0,0,0.08)";
+    invLeft.style.display = "flex";
+    invLeft.style.flexDirection = "column";
+    invLeft.style.gap = "12px";
+
+    const invTitleRow = ensureEl("inventory_title_row", "div", invLeft);
+    invTitleRow.style.display = "flex";
+    invTitleRow.style.alignItems = "center";
+    invTitleRow.style.justifyContent = "space-between";
+    invTitleRow.style.gap = "10px";
+
+    const invTitle = ensureEl("inventory_title", "div", invTitleRow);
+    invTitle.textContent = "INVENTORY";
+    invTitle.style.font = "1200 18px system-ui";
+    invTitle.style.letterSpacing = "1.6px";
+    invTitle.style.color = "rgba(10,14,24,0.92)";
+
+    const invHint = ensureEl("inventory_hint", "div", invTitleRow);
+    invHint.textContent = "I: 닫기 · 클릭: 장착/해제";
+    invHint.style.font = "900 12px system-ui";
+    invHint.style.opacity = "0.72";
+
+    const invGrid = ensureEl("inventory_grid", "div", invLeft);
+    invGrid.style.display = "grid";
+    invGrid.style.gridTemplateColumns = "repeat(6, 1fr)";
+    invGrid.style.gap = "10px";
+    invGrid.style.padding = "10px";
+    invGrid.style.borderRadius = "18px";
+    invGrid.style.background = "rgba(10,14,24,0.06)";
+    invGrid.style.border = "1px solid rgba(0,0,0,0.08)";
+
+    const invFooter = ensureEl("inventory_footer", "div", invLeft);
+    invFooter.style.display = "flex";
+    invFooter.style.justifyContent = "space-between";
+    invFooter.style.alignItems = "center";
+    invFooter.style.gap = "10px";
+
+    const invDesc = ensureEl("inventory_desc", "div", invFooter);
+    invDesc.textContent = "아이템을 클릭하면 바로 장착/해제됩니다.";
+    invDesc.style.font = "900 12px system-ui";
+    invDesc.style.opacity = "0.70";
+
+    const invCloseBtn = ensureEl("inventory_close_btn", "button", invFooter);
+    invCloseBtn.textContent = "닫기";
+    invCloseBtn.style.cursor = "pointer";
+    invCloseBtn.style.padding = "10px 14px";
+    invCloseBtn.style.borderRadius = "14px";
+    invCloseBtn.style.border = "1px solid rgba(0,0,0,0.12)";
+    invCloseBtn.style.background = "rgba(255,255,255,0.92)";
+    invCloseBtn.style.font = "1100 13px system-ui";
+    invCloseBtn.style.boxShadow = "0 10px 24px rgba(0,0,0,0.12)";
+
+    const invRight = ensureEl("inventory_right", "div", invPanel);
+    invRight.style.padding = "18px 18px 16px";
+    invRight.style.display = "flex";
+    invRight.style.flexDirection = "column";
+    invRight.style.gap = "12px";
+
+    const equipTitle = ensureEl("equip_title", "div", invRight);
+    equipTitle.textContent = "EQUIPPED";
+    equipTitle.style.font = "1200 16px system-ui";
+    equipTitle.style.letterSpacing = "1.2px";
+    equipTitle.style.opacity = "0.88";
+
+    const equipSlots = ensureEl("equip_slots", "div", invRight);
+    equipSlots.style.display = "grid";
+    equipSlots.style.gridTemplateColumns = "repeat(2, 1fr)";
+    equipSlots.style.gap = "10px";
+
+    const equipPreview = ensureEl("equip_preview", "div", invRight);
+    equipPreview.style.marginTop = "6px";
+    equipPreview.style.padding = "12px";
+    equipPreview.style.borderRadius = "18px";
+    equipPreview.style.background = "rgba(10,14,24,0.06)";
+    equipPreview.style.border = "1px solid rgba(0,0,0,0.08)";
+    equipPreview.style.font = "900 12px system-ui";
+    equipPreview.style.lineHeight = "1.35";
+    equipPreview.style.opacity = "0.80";
+    equipPreview.textContent = "장비는 화면의 히어로에게 즉시 반영됩니다.";
+
+    // prevent closing when clicking inside panel
+    invPanel.addEventListener("pointerdown", (e) => e.stopPropagation());
+
     const style = ensureEl("lego_style_injected", "style", document.head);
     style.textContent = `
       #fade.on { opacity: 1; }
@@ -302,7 +425,11 @@
     joy.addEventListener("pointerup", joyPointerUp, { passive: false });
     joy.addEventListener("pointercancel", joyPointerUp, { passive: false });
 
-    return { canvas, toast, coord, fps, fade, modal, modalTitle, modalBody, modalHint, joyState };
+    // inventory close interactions
+    inv.addEventListener("pointerdown", () => { inv.dispatchEvent(new CustomEvent("inventory_close_request")); });
+    invCloseBtn.addEventListener("click", (e) => { e.preventDefault(); inv.dispatchEvent(new CustomEvent("inventory_close_request")); });
+
+    return { canvas, toast, coord, fps, fade, modal, modalTitle, modalBody, modalHint, joyState, inv, invGrid, equipSlots, invDesc };
   }
 
   /* ----------------------- Start ----------------------- */
@@ -389,6 +516,204 @@
     const player = { x: 360, y: 360, r: 18, speed: 250, moving: false, animT: 0, bobT: 0, dir: "down" };
     if (isTouchDevice()) player.speed = 185;
 
+    /* ----------------------- Inventory / Equipment ----------------------- */
+    const playerEquip = {
+      helmet: true,
+      armor: true,
+      sword: true,
+      shield: true
+    };
+
+    const ITEM_DEFS = [
+      { id: "helmet_horned", name: "뿔 투구", slot: "helmet", icon: "🪖", rarity: "Epic" },
+      { id: "armor_knight", name: "흑적 갑옷", slot: "armor", icon: "🛡️", rarity: "Epic" },
+      { id: "sword_rune", name: "룬 검", slot: "sword", icon: "🗡️", rarity: "Legend" },
+      { id: "shield_knight", name: "기사 방패", slot: "shield", icon: "🛡️", rarity: "Epic" },
+    ];
+
+    const inventory = ITEM_DEFS.map((d) => ({ ...d, owned: true, equipped: true }));
+
+    const invState = { open: false, hoverItemId: "" };
+
+    function equipForSlot(slot) {
+      if (slot === "helmet") return playerEquip.helmet;
+      if (slot === "armor") return playerEquip.armor;
+      if (slot === "sword") return playerEquip.sword;
+      if (slot === "shield") return playerEquip.shield;
+      return false;
+    }
+    function setEquipForSlot(slot, v) {
+      if (slot === "helmet") playerEquip.helmet = v;
+      if (slot === "armor") playerEquip.armor = v;
+      if (slot === "sword") playerEquip.sword = v;
+      if (slot === "shield") playerEquip.shield = v;
+    }
+
+    function syncInventoryEquippedFlags() {
+      for (const it of inventory) {
+        it.equipped = it.owned ? equipForSlot(it.slot) : false;
+      }
+    }
+
+    function toggleItem(it) {
+      if (!it.owned) return;
+      const next = !equipForSlot(it.slot);
+      setEquipForSlot(it.slot, next);
+      syncInventoryEquippedFlags();
+      renderInventoryUI();
+    }
+
+    function toggleInventory(openForce = null) {
+      const wantOpen = openForce == null ? !invState.open : !!openForce;
+      invState.open = wantOpen;
+      UI.inv.style.display = invState.open ? "flex" : "none";
+      if (invState.open) {
+        syncInventoryEquippedFlags();
+        renderInventoryUI();
+      }
+    }
+
+    function renderInventoryUI() {
+      if (!UI.invGrid || !UI.equipSlots) return;
+
+      // grid
+      UI.invGrid.innerHTML = "";
+      const totalSlots = 30; // 6x5
+      const items = inventory.slice(0);
+
+      for (let i = 0; i < totalSlots; i++) {
+        const cell = document.createElement("button");
+        cell.type = "button";
+        cell.style.height = "74px";
+        cell.style.borderRadius = "16px";
+        cell.style.border = "1px solid rgba(0,0,0,0.10)";
+        cell.style.background = "rgba(255,255,255,0.85)";
+        cell.style.boxShadow = "0 10px 24px rgba(0,0,0,0.08)";
+        cell.style.cursor = "pointer";
+        cell.style.display = "flex";
+        cell.style.flexDirection = "column";
+        cell.style.alignItems = "center";
+        cell.style.justifyContent = "center";
+        cell.style.gap = "4px";
+        cell.style.padding = "8px";
+        cell.style.userSelect = "none";
+        cell.style.webkitUserSelect = "none";
+
+        const it = items[i];
+        if (!it) {
+          cell.style.background = "rgba(255,255,255,0.55)";
+          cell.style.boxShadow = "none";
+          cell.style.cursor = "default";
+          cell.disabled = true;
+          cell.textContent = "";
+        } else {
+          const top = document.createElement("div");
+          top.textContent = it.icon;
+          top.style.fontSize = "22px";
+          top.style.lineHeight = "1";
+          const nm = document.createElement("div");
+          nm.textContent = it.name;
+          nm.style.font = "1000 11px system-ui";
+          nm.style.opacity = "0.86";
+          nm.style.textAlign = "center";
+          nm.style.maxWidth = "100%";
+          nm.style.whiteSpace = "nowrap";
+          nm.style.overflow = "hidden";
+          nm.style.textOverflow = "ellipsis";
+
+          const tag = document.createElement("div");
+          tag.textContent = it.equipped ? "EQUIPPED" : "CLICK TO EQUIP";
+          tag.style.font = "1100 9px system-ui";
+          tag.style.letterSpacing = "0.6px";
+          tag.style.opacity = it.equipped ? "0.95" : "0.60";
+          tag.style.padding = "3px 6px";
+          tag.style.borderRadius = "999px";
+          tag.style.border = "1px solid rgba(0,0,0,0.10)";
+          tag.style.background = it.equipped ? "rgba(52,199,89,0.14)" : "rgba(10,14,24,0.06)";
+
+          if (it.equipped) {
+            cell.style.outline = "2px solid rgba(52,199,89,0.45)";
+            cell.style.background = "rgba(255,255,255,0.92)";
+          }
+
+          cell.appendChild(top);
+          cell.appendChild(nm);
+          cell.appendChild(tag);
+
+          cell.addEventListener("mouseenter", () => { invState.hoverItemId = it.id; });
+          cell.addEventListener("mouseleave", () => { invState.hoverItemId = ""; });
+          cell.addEventListener("click", (e) => { e.preventDefault(); toggleItem(it); });
+        }
+
+        UI.invGrid.appendChild(cell);
+      }
+
+      // equipped slots
+      UI.equipSlots.innerHTML = "";
+      const slotDefs = [
+        { slot: "helmet", label: "HEAD" },
+        { slot: "armor", label: "CHEST" },
+        { slot: "sword", label: "MAIN HAND" },
+        { slot: "shield", label: "OFF HAND" },
+      ];
+
+      for (const s of slotDefs) {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.style.borderRadius = "18px";
+        card.style.border = "1px solid rgba(0,0,0,0.10)";
+        card.style.background = "rgba(255,255,255,0.88)";
+        card.style.boxShadow = "0 10px 24px rgba(0,0,0,0.08)";
+        card.style.padding = "12px 12px";
+        card.style.cursor = "pointer";
+        card.style.display = "flex";
+        card.style.flexDirection = "column";
+        card.style.gap = "6px";
+        card.style.userSelect = "none";
+        card.style.webkitUserSelect = "none";
+
+        const t1 = document.createElement("div");
+        t1.textContent = s.label;
+        t1.style.font = "1100 11px system-ui";
+        t1.style.letterSpacing = "1px";
+        t1.style.opacity = "0.70";
+
+        const it = inventory.find((x) => x.slot === s.slot);
+        const on = equipForSlot(s.slot);
+        const t2 = document.createElement("div");
+        t2.textContent = it ? `${it.icon} ${it.name}` : "—";
+        t2.style.font = "1100 13px system-ui";
+        t2.style.opacity = on ? "0.96" : "0.46";
+
+        const t3 = document.createElement("div");
+        t3.textContent = on ? "장착됨 (클릭하여 해제)" : "해제됨 (클릭하여 장착)";
+        t3.style.font = "1000 11px system-ui";
+        t3.style.opacity = on ? "0.70" : "0.60";
+
+        if (on) card.style.outline = "2px solid rgba(10,132,255,0.30)";
+
+        card.appendChild(t1);
+        card.appendChild(t2);
+        card.appendChild(t3);
+
+        card.addEventListener("click", (e) => {
+          e.preventDefault();
+          const invIt = inventory.find((x) => x.slot === s.slot);
+          if (invIt) toggleItem(invIt);
+        });
+
+        UI.equipSlots.appendChild(card);
+      }
+
+      if (UI.invDesc) {
+        const active = inventory.filter((x) => x.equipped).map((x) => x.name).join(", ");
+        UI.invDesc.textContent = active ? `장착 중: ${active}` : "장착 중인 아이템 없음";
+      }
+    }
+
+    // close requests from overlay/button
+    UI.inv.addEventListener("inventory_close_request", () => toggleInventory(false));
+
     let activePortal = null;
     let entering = false;
 
@@ -399,12 +724,25 @@
 
     window.addEventListener("keydown", (e) => {
       const k = e.key.toLowerCase();
+
+      // inventory toggle
+      if (k === "i") {
+        e.preventDefault();
+        toggleInventory();
+        return;
+      }
+
       keys.add(k);
+
       if (k === "enter" || k === "e") {
         if (modalState.open && modalState.portal) confirmEnter(modalState.portal);
         else if (activePortal) openPortalUI(activePortal);
       }
-      if (k === "escape") closeModal();
+
+      if (k === "escape") {
+        if (invState.open) toggleInventory(false);
+        else closeModal();
+      }
     });
     window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
 
@@ -651,183 +989,37 @@
           y = WORLD.margin + rng() * (WORLD.h - WORLD.margin * 2);
           if (okPos(x, y)) break;
         }
-        roamers.push({
-          kind: "roamer", x, y, r: 16,
-          speed: 92 + rng() * 46,
-          dir: ["down", "left", "right", "up"][(rng() * 4) | 0],
-          t: rng() * 10, tx: x, ty: y,
-          colorIdx: (rng() * 6) | 0
-        });
-      }
-    }
-    function stepRoamers(dt, rng) {
-      const palette = [
-        { torso: "#0a84ff", pants: "#3b4251", hat: "#ff3b30" },
-        { torso: "#34c759", pants: "#2a2f3b", hat: "#ffcc00" },
-        { torso: "#b889ff", pants: "#3b4251", hat: "#0a84ff" },
-        { torso: "#ffffff", pants: "#2a2f3b", hat: "#ff2d55" },
-        { torso: "#ffd66b", pants: "#3b4251", hat: "#0a84ff" },
-        { torso: "#7fd7ff", pants: "#2a2f3b", hat: "#ffcc00" }
-      ];
-      for (const n of roamers) {
-        n.t += dt;
-        if (Math.hypot(n.tx - n.x, n.ty - n.y) < 14 || rng() < 0.004) {
-          let nx = n.x, ny = n.y;
-          for (let k = 0; k < 48; k++) {
-            nx = clamp(n.x + (rng() - 0.5) * 520, WORLD.margin, WORLD.w - WORLD.margin);
-            ny = clamp(n.y + (rng() - 0.5) * 520, WORLD.margin, WORLD.h - WORLD.margin);
-            if (!isOnRoadLike(nx, ny) && !isInsideBuildingBuffer(nx, ny) && !isInsideZonesBuffer(nx, ny)) break;
-          }
-          n.tx = nx; n.ty = ny;
-        }
-        const dx = n.tx - n.x, dy = n.ty - n.y;
-        const len = Math.hypot(dx, dy) || 1;
-        n.x += (dx / len) * n.speed * dt;
-        n.y += (dy / len) * n.speed * dt;
-        if (Math.abs(dy) >= Math.abs(dx)) n.dir = dy < 0 ? "up" : "down";
-        else n.dir = dx < 0 ? "left" : "right";
-        n.x = clamp(n.x, WORLD.margin, WORLD.w - WORLD.margin);
-        n.y = clamp(n.y, WORLD.margin, WORLD.h - WORLD.margin);
-      }
-      return palette;
-    }
-
-    /* ----------------------- Stable ground patches ----------------------- */
-    let groundPatches = [];
-    function buildGroundPatches(rng) {
-      groundPatches = [];
-      for (let i = 0; i < 22; i++) {
-        groundPatches.push({
-          x: WORLD.w * 0.10 + rng() * WORLD.w * 0.80,
-          y: WORLD.h * 0.26 + rng() * WORLD.h * 0.66,
-          rx: 70 + rng() * 180, ry: 20 + rng() * 62,
-          rot: (rng() - 0.5) * 0.7, a: 0.20 + rng() * 0.12
-        });
+        const c = {
+          torso: ["#0a84ff", "#34c759", "#ff3b30", "#ffcc00", "#af52de", "#ffffff"][(rng() * 6) | 0],
+          pants: ["#2a2f3b", "#3b4251", "#1f2a44"][(rng() * 3) | 0],
+          hat: ["#ff3b30", "#ffcc00", "#34c759", "#0a84ff", "#ffffff"][(rng() * 5) | 0],
+        };
+        roamers.push({ kind: "roamer", x, y, dir: rng() < 0.5 ? "left" : "right", vx: 0, vy: 0, t: rng() * 10, c });
       }
     }
 
-    /* ----------------------- Footprints ----------------------- */
-    const footprints = [];
-    let footStepAcc = 0;
-    function addFootprint(dt, rng) {
-      if (!player.moving) { footStepAcc = 0; return; }
-      footStepAcc += dt * (player.speed / 220);
-      if (footStepAcc < 0.12) return;
-      footStepAcc = 0;
+    /* ===================== [PART 2 / 3] ===================== */
+    /* ----------------------- Geometry / Drawing helpers ----------------------- */
+    function resize() {
+      DPR = Math.min(2, window.devicePixelRatio || 1);
+      W = Math.floor(window.innerWidth);
+      H = Math.floor(window.innerHeight);
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      canvas.style.width = `${W}px`;
+      canvas.style.height = `${H}px`;
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      VIEW.w = W;
+      VIEW.h = H;
 
-      let ox = 0, oy = 0;
-      if (player.dir === "up") oy = 8;
-      else if (player.dir === "down") oy = -6;
-      else if (player.dir === "left") ox = 8;
-      else if (player.dir === "right") ox = -8;
+      // world scale
+      const base = Math.min(W, H);
+      VIEW.zoom = clamp(base / 920, 0.72, 1.10);
 
-      footprints.push({
-        x: player.x + ox + (rng() - 0.5) * 2,
-        y: player.y + 30 + oy + (rng() - 0.5) * 2,
-        life: 1.2, age: 0
-      });
+      layoutWorld(mulberry32(seedFromWorld(W, H)));
     }
+    window.addEventListener("resize", resize);
 
-    /* ----------------------- Background layers ----------------------- */
-    const clouds = Array.from({ length: 12 }, () => ({
-      x: Math.random() * 3600, y: 40 + Math.random() * 260,
-      s: 0.7 + Math.random() * 1.25, v: 9 + Math.random() * 18,
-      layer: Math.random() < 0.5 ? 0 : 1
-    }));
-    const birds = Array.from({ length: 7 }, () => ({ x: 0, y: 0, p: Math.random() * 10, v: 22 + Math.random() * 22 }));
-
-    /* ----------------------- Patterns ----------------------- */
-    let grassPattern = null, dirtPattern = null, roadPattern = null, sidewalkPattern = null, brickPattern = null;
-
-    function makePattern(w, h, drawFn) {
-      const c = document.createElement("canvas");
-      c.width = w; c.height = h;
-      const g = c.getContext("2d");
-      drawFn(g, w, h);
-      return ctx.createPattern(c, "repeat");
-    }
-
-    function buildPatterns(rng) {
-      grassPattern = makePattern(520, 520, (g, w, h) => {
-        g.fillStyle = "#39d975";
-        g.fillRect(0, 0, w, h);
-        g.globalAlpha = 0.045;
-        g.strokeStyle = "rgba(0,0,0,0.14)";
-        g.lineWidth = 1;
-        for (let x = 0; x <= w; x += 86) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
-        for (let y = 0; y <= h; y += 86) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
-        g.globalAlpha = 0.12;
-        for (let i = 0; i < 420; i++) {
-          const rr = 0.7 + rng() * 1.8;
-          g.fillStyle = (i % 3 === 0) ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.10)";
-          g.beginPath(); g.arc(rng() * w, rng() * h, rr, 0, Math.PI * 2); g.fill();
-        }
-        g.globalAlpha = 1;
-      });
-
-      dirtPattern = makePattern(260, 260, (g, w, h) => {
-        g.fillStyle = "#c79a64";
-        g.fillRect(0, 0, w, h);
-        g.globalAlpha = 0.20;
-        for (let i = 0; i < 360; i++) {
-          const rr = 0.8 + rng() * 3.0;
-          g.fillStyle = (i % 2 === 0) ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)";
-          g.beginPath(); g.arc(rng() * w, rng() * h, rr, 0, Math.PI * 2); g.fill();
-        }
-        g.globalAlpha = 1;
-      });
-
-      roadPattern = makePattern(260, 260, (g, w, h) => {
-        g.fillStyle = "#262c37";
-        g.fillRect(0, 0, w, h);
-        g.globalAlpha = 0.16;
-        for (let i = 0; i < 2200; i++) {
-          const v = (rng() * 55) | 0;
-          g.fillStyle = `rgb(${40 + v},${44 + v},${52 + v})`;
-          g.fillRect(rng() * w, rng() * h, 1, 1);
-        }
-        g.globalAlpha = 0.10;
-        g.strokeStyle = "rgba(255,255,255,0.10)";
-        g.lineWidth = 1;
-        for (let y = 0; y <= h; y += 64) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
-        g.globalAlpha = 1;
-      });
-
-      sidewalkPattern = makePattern(240, 240, (g, w, h) => {
-        g.fillStyle = "#f5efe7";
-        g.fillRect(0, 0, w, h);
-        g.globalAlpha = 0.12;
-        g.strokeStyle = "rgba(0,0,0,0.18)";
-        g.lineWidth = 1;
-        for (let x = 0; x <= w; x += 24) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
-        for (let y = 0; y <= h; y += 24) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
-        g.globalAlpha = 1;
-      });
-
-      brickPattern = makePattern(360, 360, (g, w, h) => {
-        g.fillStyle = "#d9c6a3";
-        g.fillRect(0, 0, w, h);
-        g.globalAlpha = 0.32;
-        g.strokeStyle = "rgba(60,45,30,0.34)";
-        g.lineWidth = 2;
-        const tileW = 60, tileH = 40;
-        for (let y = 0; y <= h; y += tileH) {
-          const off = ((y / tileH) | 0) % 2 ? tileW / 2 : 0;
-          for (let x = -tileW; x <= w + tileW; x += tileW) {
-            g.strokeRect(x + off, y, tileW, tileH);
-          }
-        }
-        g.globalAlpha = 0.10;
-        for (let i = 0; i < 1600; i++) {
-          const v = (rng() * 40) | 0;
-          g.fillStyle = `rgb(${210 + v},${190 + v},${155 + v})`;
-          g.fillRect(rng() * w, rng() * h, 1, 1);
-        }
-        g.globalAlpha = 1;
-      });
-    }
-
-    /* ----------------------- Shape helpers ----------------------- */
     function roundRect(x, y, w, h, r) {
       const rr = Math.min(r, w / 2, h / 2);
       ctx.beginPath();
@@ -838,101 +1030,192 @@
       ctx.arcTo(x, y, x + w, y, rr);
       ctx.closePath();
     }
-    function glossyHighlight(x, y, w, h, alpha = 0.14) {
+
+    function blockSpan(html) {
+      return `<div style="display:inline-block; padding:12px 16px; border-radius:16px; background:rgba(255,255,255,0.86); border:1px solid rgba(0,0,0,0.10); box-shadow:0 18px 52px rgba(0,0,0,0.14); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">${html}</div>`;
+    }
+
+    function groundAO(x, y, w, h, a) {
       ctx.save();
-      ctx.globalAlpha = alpha;
+      ctx.globalAlpha = a;
+      ctx.fillStyle = "rgba(10,14,24,0.55)";
+      ctx.beginPath();
+      ctx.ellipse(x, y, w, h, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function glossyHighlight(x, y, w, h, a) {
+      ctx.save();
+      ctx.globalAlpha = a;
       const g = ctx.createLinearGradient(x, y, x + w, y + h);
       g.addColorStop(0, "rgba(255,255,255,0.85)");
-      g.addColorStop(0.35, "rgba(255,255,255,0.18)");
-      g.addColorStop(1, "rgba(255,255,255,0)");
+      g.addColorStop(0.55, "rgba(255,255,255,0.00)");
       ctx.fillStyle = g;
-      roundRect(x + 6, y + 6, w - 12, Math.max(18, h * 0.34), 14);
+      roundRect(x, y, w, h, Math.min(14, w / 2, h / 2));
       ctx.fill();
       ctx.restore();
     }
-    function groundAO(x, y, w, h, alpha = 0.2) {
-      ctx.save();
-      const g = ctx.createRadialGradient(x + w * 0.5, y + h * 0.8, 10, x + w * 0.5, y + h * 0.8, Math.max(w, h) * 0.95);
-      g.addColorStop(0, `rgba(10,14,24,${alpha})`);
-      g.addColorStop(1, "rgba(10,14,24,0)");
-      ctx.fillStyle = g;
-      ctx.fillRect(x - 140, y - 140, w + 280, h + 280);
-      ctx.restore();
+
+    /* ----------------------- Modal state ----------------------- */
+    const modalState = { open: false, portal: null };
+
+    function openModal(title, body, hint) {
+      modalState.open = true;
+      UI.modal.style.display = "flex";
+      UI.modalTitle.textContent = title;
+      UI.modalBody.innerHTML = body;
+      UI.modalHint.textContent = hint || "";
     }
-    function softShadow(x, y, w, h, alpha = 0.1) {
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = "rgba(10,14,24,0.85)";
-      roundRect(x, y, w, h, 18);
-      ctx.fill();
-      ctx.restore();
+    function closeModal() {
+      modalState.open = false;
+      modalState.portal = null;
+      UI.modal.style.display = "none";
     }
-        /* ----------------------- World layout (도로/존 정렬 + 입구 게이트) ----------------------- */
-    function layoutRoadNetwork() {
+
+    /* ----------------------- Portal UI ----------------------- */
+    function portalEnterZone(portal) {
+      const zone = (portal.key === "avoid" || portal.key === "archery" || portal.key === "janggi" || portal.key === "omok" || portal.key === "snow" || portal.key === "jump")
+        ? ZONES.game
+        : (portal.key === "twitter" || portal.key === "telegram" || portal.key === "wallet" || portal.key === "market" || portal.key === "support")
+          ? ZONES.community
+          : ZONES.ads;
+
+      if (zone.entrance) return zone.entrance;
+      return { x: zone.x + zone.w * 0.5 - 120, y: zone.y + zone.h - 140, w: 240, h: 110 };
+    }
+
+    function openPortalUI(portal) {
+      if (!portal) return;
+      modalState.portal = portal;
+
+      const status = portal.status === "open" ? "OPEN" : "SOON";
+      const msg = portal.status === "open"
+        ? `입장하려면 <b>Enter</b> 또는 <b>E</b> 키를 누르세요.`
+        : `아직 준비 중입니다.`;
+
+      const body = `
+        <div style="font:1200 20px system-ui; letter-spacing:0.4px; margin-bottom:8px;">${portal.label}</div>
+        <div style="font:1000 14px system-ui; opacity:0.75; margin-bottom:10px;">STATUS: <b>${status}</b></div>
+        <div style="font:900 14px system-ui; opacity:0.85;">${portal.message ? portal.message : msg}</div>
+      `;
+      openModal("PORTAL", body, "ESC: 닫기");
+    }
+
+    function confirmEnter(portal) {
+      if (!portal || portal.status !== "open" || !portal.url) return;
+      entering = true;
+      UI.fade.classList.add("on");
+      setTimeout(() => {
+        window.location.href = portal.url;
+      }, 240);
+    }
+
+    /* ----------------------- World layout ----------------------- */
+    function splitRangeByBlocksH(y, L, R, h) {
+      const blocks = [];
+      for (const z of [ZONES.game, ZONES.community, ZONES.ads]) {
+        blocks.push({ a: z.x - 24, b: z.x + z.w + 24 });
+      }
+      blocks.sort((a, b) => a.a - b.a);
+      const segs = [];
+      let cur = L;
+      for (const b of blocks) {
+        if (b.a <= cur) { cur = Math.max(cur, b.b); continue; }
+        segs.push({ a: cur, b: b.a });
+        cur = b.b;
+      }
+      if (cur < R) segs.push({ a: cur, b: R });
+      return segs.filter(s => s.b - s.a > 220);
+    }
+    function splitRangeByBlocksV(x, T, B, w) {
+      const blocks = [];
+      for (const z of [ZONES.game, ZONES.community, ZONES.ads]) {
+        blocks.push({ a: z.y - 24, b: z.y + z.h + 24 });
+      }
+      blocks.sort((a, b) => a.a - b.a);
+      const segs = [];
+      let cur = T;
+      for (const b of blocks) {
+        if (b.a <= cur) { cur = Math.max(cur, b.b); continue; }
+        segs.push({ a: cur, b: b.a });
+        cur = b.b;
+      }
+      if (cur < B) segs.push({ a: cur, b: B });
+      return segs.filter(s => s.b - s.a > 220);
+    }
+
+    let roadsSeeded = false;
+    function layoutWorld(rng) {
+      WORLD.w = Math.max(4200, Math.floor(W * 4.4));
+      WORLD.h = Math.max(3000, Math.floor(H * 3.8));
+
+      // zones placement
+      ZONES.game.w = WORLD.w * 0.22;
+      ZONES.game.h = WORLD.h * 0.24;
+      ZONES.game.x = WORLD.w * 0.10;
+      ZONES.game.y = WORLD.h * 0.12;
+
+      ZONES.community.w = WORLD.w * 0.22;
+      ZONES.community.h = WORLD.h * 0.24;
+      ZONES.community.x = WORLD.w * 0.39;
+      ZONES.community.y = WORLD.h * 0.12;
+
+      ZONES.ads.w = WORLD.w * 0.22;
+      ZONES.ads.h = WORLD.h * 0.24;
+      ZONES.ads.x = WORLD.w * 0.68;
+      ZONES.ads.y = WORLD.h * 0.12;
+
+      // entrances
+      ZONES.game.entrance = { x: ZONES.game.x + ZONES.game.w * 0.5 - 120, y: ZONES.game.y + ZONES.game.h - 140, w: 240, h: 110 };
+      ZONES.community.entrance = { x: ZONES.community.x + ZONES.community.w * 0.5 - 120, y: ZONES.community.y + ZONES.community.h - 140, w: 240, h: 110 };
+      ZONES.ads.entrance = { x: ZONES.ads.x + ZONES.ads.w * 0.5 - 120, y: ZONES.ads.y + ZONES.ads.h - 140, w: 240, h: 110 };
+
+      // portal building placement inside zones
+      function placeInZone(zone, list) {
+        const pad = 68;
+        const inner = { x: zone.x + pad, y: zone.y + pad, w: zone.w - pad * 2, h: zone.h - pad * 2 - 84 };
+        const cols = 3;
+        const rows = Math.ceil(list.length / cols);
+        const cellW = inner.w / cols;
+        const cellH = inner.h / rows;
+        for (let i = 0; i < list.length; i++) {
+          const c = i % cols;
+          const r = (i / cols) | 0;
+          const p = list[i];
+          const w = p.size === "L" ? 190 : 160;
+          const h = p.size === "L" ? 150 : 130;
+          const x = inner.x + c * cellW + cellW * 0.5 - w / 2;
+          const y = inner.y + r * cellH + cellH * 0.5 - h / 2;
+          p.x = x; p.y = y; p.w = w; p.h = h;
+        }
+      }
+
+      const gameList = portals.filter(p => ["avoid", "archery", "janggi", "omok", "snow", "jump"].includes(p.key));
+      const commList = portals.filter(p => ["twitter", "telegram", "wallet", "market", "support"].includes(p.key));
+      const adsList = portals.filter(p => ["mcd", "bbq", "baskin", "paris"].includes(p.key));
+      placeInZone(ZONES.game, gameList);
+      placeInZone(ZONES.community, commList);
+      placeInZone(ZONES.ads, adsList);
+
+      // roads only once per layout
       roads.length = 0; sidewalks.length = 0; crossings.length = 0; signals.length = 0;
-      let id = 0;
 
-      const zonePad = 64;
-      const zoneBlocks = [
-        { x: ZONES.game.x - zonePad, y: ZONES.game.y - zonePad, w: ZONES.game.w + zonePad * 2, h: ZONES.game.h + zonePad * 2 },
-        { x: ZONES.community.x - zonePad, y: ZONES.community.y - zonePad, w: ZONES.community.w + zonePad * 2, h: ZONES.community.h + zonePad * 2 },
-        { x: ZONES.ads.x - zonePad, y: ZONES.ads.y - zonePad, w: ZONES.ads.w + zonePad * 2, h: ZONES.ads.h + zonePad * 2 },
-      ];
-
-      const addRoadH = (y, x0, x1, h = 132) => {
-        const r = { _id: id++, axis: "h", x: x0, y, w: (x1 - x0), h };
+      let rid = 0;
+      function addRoadH(y, x1, x2, h) {
+        const r = { kind: "road", axis: "h", x: x1, y, w: x2 - x1, h, _id: rid++ };
         roads.push(r);
-        sidewalks.push({ x: r.x, y: r.y - 48, w: r.w, h: 38 });
-        sidewalks.push({ x: r.x, y: r.y + r.h + 10, w: r.w, h: 38 });
-        return r;
-      };
-      const addRoadV = (x, y0, y1, w = 124) => {
-        const r = { _id: id++, axis: "v", x, y: y0, w, h: (y1 - y0) };
-        roads.push(r);
-        sidewalks.push({ x: r.x - 46, y: r.y, w: 34, h: r.h });
-        sidewalks.push({ x: r.x + r.w + 12, y: r.y, w: 34, h: r.h });
-        return r;
-      };
-
-      // split helpers: 존 근처를 피해서 "끊김 없이 이어진" 도로 세그먼트 생성
-      function splitRangeByBlocksH(y, x0, x1, h) {
-        const segs = [{ a: x0, b: x1 }];
-        for (const z of zoneBlocks) {
-          // y 라인이 존 블록과 겹치면 해당 x 구간을 제거
-          if (y + h < z.y || y > z.y + z.h) continue;
-          for (let i = segs.length - 1; i >= 0; i--) {
-            const s = segs[i];
-            const cutA = Math.max(s.a, z.x);
-            const cutB = Math.min(s.b, z.x + z.w);
-            if (cutA < cutB) {
-              segs.splice(i, 1);
-              if (s.a < cutA) segs.push({ a: s.a, b: cutA });
-              if (cutB < s.b) segs.push({ a: cutB, b: s.b });
-            }
-          }
-        }
-        // 너무 짧은 건 제거
-        return segs.filter(s => (s.b - s.a) > 260).sort((p, q) => p.a - q.a);
+        sidewalks.push({ x: r.x - 24, y: r.y - 18, w: r.w + 48, h: 18 });
+        sidewalks.push({ x: r.x - 24, y: r.y + r.h, w: r.w + 48, h: 18 });
       }
-      function splitRangeByBlocksV(x, y0, y1, w) {
-        const segs = [{ a: y0, b: y1 }];
-        for (const z of zoneBlocks) {
-          if (x + w < z.x || x > z.x + z.w) continue;
-          for (let i = segs.length - 1; i >= 0; i--) {
-            const s = segs[i];
-            const cutA = Math.max(s.a, z.y);
-            const cutB = Math.min(s.b, z.y + z.h);
-            if (cutA < cutB) {
-              segs.splice(i, 1);
-              if (s.a < cutA) segs.push({ a: s.a, b: cutA });
-              if (cutB < s.b) segs.push({ a: cutB, b: s.b });
-            }
-          }
-        }
-        return segs.filter(s => (s.b - s.a) > 260).sort((p, q) => p.a - q.a);
+      function addRoadV(x, y1, y2, w) {
+        const r = { kind: "road", axis: "v", x, y: y1, w, h: y2 - y1, _id: rid++ };
+        roads.push(r);
+        sidewalks.push({ x: r.x - 18, y: r.y - 24, w: 18, h: r.h + 48 });
+        sidewalks.push({ x: r.x + r.w, y: r.y - 24, w: 18, h: r.h + 48 });
       }
 
-      // ✅ (4) "배경에서 도로가 짤리지 않게" 월드 가장자리까지 이어지는 외곽 순환로 + 내부 간선
+      // outer ring roads
       const L = WORLD.margin * 0.35, R = WORLD.w - WORLD.margin * 0.35;
       const T = WORLD.margin * 0.35, B = WORLD.h - WORLD.margin * 0.35;
 
@@ -974,461 +1257,196 @@
         addSignal(c.x - 14, c.y + 8, "v");
         addSignal(c.x + c.w + 14, c.y + 8, "v");
       }
-    }
 
-    function layoutWorld(rng) {
-      WORLD.w = Math.max(4200, Math.floor(W * 4.4));
-      WORLD.h = Math.max(3000, Math.floor(H * 3.8));
-
-      ZONES = {
-        game: { x: WORLD.w * 0.08, y: WORLD.h * 0.14, w: WORLD.w * 0.36, h: WORLD.h * 0.30, label: "GAME ZONE", color: "#0a84ff", entrance: null },
-        community: { x: WORLD.w * 0.56, y: WORLD.h * 0.14, w: WORLD.w * 0.36, h: WORLD.h * 0.30, label: "COMMUNITY ZONE", color: "#34c759", entrance: null },
-        ads: { x: WORLD.w * 0.32, y: WORLD.h * 0.60, w: WORLD.w * 0.36, h: WORLD.h * 0.20, label: "AD ZONE", color: "#ff2d55", entrance: null },
-      };
-
-      // ✅ (3) 입구(게이트) 좌표 확정: 각 존 하단 중앙
-      function setEntrance(z) {
-        const gateW = 260, gateH = 86;
-        z.entrance = {
-          x: z.x + z.w * 0.5 - gateW * 0.5,
-          y: z.y + z.h - gateH * 0.55,
-          w: gateW,
-          h: gateH
-        };
-      }
-      setEntrance(ZONES.game);
-      setEntrance(ZONES.community);
-      setEntrance(ZONES.ads);
-
-      const base = 220;
-      const mul = { S: 0.82, M: 1.0, L: 1.22 };
-      for (const p of portals) {
-        const m = mul[p.size] || 1;
-        p.w = base * 1.22 * m;
-        p.h = base * 0.92 * m;
-      }
-
-      buildPatterns(rng);
-      layoutRoadNetwork();
-
-      // portal placement (zone 내부 grid 정렬)
-      const desired = {
-        // GAME
-        jump: { x: ZONES.game.x + ZONES.game.w * 0.20, y: ZONES.game.y + ZONES.game.h * 0.30 },
-        archery: { x: ZONES.game.x + ZONES.game.w * 0.50, y: ZONES.game.y + ZONES.game.h * 0.30 },
-        omok: { x: ZONES.game.x + ZONES.game.w * 0.80, y: ZONES.game.y + ZONES.game.h * 0.30 },
-        avoid: { x: ZONES.game.x + ZONES.game.w * 0.20, y: ZONES.game.y + ZONES.game.h * 0.74 },
-        janggi: { x: ZONES.game.x + ZONES.game.w * 0.50, y: ZONES.game.y + ZONES.game.h * 0.74 },
-        snow: { x: ZONES.game.x + ZONES.game.w * 0.80, y: ZONES.game.y + ZONES.game.h * 0.74 },
-
-        // COMMUNITY
-        twitter: { x: ZONES.community.x + ZONES.community.w * 0.25, y: ZONES.community.y + ZONES.community.h * 0.34 },
-        telegram: { x: ZONES.community.x + ZONES.community.w * 0.70, y: ZONES.community.y + ZONES.community.h * 0.34 },
-        wallet: { x: ZONES.community.x + ZONES.community.w * 0.25, y: ZONES.community.y + ZONES.community.h * 0.76 },
-        market: { x: ZONES.community.x + ZONES.community.w * 0.70, y: ZONES.community.y + ZONES.community.h * 0.76 },
-        support: { x: ZONES.community.x + ZONES.community.w * 0.48, y: ZONES.community.y + ZONES.community.h * 0.56 },
-
-        // ADS
-        mcd: { x: ZONES.ads.x + ZONES.ads.w * 0.28, y: ZONES.ads.y + ZONES.ads.h * 0.36 },
-        bbq: { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.36 },
-        baskin: { x: ZONES.ads.x + ZONES.ads.w * 0.28, y: ZONES.ads.y + ZONES.ads.h * 0.76 },
-        paris: { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.76 },
-      };
-
-      function clampIntoZone(p, z, d) {
-        const pad = 18;
-        p.x = clamp(d.x - p.w / 2, z.x + pad, z.x + z.w - pad - p.w);
-        p.y = clamp(d.y - p.h / 2, z.y + pad, z.y + z.h - pad - p.h);
-      }
-
-      for (const p of portals) {
-        const d = desired[p.key] || { x: WORLD.w * 0.5, y: WORLD.h * 0.5 };
-        if (["avoid", "archery", "janggi", "omok", "snow", "jump"].includes(p.key)) clampIntoZone(p, ZONES.game, d);
-        else if (["twitter", "telegram", "wallet", "market", "support"].includes(p.key)) clampIntoZone(p, ZONES.community, d);
-        else clampIntoZone(p, ZONES.ads, d);
-      }
-
-      buildGroundPatches(rng);
-      seedCars(rng);
+      // seed props/cars/roamers once per layout
       seedProps(rng);
+      seedCars(rng);
       seedRoamers(rng);
 
-      player.x = clamp(player.x, WORLD.margin + 80, WORLD.w - WORLD.margin - 80);
-      player.y = clamp(player.y, WORLD.margin + 80, WORLD.h - WORLD.margin - 80);
+      roadsSeeded = true;
     }
 
-    function resize() {
-      DPR = Math.max(1, window.devicePixelRatio || 1);
-      const r = canvas.getBoundingClientRect();
-      W = r.width; H = r.height;
-      canvas.width = Math.floor(W * DPR);
-      canvas.height = Math.floor(H * DPR);
-
-      VIEW.w = W / VIEW.zoom;
-      VIEW.h = H / VIEW.zoom;
-
-      ctx.setTransform(DPR * VIEW.zoom, 0, 0, DPR * VIEW.zoom, 0, 0);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-
-      const rng = mulberry32(seedFromWorld(Math.floor(W), Math.floor(H)) ^ 0x91ee55aa);
-      layoutWorld(rng);
-    }
-    window.addEventListener("resize", resize);
-
-    /* ----------------------- Movement / camera ----------------------- */
-    function updateDirFromAxes(ax, ay) {
-      if (Math.abs(ay) >= Math.abs(ax)) player.dir = ay < 0 ? "up" : "down";
-      else player.dir = ax < 0 ? "left" : "right";
-    }
-    function updateDirFromDelta(dx, dy) { if (dx === 0 && dy === 0) return; updateDirFromAxes(dx, dy); }
-    function updateCamera(dt) {
-      cam.targetX = player.x - VIEW.w * 0.5;
-      cam.targetY = player.y - VIEW.h * 0.56;
-      cam.targetX = clamp(cam.targetX, 0, WORLD.w - VIEW.w);
-      cam.targetY = clamp(cam.targetY, 0, WORLD.h - VIEW.h);
-      const k = 1 - Math.pow(0.0012, dt);
-      cam.x += (cam.targetX - cam.x) * k;
-      cam.y += (cam.targetY - cam.y) * k;
+    /* ----------------------- Camera + player movement ----------------------- */
+    function updateDirFromDelta(dx, dy) {
+      if (Math.abs(dx) > Math.abs(dy)) player.dir = dx < 0 ? "left" : "right";
+      else player.dir = dy < 0 ? "up" : "down";
     }
 
-    /* ----------------------- Portal zones ----------------------- */
-    function portalEnterZone(p) {
-      const zx = p.x + p.w * 0.5 - 28;
-      const zy = p.y + p.h * 0.76;
-      return { x: zx, y: zy, w: 56, h: 44 };
-    }
-    function circleRectHit(cx, cy, r, rect) {
-      const closestX = Math.max(rect.x, Math.min(cx, rect.x + rect.w));
-      const closestY = Math.max(rect.y, Math.min(cy, rect.y + rect.h));
-      const dx = cx - closestX, dy = cy - closestY;
-      return dx * dx + dy * dy <= r * r;
-    }
+    function update(dt, t, rng) {
+      let ax = 0, ay = 0;
 
-    /* ----------------------- Modal ----------------------- */
-    const modalState = { open: false, portal: null };
-    function blockSpan(html, opt = {}) {
-      const bg = opt.bg || "rgba(10,14,24,0.86)";
-      const fg = opt.fg || "rgba(255,255,255,0.98)";
-      const br = opt.br || "18px";
-      return `<span style="
-        display:inline-block; padding:12px 16px; border-radius:${br};
-        background:${bg}; color:${fg};
-        box-shadow: 0 18px 54px rgba(0,0,0,0.22);
-        letter-spacing: 0.4px;
-        border: 1px solid rgba(255,255,255,0.10);
-        filter:none; backdrop-filter:none; -webkit-backdrop-filter:none;
-        text-shadow:none;
-      ">${html}</span>`;
-    }
-    function openModal(title, body, hint) {
-      UI.modalTitle.innerHTML = blockSpan(title, { bg: "rgba(255,255,255,0.90)", fg: "rgba(10,14,24,0.92)", br: "20px" });
-      UI.modalBody.innerHTML = blockSpan(body);
-      UI.modalHint.textContent = hint || "";
-      UI.modal.style.display = "flex";
-      modalState.open = true;
-    }
-    function closeModal() {
-      UI.modal.style.display = "none";
-      modalState.open = false;
-      modalState.portal = null;
-    }
-    UI.modal.addEventListener("pointerdown", (e) => { if (e.target === UI.modal) closeModal(); });
+      if (!dragging && !modalState.open && !invState.open) {
+        if (keys.has("a") || keys.has("arrowleft")) ax -= 1;
+        if (keys.has("d") || keys.has("arrowright")) ax += 1;
+        if (keys.has("w") || keys.has("arrowup")) ay -= 1;
+        if (keys.has("s") || keys.has("arrowdown")) ay += 1;
 
-    function openPortalUI(p) {
-      if (!p) return;
-      if (p.status !== "open" || !p.url) {
-        openModal(`🧱 ${p.label}`, "오픈 준비중입니다", isTouchDevice() ? "모바일: 바깥을 탭하면 닫힘" : "ESC로 닫기");
-        modalState.portal = null;
-        return;
-      }
-      modalState.portal = p;
-      openModal(`🧱 ${p.label}`, `입장하시겠습니까?<br/><span style="opacity:.95;font-size:22px;font-weight:1200;">Enter / E</span>`, isTouchDevice() ? "모바일: 화면 탭하면 입장" : "PC: Enter 또는 E");
-    }
+        if (isTouchDevice()) {
+          ax += UI.joyState.ax;
+          ay += UI.joyState.ay;
+          const len = Math.hypot(ax, ay) || 1;
+          ax /= len; ay /= len;
+        }
 
-    function confirmEnter(p) {
-      if (entering) return;
-      if (!p || p.status !== "open" || !p.url) { closeModal(); return; }
-      closeModal();
-      entering = true;
-      UI.fade.classList.add("on");
-      setTimeout(() => (window.location.href = p.url), 260);
-    }
-
-    UI.modal.addEventListener("pointerup", () => {
-      if (isTouchDevice() && modalState.open && modalState.portal) confirmEnter(modalState.portal);
-    });
-
-    function resetEnterState() {
-      entering = false;
-      UI.fade.classList.remove("on");
-      if (modalState.open) closeModal();
-    }
-    window.addEventListener("pageshow", () => resetEnterState());
-    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") resetEnterState(); });
-
-    /* ----------------------- Rendering: background ----------------------- */
-    function drawSkyWorld(t) {
-      const g = ctx.createLinearGradient(0, 0, 0, WORLD.h);
-      g.addColorStop(0, "#bfe7ff");
-      g.addColorStop(0.55, "#d7f1ff");
-      g.addColorStop(1, "#fff2fb");
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, WORLD.w, WORLD.h);
-
-      ctx.save();
-      ctx.globalAlpha = 0.18;
-      ctx.fillStyle = "rgba(255,255,255,0.60)";
-      ctx.beginPath();
-      ctx.ellipse(WORLD.w * 0.22, WORLD.h * 0.18, 560, 260, 0, 0, Math.PI * 2);
-      ctx.ellipse(WORLD.w * 0.72, WORLD.h * 0.16, 620, 280, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-
-      ctx.save();
-      ctx.globalAlpha = 0.26;
-      ctx.strokeStyle = "rgba(10,14,24,0.52)";
-      ctx.lineWidth = 2;
-      for (const b of birds) {
-        const yy = b.y + Math.sin(b.p) * 6;
-        const xx = b.x;
-        ctx.beginPath();
-        ctx.moveTo(xx - 7, yy);
-        ctx.quadraticCurveTo(xx, yy - 5, xx + 7, yy);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-    function drawCloudsWorld() {
-      for (const c of clouds) {
-        const a = 0.12 + 0.05 * (c.layer === 0 ? 1.0 : 0.75);
-        ctx.save();
-        ctx.globalAlpha = a;
-        ctx.fillStyle = "rgba(255,255,255,0.95)";
-        ctx.beginPath();
-        ctx.ellipse(c.x, c.y, 84 * c.s, 36 * c.s, 0, 0, Math.PI * 2);
-        ctx.ellipse(c.x + 52 * c.s, c.y - 12 * c.s, 72 * c.s, 31 * c.s, 0, 0, Math.PI * 2);
-        ctx.ellipse(c.x + 106 * c.s, c.y, 82 * c.s, 33 * c.s, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-    }
-    function drawGroundWorld() {
-      ctx.save();
-      ctx.fillStyle = grassPattern || "#2f6f45";
-      ctx.fillRect(0, 0, WORLD.w, WORLD.h);
-      ctx.restore();
-
-      ctx.save();
-      const sh = ctx.createLinearGradient(0, 0, 0, WORLD.h);
-      sh.addColorStop(0, "rgba(10,14,24,0.00)");
-      sh.addColorStop(1, "rgba(10,14,24,0.08)");
-      ctx.fillStyle = sh;
-      ctx.fillRect(0, 0, WORLD.w, WORLD.h);
-      ctx.restore();
-
-      ctx.save();
-      ctx.fillStyle = dirtPattern || "#c79a64";
-      for (const p of groundPatches) {
-        ctx.globalAlpha = p.a;
-        ctx.beginPath();
-        ctx.ellipse(p.x, p.y, p.rx, p.ry, p.rot, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 0.42;
-      for (const po of portals) {
-        const cx = po.x + po.w * 0.5;
-        const cy = po.y + po.h * 0.9;
-        ctx.beginPath();
-        ctx.ellipse(cx, cy + 34, 74, 30, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
-    function drawRoadsAndSidewalks() {
-      for (const r of roads) {
-        groundAO(r.x, r.y + r.h - 18, r.w, 26, 0.18);
-        ctx.save();
-
-        ctx.globalAlpha = 0.14;
-        ctx.fillStyle = "rgba(255,255,255,0.30)";
-        roundRect(r.x - 6, r.y - 6, r.w + 12, r.h + 12, 44);
-        ctx.fill();
-
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = roadPattern || "#262c37";
-        roundRect(r.x, r.y, r.w, r.h, 40);
-        ctx.fill();
-
-        ctx.globalAlpha = 0.12;
-        ctx.fillStyle = "rgba(255,255,255,0.26)";
-        roundRect(r.x + 10, r.y + 10, r.w - 20, r.h * 0.26, 30);
-        ctx.fill();
-
-        // ✅ 차선이 "짤려 보이지 않게" 도로 끝단까지 충분히
-        ctx.globalAlpha = 0.42;
-        ctx.strokeStyle = "rgba(255,255,255,0.88)";
-        ctx.lineWidth = 4;
-        ctx.setLineDash([18, 16]);
-        ctx.beginPath();
-        if (r.axis === "h") {
-          ctx.moveTo(r.x + 18, r.y + r.h / 2);
-          ctx.lineTo(r.x + r.w - 18, r.y + r.h / 2);
+        const len = Math.hypot(ax, ay);
+        if (len > 0.01) {
+          player.moving = true;
+          player.x += (ax / len) * player.speed * dt;
+          player.y += (ay / len) * player.speed * dt;
+          clampPlayerToWorld();
+          updateDirFromDelta(ax, ay);
+          player.animT += dt;
+          player.bobT += dt * 7.2;
         } else {
-          ctx.moveTo(r.x + r.w / 2, r.y + 18);
-          ctx.lineTo(r.x + r.w / 2, r.y + r.h - 18);
+          player.moving = false;
         }
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.restore();
       }
 
-      for (const s of sidewalks) {
-        if (rectInAnyZone(s, 0)) continue;
-        groundAO(s.x, s.y + s.h - 10, s.w, 20, 0.12);
-        ctx.save();
-        ctx.fillStyle = sidewalkPattern || "#f5efe7";
-        roundRect(s.x, s.y, s.w, s.h, 18);
-        ctx.fill();
-        ctx.globalAlpha = 0.10;
-        ctx.fillStyle = "rgba(255,255,255,0.85)";
-        roundRect(s.x + 4, s.y + 3, s.w - 8, Math.max(8, s.h * 0.35), 14);
-        ctx.fill();
-        ctx.restore();
+      // camera follows
+      cam.targetX = player.x - VIEW.w / 2;
+      cam.targetY = player.y - VIEW.h / 2;
+      cam.x = lerp(cam.x, cam.targetX, 1 - Math.pow(0.0001, dt));
+      cam.y = lerp(cam.y, cam.targetY, 1 - Math.pow(0.0001, dt));
+      cam.x = clamp(cam.x, 0, Math.max(0, WORLD.w - VIEW.w));
+      cam.y = clamp(cam.y, 0, Math.max(0, WORLD.h - VIEW.h));
+
+      // active portal
+      activePortal = null;
+      for (const p of portals) {
+        const cx = p.x + p.w / 2;
+        const cy = p.y + p.h;
+        if (Math.hypot(cx - player.x, cy - player.y) < 120) {
+          activePortal = p; break;
+        }
       }
 
-      for (const c of crossings) {
-        if (rectInAnyZone(c, 0)) continue;
-        ctx.save();
-        ctx.globalAlpha = 0.16;
-        ctx.fillStyle = "rgba(255,255,255,0.20)";
-        roundRect(c.x, c.y, c.w, c.h, 14);
-        ctx.fill();
-        ctx.globalAlpha = 0.92;
-        for (let i = 0; i < 9; i++) {
-          const yy = c.y + 6 + i * 6;
-          ctx.fillStyle = i % 2 === 0 ? "rgba(255,255,255,0.92)" : "rgba(0,0,0,0.08)";
-          ctx.fillRect(c.x + 10, yy, c.w - 20, 4);
+      // roamers wander
+      for (const n of roamers) {
+        n.t += dt;
+        if ((n.t % 2.4) < dt) {
+          const a = rng() * Math.PI * 2;
+          n.vx = Math.cos(a) * (36 + rng() * 58);
+          n.vy = Math.sin(a) * (36 + rng() * 58);
+          n.dir = Math.abs(n.vx) > Math.abs(n.vy) ? (n.vx < 0 ? "left" : "right") : (n.vy < 0 ? "up" : "down");
         }
-        ctx.restore();
+        const nx = n.x + n.vx * dt;
+        const ny = n.y + n.vy * dt;
+        if (nx > WORLD.margin && nx < WORLD.w - WORLD.margin && ny > WORLD.margin && ny < WORLD.h - WORLD.margin) {
+          n.x = nx; n.y = ny;
+        }
       }
+
+      // cars
+      for (const c of cars) {
+        if (c.axis === "h") {
+          c.x += c.dir * c.speed * dt;
+          if (c.x < -120) c.x = WORLD.w + 120;
+          if (c.x > WORLD.w + 120) c.x = -120;
+        } else {
+          c.y += c.dir * c.speed * dt;
+          if (c.y < -120) c.y = WORLD.h + 120;
+          if (c.y > WORLD.h + 120) c.y = -120;
+        }
+      }
+
+      return null;
     }
 
-    /* ----------------------- Zone (brick + entrance gate) ----------------------- */
-    function drawZoneGate(z, t) {
-      if (!z.entrance) return;
-      const g = z.entrance;
-      const pulse = 0.55 + 0.45 * Math.sin(t * 2.8);
+    /* ----------------------- LEGO Building style ----------------------- */
+    function legoStyleForType(type) {
+      const wall = "#f2d9b3";
+      const base = "#6b717d";
+      const grass = "#57c957";
+      if (type === "arcade") return { wall: "#eaf0ff", roof: "#0a84ff", base, accent: "#0a84ff" };
+      if (type === "tower") return { wall: "#fff0f0", roof: "#ff3b30", base, accent: "#ff3b30" };
+      if (type === "dojo") return { wall, roof: "#2a2f3b", base: "#3b4251", accent: "#ff2d55" };
+      if (type === "cafe") return { wall: "#fff", roof: "#ffcc00", base, accent: "#ffcc00" };
+      if (type === "igloo") return { wall: "#f5fbff", roof: "#0a84ff", base, accent: "#0a84ff" };
+      if (type === "gym") return { wall: "#f7f7ff", roof: "#34c759", base, accent: "#34c759" };
+      if (type === "social") return { wall: "#ffffff", roof: "#af52de", base, accent: "#af52de" };
+      if (type === "wallet") return { wall: "#ffffff", roof: "#0a84ff", base, accent: "#0a84ff" };
+      if (type === "market") return { wall: "#ffffff", roof: "#34c759", base, accent: "#34c759" };
+      if (type === "support") return { wall: "#ffffff", roof: "#ff2d55", base, accent: "#ff2d55" };
+      if (type === "bbq") return { wall: "#fff6f0", roof: "#ff3b30", base, accent: "#ff3b30" };
+      if (type === "mcd") return { wall: "#fff8e6", roof: "#ffcc00", base, accent: "#ffcc00" };
+      if (type === "baskin") return { wall: "#fff0fb", roof: "#ff2d55", base, accent: "#ff2d55" };
+      if (type === "paris") return { wall: "#fff", roof: "#0a84ff", base, accent: "#0a84ff" };
+      return { wall: "#ffffff", roof: "#0a84ff", base, accent: "#0a84ff" };
+    }
 
-      // 바닥 카펫/길(존 내부에서 입구 강조)
+    /* ----------------------- Drawing: world ----------------------- */
+    function drawBackground(t) {
       ctx.save();
-      ctx.globalAlpha = 0.12;
-      ctx.fillStyle = z.color;
-      roundRect(g.x + 22, g.y + 40, g.w - 44, 160, 22);
-      ctx.fill();
+      ctx.fillStyle = "#eaf6ff";
+      ctx.fillRect(0, 0, VIEW.w, VIEW.h);
+
+      // subtle sky gradient
+      const g = ctx.createLinearGradient(0, 0, 0, VIEW.h);
+      g.addColorStop(0, "rgba(10,132,255,0.08)");
+      g.addColorStop(1, "rgba(52,199,89,0.06)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, VIEW.w, VIEW.h);
       ctx.restore();
+    }
 
-      // 게이트 그림자
-      groundAO(g.x + 14, g.y + g.h - 10, g.w - 28, 24, 0.22);
-
-      // 기둥 + 아치
+    function drawRoad(r) {
       ctx.save();
-      softShadow(g.x + 4, g.y + 10, g.w - 8, g.h - 6, 0.10);
-
-      // base metal
-      ctx.fillStyle = "rgba(10,14,24,0.86)";
-      roundRect(g.x, g.y + 18, g.w, g.h - 18, 22);
+      ctx.fillStyle = "rgba(38,44,55,0.88)";
+      roundRect(r.x - cam.x, r.y - cam.y, r.w, r.h, 22);
       ctx.fill();
 
-      // inner glow
-      ctx.globalAlpha = 0.12 + 0.10 * pulse;
-      ctx.fillStyle = z.color;
-      roundRect(g.x + 8, g.y + 24, g.w - 16, g.h - 28, 18);
-      ctx.fill();
-
-      // arch opening
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = "rgba(255,255,255,0.10)";
-      roundRect(g.x + 26, g.y + 34, g.w - 52, g.h - 42, 18);
-      ctx.fill();
-
-      // neon edge
-      ctx.globalAlpha = 0.50 + 0.30 * pulse;
-      ctx.strokeStyle = z.color;
+      // lane
+      ctx.globalAlpha = 0.22;
+      ctx.strokeStyle = "rgba(255,255,255,0.9)";
       ctx.lineWidth = 3;
-      roundRect(g.x + 6, g.y + 20, g.w - 12, g.h - 24, 20);
-      ctx.stroke();
-
-      // label plate
+      ctx.setLineDash([18, 18]);
+      if (r.axis === "h") {
+        ctx.beginPath();
+        ctx.moveTo(r.x - cam.x + 28, r.y - cam.y + r.h / 2);
+        ctx.lineTo(r.x - cam.x + r.w - 28, r.y - cam.y + r.h / 2);
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(r.x - cam.x + r.w / 2, r.y - cam.y + 28);
+        ctx.lineTo(r.x - cam.x + r.w / 2, r.y - cam.y + r.h - 28);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
       ctx.globalAlpha = 1;
-      ctx.fillStyle = "rgba(255,255,255,0.92)";
-      roundRect(g.x + g.w * 0.5 - 120, g.y - 22, 240, 44, 18);
-      ctx.fill();
-      ctx.strokeStyle = "rgba(0,0,0,0.10)";
-      ctx.lineWidth = 2;
-      roundRect(g.x + g.w * 0.5 - 120, g.y - 22, 240, 44, 18);
-      ctx.stroke();
 
-      ctx.fillStyle = "rgba(10,14,24,0.92)";
-      ctx.font = "1200 16px system-ui";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("ENTRANCE", g.x + g.w * 0.5, g.y);
-
-      // 방향 화살표
-      ctx.globalAlpha = 0.9;
-      ctx.fillStyle = "rgba(255,255,255,0.92)";
-      const ax = g.x + g.w * 0.5, ay = g.y + g.h + 10;
-      roundRect(ax - 70, ay, 140, 34, 16);
-      ctx.fill();
-      ctx.fillStyle = "rgba(10,14,24,0.92)";
-      ctx.font = "1100 12px system-ui";
-      ctx.fillText(z.label, ax, ay + 17);
       ctx.restore();
     }
 
-    function drawZonesWorld(t) {
-      function drawZone(z) {
-        if (!z.w) return;
-        ctx.save();
+    function drawSidewalk(s) {
+      ctx.save();
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = "rgba(245,245,245,0.92)";
+      roundRect(s.x - cam.x, s.y - cam.y, s.w, s.h, 16);
+      ctx.fill();
+      ctx.globalAlpha = 0.20;
+      ctx.fillStyle = "rgba(0,0,0,0.22)";
+      roundRect(s.x - cam.x, s.y - cam.y + (s.h > s.w ? 2 : 0), s.w, s.h, 16);
+      ctx.fill();
+      ctx.restore();
+    }
 
-        ctx.fillStyle = brickPattern || "#d9c6a3";
-        roundRect(z.x, z.y, z.w, z.h, 26);
+    function drawCrossing(c) {
+      ctx.save();
+      ctx.globalAlpha = 0.86;
+      ctx.fillStyle = "rgba(255,255,255,0.86)";
+      roundRect(c.x - cam.x, c.y - cam.y, c.w, c.h, 18);
+      ctx.fill();
+
+      // stripes
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = "rgba(10,14,24,0.22)";
+      const n = 8;
+      for (let i = 0; i < n; i++) {
+        const xx = c.x + (c.w / n) * i + 6;
+        roundRect(xx - cam.x, c.y - cam.y + 8, (c.w / n) - 12, c.h - 16, 10);
         ctx.fill();
-
-        ctx.globalAlpha = 0.22;
-        ctx.strokeStyle = "rgba(10,14,24,0.48)";
-        ctx.lineWidth = 4;
-        roundRect(z.x + 2, z.y + 2, z.w - 4, z.h - 4, 24);
-        ctx.stroke();
-
-        ctx.globalAlpha = 0.10;
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 4;
-        roundRect(z.x + 10, z.y + 10, z.w - 20, z.h - 20, 20);
-        ctx.stroke();
-
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = z.color;
-        roundRect(z.x + z.w / 2 - 130, z.y - 52, 260, 40, 16);
-        ctx.fill();
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "1200 16px system-ui";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(z.label, z.x + z.w / 2, z.y - 32);
-
-        ctx.restore();
-
-        // ✅ (3) 게이트 렌더
-        drawZoneGate(z, t);
       }
-
-      drawZone(ZONES.game);
-      drawZone(ZONES.community);
-      drawZone(ZONES.ads);
+      ctx.restore();
     }
 
     function drawSignal(s, t) {
@@ -1437,7 +1455,7 @@
       const yellowOn = phase >= 2.4 && phase < 3.2;
       const redOn = phase >= 3.2;
       ctx.save();
-      ctx.translate(s.x, s.y);
+      ctx.translate(s.x - cam.x, s.y - cam.y);
       groundAO(-10, 28, 20, 10, 0.10);
       ctx.fillStyle = "rgba(40,46,58,0.92)";
       roundRect(-4, -18, 8, 48, 6);
@@ -1467,761 +1485,578 @@
       ctx.restore();
     }
 
-    /* ----------------------- LEGO Building style ----------------------- */
-    function legoStyleForType(type) {
-      const wall = "#f2d9b3";
-      const base = "#6b717d";
-      const grass = "#57c957";
-      const sign = "#e12a2a";
-      const frame = "#1f242d";
-      const glassA = "#bfeeff";
-      const glassB = "#86dcff";
-      const knob = "#1f242d";
-      const accentBy = {
-        arcade: "#ff5aa5", tower: "#0a84ff", dojo: "#42e7a5", gym: "#ffd66b",
-        igloo: "#bfe9ff", cafe: "#b889ff", mcd: "#ffcc00", social: "#1da1f2",
-        wallet: "#34c759", market: "#ffcc00", support: "#8b5cf6", bbq: "#ff2d55",
-        baskin: "#ff66cc", paris: "#0a84ff"
-      };
-      return { wall, base, grass, sign, frame, glassA, glassB, knob, accent: accentBy[type] || "#0a84ff" };
-    }
-
-    function drawLegoStudRow(x, y, w, count, color) {
+    /* ----------------------- Props draw ----------------------- */
+    function drawTree(p) {
       ctx.save();
-      ctx.fillStyle = color;
-      const r = 6;
-      const step = w / count;
-      for (let i = 0; i < count; i++) {
-        const cx = x + step * (i + 0.5);
-        ctx.beginPath();
-        ctx.arc(cx, y, r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 0.18;
-        ctx.fillStyle = "rgba(255,255,255,0.92)";
-        ctx.beginPath();
-        ctx.arc(cx - 1.6, y - 1.8, r * 0.55, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = color;
-      }
-      ctx.restore();
-    }
+      ctx.translate(p.x - cam.x, p.y - cam.y);
+      ctx.scale(p.s, p.s);
 
-    function drawLegoBrickGrid(x, y, w, h) {
-      ctx.save();
-      ctx.globalAlpha = 0.14;
-      ctx.strokeStyle = "rgba(0,0,0,0.22)";
-      ctx.lineWidth = 1;
-      const rowH = 22;
-      for (let yy = y + rowH; yy < y + h; yy += rowH) {
-        ctx.beginPath();
-        ctx.moveTo(x + 6, yy);
-        ctx.lineTo(x + w - 6, yy);
-        ctx.stroke();
-      }
-      const colW = 40;
-      let alt = false;
-      for (let yy = y; yy < y + h; yy += rowH) {
-        const off = alt ? colW * 0.5 : 0;
-        for (let xx = x + off; xx < x + w; xx += colW) {
-          ctx.beginPath();
-          ctx.moveTo(xx, yy + 2);
-          ctx.lineTo(xx, Math.min(yy + rowH - 2, y + h - 2));
-          ctx.stroke();
-        }
-        alt = !alt;
-      }
-      ctx.restore();
-    }
+      groundAO(0, 52, 28, 10, 0.10);
 
-    function drawLegoSignPlaque(x, y, w, h, text, textSize, signColor) {
-      softShadow(x + 2, y + 4, w, h, 0.12);
-      ctx.save();
-      ctx.fillStyle = signColor || "#e12a2a";
-      ctx.strokeStyle = "rgba(0,0,0,0.12)";
-      ctx.lineWidth = 2;
-      roundRect(x, y, w, h, 18);
-      ctx.fill(); ctx.stroke();
-
-      ctx.globalAlpha = 0.16;
-      ctx.fillStyle = "rgba(255,255,255,0.92)";
-      roundRect(x + 8, y + 6, w - 16, Math.max(10, h * 0.35), 14);
+      ctx.fillStyle = "#6b4b2a";
+      roundRect(-8, 12, 16, 44, 10);
       ctx.fill();
 
+      const g = ctx.createRadialGradient(0, -6, 8, 0, -10, 44);
+      g.addColorStop(0, "rgba(52,199,89,0.95)");
+      g.addColorStop(1, "rgba(30,140,70,0.95)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(0, -4, 34, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.14;
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.beginPath();
+      ctx.arc(-10, -18, 12, 0, Math.PI * 2);
+      ctx.fill();
       ctx.globalAlpha = 1;
-      ctx.fillStyle = "rgba(0,0,0,0.22)";
-      ctx.font = `1200 ${textSize}px system-ui`;
+
+      ctx.restore();
+    }
+
+    function drawFlower(p) {
+      ctx.save();
+      ctx.translate(p.x - cam.x, p.y - cam.y);
+      ctx.scale(p.s, p.s);
+      groundAO(0, 10, 12, 4, 0.08);
+
+      ctx.fillStyle = "#34c759";
+      roundRect(-2, 0, 4, 12, 3);
+      ctx.fill();
+
+      const cols = ["#ff2d55", "#ffcc00", "#0a84ff", "#af52de", "#ffffff"];
+      const col = cols[((p.x + p.y) | 0) % cols.length];
+      ctx.fillStyle = col;
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.ellipse(Math.cos(a) * 5, 2 + Math.sin(a) * 5, 4, 2.6, a, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = "rgba(10,14,24,0.20)";
+      ctx.beginPath();
+      ctx.arc(0, 2, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawBench(p) {
+      ctx.save();
+      ctx.translate(p.x - cam.x, p.y - cam.y);
+      ctx.scale(p.s, p.s);
+      groundAO(0, 18, 30, 8, 0.10);
+
+      ctx.fillStyle = "rgba(10,14,24,0.80)";
+      roundRect(-26, 6, 52, 10, 8);
+      ctx.fill();
+
+      ctx.globalAlpha = 0.24;
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      roundRect(-22, 8, 44, 4, 4);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = "#6b717d";
+      roundRect(-22, 16, 6, 10, 4);
+      ctx.fill();
+      roundRect(16, 16, 6, 10, 4);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawLamp(p, t) {
+      ctx.save();
+      ctx.translate(p.x - cam.x, p.y - cam.y);
+      ctx.scale(p.s, p.s);
+
+      groundAO(0, 52, 22, 8, 0.10);
+
+      ctx.fillStyle = "rgba(40,46,58,0.92)";
+      roundRect(-4, 0, 8, 54, 6);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(10,14,24,0.92)";
+      roundRect(-14, -10, 28, 16, 10);
+      ctx.fill();
+
+      const on = (Math.sin(t * 2 + p.x * 0.01) * 0.5 + 0.5);
+      ctx.globalAlpha = 0.82;
+      ctx.fillStyle = `rgba(255,204,0,${0.55 + 0.35 * on})`;
+      ctx.beginPath();
+      ctx.arc(0, -2, 5.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.18;
+      ctx.beginPath();
+      ctx.arc(0, -2, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.restore();
+    }
+
+    function drawSign(s) {
+      ctx.save();
+      ctx.translate(s.x - cam.x, s.y - cam.y);
+      groundAO(0, 36, 22, 7, 0.10);
+
+      ctx.fillStyle = "rgba(40,46,58,0.92)";
+      roundRect(-4, -8, 8, 44, 6);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      roundRect(-40, -44, 80, 34, 14);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(0,0,0,0.10)";
+      ctx.lineWidth = 2;
+      roundRect(-40, -44, 80, 34, 14);
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(10,14,24,0.86)";
+      ctx.font = "1100 12px system-ui";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(text, x + w * 0.5 + 1.4, y + h * 0.55 + 1.4);
+      ctx.fillText(s.text, 0, -27);
 
-      ctx.fillStyle = "rgba(255,255,255,0.98)";
-      ctx.fillText(text, x + w * 0.5, y + h * 0.55);
       ctx.restore();
     }
 
-    function drawLegoWindow(x, y, w, h, frameCol, glassA, glassB) {
+    function drawZoneGate(z, t) {
+      const e = z.entrance;
+      if (!e) return;
+      const x = e.x - cam.x, y = e.y - cam.y;
+
       ctx.save();
-      ctx.fillStyle = "rgba(0,0,0,0.18)";
-      roundRect(x - 2, y - 2, w + 4, h + 4, 14);
-      ctx.fill();
+      groundAO(x + e.w / 2, y + e.h + 18, e.w * 0.55, 14, 0.12);
 
-      ctx.fillStyle = frameCol;
-      roundRect(x, y, w, h, 14);
+      // outer gate frame
+      ctx.globalAlpha = 0.94;
+      ctx.fillStyle = "rgba(255,255,255,0.76)";
+      ctx.strokeStyle = "rgba(0,0,0,0.10)";
+      ctx.lineWidth = 2;
+      roundRect(x, y, e.w, e.h, 26);
       ctx.fill();
+      ctx.stroke();
 
-      const g = ctx.createLinearGradient(x, y, x + w, y + h);
-      g.addColorStop(0, glassA);
-      g.addColorStop(1, "rgba(10,14,24,0.14)");
+      // inner glow bar
+      const pulse = (Math.sin(t * 2.2) * 0.5 + 0.5);
+      const g = ctx.createLinearGradient(x, y, x + e.w, y);
+      g.addColorStop(0, "rgba(255,255,255,0)");
+      g.addColorStop(0.5, `${z.color}55`);
+      g.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.globalAlpha = 0.7 + 0.18 * pulse;
       ctx.fillStyle = g;
-      roundRect(x + 4, y + 4, w - 8, h - 8, 10);
+      roundRect(x + 10, y + 10, e.w - 20, 12, 10);
       ctx.fill();
 
-      ctx.globalAlpha = 0.22;
-      ctx.strokeStyle = "rgba(255,255,255,0.72)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(x + w / 2, y + 6);
-      ctx.lineTo(x + w / 2, y + h - 6);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(x + 6, y + h / 2);
-      ctx.lineTo(x + w - 6, y + h / 2);
-      ctx.stroke();
+      // label plate
       ctx.globalAlpha = 1;
+      ctx.fillStyle = z.color;
+      roundRect(x + e.w / 2 - 130, y - 52, 260, 40, 16);
+      ctx.fill();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "1200 16px system-ui";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(z.label, x + e.w / 2, y - 32);
+
       ctx.restore();
     }
 
-    function drawLegoDoor(x, y, w, h, doorCol, frameCol, knobCol) {
-      ctx.save();
-      ctx.fillStyle = "rgba(0,0,0,0.18)";
-      roundRect(x - 2, y - 2, w + 4, h + 4, 14);
-      ctx.fill();
-
-      ctx.fillStyle = frameCol;
-      roundRect(x, y, w, h, 14);
-      ctx.fill();
-
-      ctx.fillStyle = doorCol;
-      roundRect(x + 4, y + 4, w - 8, h - 8, 12);
-      ctx.fill();
-      glossyHighlight(x + 2, y + 2, w - 4, h - 4, 0.12);
-
-      ctx.fillStyle = knobCol;
-      roundRect(x + w * 0.72, y + h * 0.46, 7, 12, 5);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    function drawPortalBuilding(p, t) {
-      const S = legoStyleForType(p.type);
-      if (p.key === "twitter") S.sign = "#1da1f2";
-      if (p.key === "telegram") S.sign = "#229ED9";
-      if (p.key === "wallet") S.sign = "#34c759";
-      if (p.key === "market") S.sign = "#ffcc00";
-      if (p.key === "support") S.sign = "#8b5cf6";
-      if (p.key === "bbq") S.sign = "#ff2d55";
-      if (p.key === "baskin") S.sign = "#ff66cc";
-      if (p.key === "paris") S.sign = "#0a84ff";
-
-      const isActive = activePortal === p;
-      const pulse = 0.55 + 0.45 * Math.sin(t * 3.0 + hash01(p.key) * 6);
-
-      groundAO(p.x + 8, p.y + p.h - 18, p.w - 16, 30, 0.22);
+    /* ----------------------- draw building (portal) ----------------------- */
+    function drawBuilding(p, t) {
+      const SS = legoStyleForType(p.type);
+      const x = p.x - cam.x, y = p.y - cam.y;
 
       ctx.save();
-      ctx.globalAlpha = 0.08 + (isActive ? 0.14 * pulse : 0);
-      ctx.fillStyle = isActive ? "rgba(10,132,255,0.92)" : "rgba(255,255,255,0.18)";
-      ctx.beginPath();
-      ctx.ellipse(p.x + p.w * 0.5, p.y + p.h * 0.9, 90, 28, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      // base shadow
+      groundAO(x + p.w / 2, y + p.h + 18, p.w * 0.45, 14, 0.10);
 
-      const baseH = 18;
-      ctx.save();
-      ctx.fillStyle = "rgba(120,94,255,0.52)";
-      roundRect(p.x + 6, p.y + p.h - baseH + 6, p.w - 12, baseH, 12);
-      ctx.fill();
-      ctx.fillStyle = S.grass;
-      roundRect(p.x + 10, p.y + p.h - baseH + 2, p.w - 20, 14, 10);
-      ctx.fill();
-      ctx.restore();
-
-      const bodyX = p.x + 10, bodyY = p.y + 54, bodyW = p.w - 20, bodyH = p.h - 70;
-      softShadow(bodyX + 2, bodyY + 8, bodyW, bodyH, 0.12);
-
-      ctx.save();
-      ctx.fillStyle = S.wall;
-      ctx.strokeStyle = "rgba(0,0,0,0.14)";
-      ctx.lineWidth = 2;
-      roundRect(bodyX, bodyY, bodyW, bodyH, 18);
-      ctx.fill(); ctx.stroke();
-
-      ctx.fillStyle = shade(S.wall, +12);
-      roundRect(bodyX, bodyY - 14, bodyW, 22, 18);
+      // base
+      ctx.fillStyle = SS.base;
+      roundRect(x - 6, y + p.h - 18, p.w + 12, 30, 18);
       ctx.fill();
 
-      ctx.globalAlpha = 0.14;
-      ctx.fillStyle = "rgba(255,255,255,0.9)";
-      roundRect(bodyX + 10, bodyY - 10, bodyW - 20, 8, 10);
+      // wall
+      ctx.fillStyle = SS.wall;
+      roundRect(x, y, p.w, p.h - 10, 22);
       ctx.fill();
-      ctx.globalAlpha = 1;
+      glossyHighlight(x + 10, y + 10, p.w - 20, p.h - 30, 0.12);
 
-      drawLegoBrickGrid(bodyX + 8, bodyY + 10, bodyW - 16, bodyH - 20);
-      ctx.restore();
-
-      drawLegoStudRow(bodyX + 14, bodyY - 16, bodyW - 28, Math.max(4, Math.round(bodyW / 70)), shade(S.wall, +22));
-
-      const signPad = 10, signW = bodyW - signPad * 2, signH = 56;
-      const signX = bodyX + signPad, signY = p.y + 10;
-      const textSize = p.size === "L" ? 34 : p.size === "M" ? 30 : 28;
-      drawLegoSignPlaque(signX, signY, signW, signH, p.label, textSize, S.sign);
-
-      const doorW = bodyW * 0.36, doorH = bodyH * 0.44;
-      const doorX = bodyX + bodyW * 0.14, doorY = bodyY + bodyH * 0.48;
-
-      const doorColor = (type) => {
-        if (type === "mcd") return "#c46b25";
-        if (type === "igloo") return "#bfe9ff";
-        if (type === "cafe") return "#8b5cf6";
-        if (type === "dojo") return "#2ad49a";
-        if (type === "tower") return "#0a84ff";
-        if (type === "arcade") return "#ff5aa5";
-        if (type === "gym") return "#ffd66b";
-        if (type === "wallet") return "#34c759";
-        if (type === "market") return "#ffcc00";
-        if (type === "support") return "#8b5cf6";
-        return "#c46b25";
-      };
-      drawLegoDoor(doorX, doorY, doorW, doorH, doorColor(p.type), S.frame, S.knob);
-
-      const winW = bodyW * 0.38, winH = doorH * 0.72;
-      const winX = bodyX + bodyW * 0.56, winY = bodyY + bodyH * 0.54;
-      drawLegoWindow(winX, winY, winW, winH, S.frame, S.glassA, S.glassB);
-
-      ctx.save();
-      ctx.globalAlpha = 0.95;
-      ctx.fillStyle = shade(S.accent, 0);
-      roundRect(bodyX + 6, bodyY - 22, 34, 18, 6);
+      // roof
+      ctx.fillStyle = SS.roof;
+      roundRect(x - 4, y - 18, p.w + 8, 32, 18);
       ctx.fill();
-      roundRect(bodyX + bodyW - 40, bodyY - 22, 34, 18, 6);
-      ctx.fill();
-      ctx.restore();
-
-      if (p.status !== "open" || !p.url) {
-        ctx.save();
-        ctx.globalAlpha = 0.92;
-        ctx.fillStyle = "rgba(10,14,24,0.86)";
-        const bx = signX + signW - 134, by = signY + signH + 8;
-        roundRect(bx, by, 122, 28, 14);
-        ctx.fill();
-        ctx.fillStyle = "rgba(255,255,255,0.98)";
-        ctx.font = "1100 12px system-ui";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("오픈 준비중", bx + 61, by + 14);
-        ctx.restore();
-      }
-    }
-
-    /* ----------------------- Tree / Lamp / Bench / Flower ----------------------- */
-    function drawTree(o) {
-      const x = o.x, y = o.y, s = o.s;
-      groundAO(x - 34 * s, y + 20 * s, 68 * s, 20 * s, 0.13);
-      ctx.save();
-      ctx.fillStyle = "#a55a22";
-      roundRect(x - 10 * s, y - 22 * s, 20 * s, 48 * s, 10 * s);
-      ctx.fill();
-      glossyHighlight(x - 10 * s, y - 22 * s, 20 * s, 48 * s, 0.10);
-
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "rgba(0,0,0,0.16)";
-      ctx.fillStyle = "#1fb462";
-      function blob(cx, cy, rx, ry) {
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-        ctx.fill(); ctx.stroke();
-      }
-      blob(x - 24 * s, y - 46 * s, 26 * s, 22 * s);
-      blob(x + 6 * s, y - 60 * s, 32 * s, 26 * s);
-      blob(x + 30 * s, y - 44 * s, 26 * s, 22 * s);
-      blob(x + 2 * s, y - 40 * s, 34 * s, 24 * s);
-
-      ctx.globalAlpha = 0.16;
-      ctx.fillStyle = "#168a4a";
-      ctx.beginPath();
-      ctx.ellipse(x + 8 * s, y - 44 * s, 30 * s, 22 * s, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-
       ctx.globalAlpha = 0.10;
       ctx.fillStyle = "rgba(255,255,255,0.92)";
-      ctx.beginPath();
-      ctx.ellipse(x - 6 * s, y - 66 * s, 18 * s, 12 * s, 0, 0, Math.PI * 2);
+      roundRect(x + 10, y - 12, p.w - 20, 12, 10);
       ctx.fill();
       ctx.globalAlpha = 1;
-      ctx.restore();
-    }
 
-    function drawLamp(o, t) {
-      const x = o.x, y = o.y, s = o.s;
-      const pulse = 0.5 + 0.5 * Math.sin(t * 3.0 + x * 0.01);
-      groundAO(x - 18 * s, y + 18 * s, 36 * s, 18 * s, 0.10);
-      ctx.save();
-      ctx.fillStyle = "#3f4656";
-      roundRect(x - 5 * s, y - 44 * s, 10 * s, 74 * s, 8 * s);
+      // door
+      ctx.fillStyle = "rgba(10,14,24,0.82)";
+      roundRect(x + p.w / 2 - 24, y + p.h - 62, 48, 52, 16);
       ctx.fill();
 
-      ctx.fillStyle = "#ffffff";
-      roundRect(x - 18 * s, y - 56 * s, 36 * s, 24 * s, 10 * s);
+      // windows
+      ctx.globalAlpha = 0.92;
+      ctx.fillStyle = "rgba(10,132,255,0.18)";
+      roundRect(x + 14, y + 26, 34, 26, 12);
       ctx.fill();
-      glossyHighlight(x - 18 * s, y - 56 * s, 36 * s, 24 * s, 0.18);
-
-      ctx.globalAlpha = 0.06 + 0.20 * pulse;
-      ctx.fillStyle = "#ffd66b";
-      ctx.beginPath();
-      ctx.ellipse(x, y - 10 * s, 36 * s, 56 * s, 0, 0, Math.PI * 2);
+      roundRect(x + p.w - 48, y + 26, 34, 26, 12);
       ctx.fill();
+      ctx.globalAlpha = 1;
 
-      ctx.restore();
-    }
-
-    function drawBench(o) {
-      const x = o.x, y = o.y, s = o.s;
-      groundAO(x - 40 * s, y + 12 * s, 80 * s, 18 * s, 0.09);
-      ctx.save();
-      ctx.fillStyle = "#ffcc00";
-      roundRect(x - 42 * s, y - 2 * s, 84 * s, 18 * s, 10 * s);
+      // sign
+      ctx.fillStyle = "rgba(255,255,255,0.88)";
+      ctx.strokeStyle = "rgba(0,0,0,0.10)";
+      ctx.lineWidth = 2;
+      roundRect(x + p.w / 2 - 64, y + 20, 128, 34, 16);
       ctx.fill();
-      glossyHighlight(x - 42 * s, y - 2 * s, 84 * s, 18 * s, 0.12);
-
-      ctx.fillStyle = "rgba(0,0,0,0.22)";
-      roundRect(x - 34 * s, y + 14 * s, 14 * s, 10 * s, 5 * s);
-      ctx.fill();
-      roundRect(x + 20 * s, y + 14 * s, 14 * s, 10 * s, 5 * s);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    function drawFlower(o, t) {
-      const x = o.x, y = o.y, s = o.s;
-      const wig = Math.sin(t * 2.1 + x * 0.02) * 1.0;
-      ctx.save();
-      groundAO(x - 10 * s, y + 10 * s, 20 * s, 10 * s, 0.07);
-      ctx.strokeStyle = "#2dbf6b";
-      ctx.lineWidth = 4 * s;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(x, y + 8 * s);
-      ctx.lineTo(x + wig, y - 12 * s);
       ctx.stroke();
 
-      ctx.fillStyle = "#ff5aa5";
-      for (let i = 0; i < 6; i++) {
-        const a = (i / 6) * Math.PI * 2;
-        ctx.beginPath();
-        ctx.arc(x + wig + Math.cos(a) * 7 * s, y - 16 * s + Math.sin(a) * 7 * s, 4.2 * s, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.arc(x + wig, y - 16 * s, 3.6 * s, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(10,14,24,0.86)";
+      ctx.font = "1200 12px system-ui";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(p.label, x + p.w / 2, y + 37);
+
+      // status badge
+      const open = p.status === "open";
+      ctx.save();
+      ctx.globalAlpha = 0.96;
+      ctx.fillStyle = open ? "rgba(52,199,89,0.90)" : "rgba(255,59,48,0.90)";
+      roundRect(x + p.w - 62, y + 10, 52, 20, 10);
       ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "1100 10px system-ui";
+      ctx.fillText(open ? "OPEN" : "SOON", x + p.w - 36, y + 20);
+      ctx.restore();
+
       ctx.restore();
     }
 
-    /* ----------------------- Emblems ----------------------- */
     function drawEmblem(e) {
-      const x = e.x, y = e.y;
       const p = portalsByKey(e.key);
-      const S = legoStyleForType(p ? p.type : "arcade");
-      groundAO(x - 22, y + 6, 44, 18, 0.10);
+      if (!p) return;
+      const SS = legoStyleForType(p.type);
+      const x = e.x - cam.x, y = e.y - cam.y;
       ctx.save();
       ctx.translate(x, y);
-      ctx.fillStyle = "rgba(255,255,255,0.92)";
-      ctx.strokeStyle = "rgba(0,0,0,0.12)";
-      ctx.lineWidth = 2;
-      roundRect(-20, -6, 40, 18, 10);
-      ctx.fill(); ctx.stroke();
-      ctx.fillStyle = S.accent;
+      ctx.globalAlpha = 0.95;
+      ctx.fillStyle = SS.accent;
       ctx.beginPath();
-      ctx.arc(0, -18, 6.5, 0, Math.PI * 2);
+      ctx.arc(0, 0, 10, 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
-    }
-
-    /* ----------------------- Cars ----------------------- */
-    function drawCar(c) {
-      const bounce = Math.sin(c.bob) * 0.35;
-      ctx.save();
-      ctx.translate(c.x, c.y + bounce);
-      const w = c.w, h = c.h;
-      const base = c.color;
-
-      ctx.save();
       ctx.globalAlpha = 0.18;
-      ctx.fillStyle = "rgba(10,14,24,0.42)";
+      ctx.fillStyle = "#ffffff";
       ctx.beginPath();
-      ctx.ellipse(0, h * 0.58, w * 0.56, h * 0.34, 0, 0, Math.PI * 2);
+      ctx.arc(-3, -3, 4, 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
-
-      if (c.axis === "h") {
-        if (c.dir < 0) ctx.scale(-1, 1);
-        ctx.fillStyle = base;
-        roundRect(-w * 0.52, -h * 0.4, w * 1.04, h * 0.8, 12);
-        ctx.fill();
-        glossyHighlight(-w * 0.52, -h * 0.4, w * 1.04, h * 0.8, 0.10);
-
-        ctx.fillStyle = shade(base, +16);
-        roundRect(-w * 0.2, -h * 0.58, w * 0.4, h * 0.28, 10);
-        ctx.fill();
-
-        const g = ctx.createLinearGradient(-w * 0.12, -h * 0.5, w * 0.2, -h * 0.18);
-        g.addColorStop(0, "rgba(210,250,255,0.92)");
-        g.addColorStop(1, "rgba(10,14,24,0.10)");
-        ctx.fillStyle = g;
-        roundRect(-w * 0.18, -h * 0.34, w * 0.36, h * 0.26, 8);
-        ctx.fill();
-
-        ctx.fillStyle = "rgba(10,14,24,0.16)";
-        roundRect(-w * 0.54, h * 0.14, w * 1.08, h * 0.18, 10);
-        ctx.fill();
-
-        ctx.fillStyle = "rgba(10,14,24,0.72)";
-        ctx.beginPath();
-        ctx.arc(-w * 0.3, h * 0.38, h * 0.16, 0, Math.PI * 2);
-        ctx.arc(w * 0.3, h * 0.38, h * 0.16, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.globalAlpha = 0.85;
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath();
-        ctx.ellipse(w * 0.49, -h * 0.05, w * 0.06, h * 0.12, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-        ctx.restore();
-        return;
-      }
-
-      const goingDown = c.dir > 0;
-      ctx.fillStyle = base;
-      roundRect(-w * 0.55, -h * 0.5, w * 1.1, h * 1.0, 12);
-      ctx.fill();
-      glossyHighlight(-w * 0.55, -h * 0.5, w * 1.1, h * 1.0, 0.10);
-
-      ctx.fillStyle = shade(base, +16);
-      roundRect(-w * 0.34, -h * 0.62, w * 0.68, h * 0.26, 10);
-      ctx.fill();
-
-      const gg = ctx.createLinearGradient(0, -h * 0.4, 0, h * 0.2);
-      gg.addColorStop(0, "rgba(210,250,255,0.92)");
-      gg.addColorStop(1, "rgba(10,14,24,0.10)");
-      ctx.fillStyle = gg;
-      roundRect(-w * 0.32, -h * 0.3, w * 0.64, h * 0.52, 10);
-      ctx.fill();
-
-      ctx.fillStyle = "rgba(10,14,24,0.16)";
-      roundRect(-w * 0.56, h * 0.32, w * 1.12, h * 0.16, 10);
-      ctx.fill();
-
-      if (goingDown) {
-        ctx.globalAlpha = 0.85;
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath();
-        ctx.ellipse(-w * 0.22, h * 0.5, w * 0.12, h * 0.08, 0, 0, Math.PI * 2);
-        ctx.ellipse(w * 0.22, h * 0.5, w * 0.12, h * 0.08, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-      } else {
-        ctx.globalAlpha = 0.9;
-        ctx.fillStyle = "#ff3b30";
-        ctx.beginPath();
-        ctx.ellipse(-w * 0.22, -h * 0.5, w * 0.12, h * 0.08, 0, 0, Math.PI * 2);
-        ctx.ellipse(w * 0.22, -h * 0.5, w * 0.12, h * 0.08, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-      }
       ctx.restore();
     }
 
-    /* ----------------------- Footprints ----------------------- */
-    function drawFootprints() {
+    /* ----------------------- draw NPC ----------------------- */
+    function drawCapOnHead(color) {
       ctx.save();
-      for (const f of footprints) {
-        const a = 0.16 * (1 - f.age / f.life);
-        ctx.globalAlpha = a;
-        ctx.fillStyle = "rgba(10,14,24,0.62)";
-        ctx.beginPath();
-        ctx.ellipse(f.x, f.y, 5.2, 2.4, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
-    /* ----------------------- Character (업그레이드: 갑옷/무기/방패) ----------------------- */
-    function drawSpriteCharacter(x, y) {
-      if (!sprite.loaded || !sprite.img) return false;
-      const bob = player.moving ? Math.sin(player.bobT) * 0.35 : 0;
-      const baseW = 92, baseH = 100;
-
-      ctx.save();
-      ctx.globalAlpha = 0.24;
-      ctx.fillStyle = "rgba(10,14,24,0.42)";
-      ctx.beginPath();
-      ctx.ellipse(x, y + 28, 22, 8, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-
-      ctx.save();
-      ctx.translate(x, y + bob);
-      if (player.dir === "left") ctx.scale(-1, 1);
-      const s = player.moving ? 0.98 + 0.02 * Math.sin(player.animT * 10) : 1;
-      ctx.scale(s, 1);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-      ctx.drawImage(sprite.img, -baseW / 2, -74, baseW, baseH);
-      ctx.restore();
-      return true;
-    }
-
-    function drawCapOnHead(hatColor) {
-      ctx.save();
-      ctx.translate(0, -20);
-      ctx.fillStyle = hatColor;
-      roundRect(-14, -20, 28, 15, 9);
+      ctx.fillStyle = color;
+      roundRect(-14, -36, 28, 12, 10);
       ctx.fill();
       ctx.globalAlpha = 0.14;
-      ctx.fillStyle = "rgba(255,255,255,0.95)";
-      roundRect(-10, -17, 20, 5, 6);
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      roundRect(-10, -34, 20, 5, 8);
       ctx.fill();
       ctx.globalAlpha = 1;
+      ctx.restore();
+    }
 
-      ctx.fillStyle = shade(hatColor, -10);
+    function drawNPC(key, x, y) {
+      const theme = {
+        archery: { torso: "#34c759", pants: "#3b4251", hat: "#ffcc00", acc: "bow" },
+        janggi: { torso: "#b889ff", pants: "#2a2f3b", hat: "#ff3b30", acc: "stone" },
+        omok: { torso: "#ffffff", pants: "#3b4251", hat: "#0a84ff", acc: "stone" },
+      }[key] || { torso: "#0a84ff", pants: "#3b4251", hat: "#ff3b30", acc: "" };
+
+      drawMinifig(x, y, { moving: false, dir: "right", torso: theme.torso, pants: theme.pants, hat: theme.hat });
+
+      ctx.save();
+      ctx.translate(x - cam.x, y - cam.y);
+      ctx.scale(-1, 1);
+      if (theme.acc === "bow") {
+        ctx.globalAlpha = 0.92;
+        ctx.strokeStyle = "rgba(10,14,24,0.72)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(-22, 10, 14, -Math.PI * 0.6, Math.PI * 0.6);
+        ctx.stroke();
+      } else if (theme.acc === "stone") {
+        ctx.globalAlpha = 0.92;
+        ctx.fillStyle = "rgba(10,14,24,0.68)";
+        roundRect(-28, 14, 16, 12, 6);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    /* ----------------------- Character: hero gear ----------------------- */
+    function drawHeroGear(dir, swing, equip = playerEquip) {
+      // Black + Red premium knight kit + shield shape + dark particle glow accents
+      const metalDark = "#1a1d24";
+      const metalMid  = "#2a2f3b";
+      const red1 = "#ff2d55";
+      const red2 = "#b00024";
+      const steel = "#c8cfdb";
+      const gold = "#ffcc00";
+      const dark = "rgba(10,14,24,0.72)";
+
+      if (equip.armor) {
+
+      // ===== Chest Armor (black base + red accents) =====
+      ctx.save();
+
+      // base plate
+      const cg = ctx.createLinearGradient(-14, 0, 14, 18);
+      cg.addColorStop(0, metalMid);
+      cg.addColorStop(1, "rgba(10,14,24,0.28)");
+      ctx.globalAlpha = 0.98;
+      ctx.fillStyle = cg;
+      roundRect(-15, 0, 30, 19, 9);
+      ctx.fill();
+
+      // inner plate
+      ctx.globalAlpha = 0.95;
+      ctx.fillStyle = metalDark;
+      roundRect(-12.5, 2.5, 25, 14, 8);
+      ctx.fill();
+
+      // red cross / stripe
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = red1;
+      roundRect(-2.2, 2.5, 4.4, 14, 2.2);
+      ctx.fill();
+      roundRect(-10, 8.2, 20, 3.8, 2.2);
+      ctx.fill();
+
+      // tiny rivets
+      ctx.globalAlpha = 0.8;
+      ctx.fillStyle = "rgba(255,255,255,0.45)";
+      ctx.beginPath(); ctx.arc(-9.5, 4.5, 1.2, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc( 9.5, 4.5, 1.2, 0, Math.PI*2); ctx.fill();
+
+      // edge stroke
+      ctx.globalAlpha = 0.3;
+      ctx.strokeStyle = dark;
+      ctx.lineWidth = 2;
+      roundRect(-15, 0, 30, 19, 9);
+      ctx.stroke();
+
+      ctx.restore();
+
+      // ===== Pauldrons (black + red trim) =====
+      ctx.save();
+      ctx.globalAlpha = 0.98;
+      ctx.fillStyle = metalMid;
+      roundRect(-23, 2, 12, 10, 7);
+      ctx.fill();
+      roundRect(11, 2, 12, 10, 7);
+      ctx.fill();
+
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = red2;
+      roundRect(-22, 10, 10, 2.8, 2);
+      ctx.fill();
+      roundRect(12, 10, 10, 2.8, 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      }
+
+      // ===== Shield (real shield silhouette + rim + boss + emblem) =====
+      if (equip.shield) {
+      const shieldSide = (dir === "left") ? -1 : 1;
+      ctx.save();
+      ctx.translate(22 * shieldSide, 18);
+      ctx.rotate(0.12 * shieldSide);
+
+      // shadow
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = "rgba(10,14,24,0.55)";
+      roundRect(-14, -10, 28, 30, 12);
+      ctx.fill();
+
+      // shield path (top round, bottom point)
+      function shieldPath() {
+        ctx.beginPath();
+        ctx.moveTo(0, -12);
+        ctx.quadraticCurveTo(14, -12, 14, -2);
+        ctx.lineTo(14, 10);
+        ctx.quadraticCurveTo(14, 20, 0, 24);
+        ctx.quadraticCurveTo(-14, 20, -14, 10);
+        ctx.lineTo(-14, -2);
+        ctx.quadraticCurveTo(-14, -12, 0, -12);
+        ctx.closePath();
+      }
+
+      // body gradient (black + red glow edge)
+      const sg = ctx.createLinearGradient(-14, -12, 14, 24);
+      sg.addColorStop(0, metalMid);
+      sg.addColorStop(0.6, metalDark);
+      sg.addColorStop(1, "rgba(10,14,24,0.22)");
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = sg;
+      shieldPath();
+      ctx.fill();
+
+      // rim
+      ctx.globalAlpha = 0.55;
+      ctx.strokeStyle = "rgba(255,255,255,0.35)";
+      ctx.lineWidth = 2.2;
+      shieldPath();
+      ctx.stroke();
+
+      // red edge glow
+      ctx.globalAlpha = 0.22;
+      ctx.strokeStyle = red1;
+      ctx.lineWidth = 4;
+      shieldPath();
+      ctx.stroke();
+
+      // center boss
+      ctx.globalAlpha = 0.95;
+      ctx.fillStyle = steel;
       ctx.beginPath();
-      ctx.moveTo(-16, -8);
-      ctx.quadraticCurveTo(0, -2, 16, -8);
-      ctx.quadraticCurveTo(0, -12, -16, -8);
+      ctx.arc(0, 6, 4.2, 0, Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.beginPath();
+      ctx.arc(-1.2, 5.2, 1.8, 0, Math.PI*2);
+      ctx.fill();
+
+      // emblem (small red diamond)
+      ctx.globalAlpha = 0.92;
+      ctx.fillStyle = red1;
+      ctx.beginPath();
+      ctx.moveTo(0, -2);
+      ctx.lineTo(4, 2);
+      ctx.lineTo(0, 6);
+      ctx.lineTo(-4, 2);
       ctx.closePath();
       ctx.fill();
 
-      ctx.globalAlpha = 0.14;
-      ctx.fillStyle = "rgba(10,14,24,0.55)";
-      roundRect(-12, -6, 24, 4, 3);
-      ctx.fill();
-      ctx.globalAlpha = 1;
       ctx.restore();
+      }
+
+      // ===== Sword (steel blade + red rune) =====
+      if (equip.sword) {
+      const swordSide = (dir === "left") ? -1 : 1;
+      ctx.save();
+      ctx.translate(-22 * swordSide, 18 - swing * 1.6);
+      ctx.rotate((-0.42 * swordSide) + swing * 0.11);
+
+      // ✨ blade glow + particles (high quality)
+      (function swordGlow() {
+        const tt = performance.now() / 1000;
+        const pulse = 0.55 + 0.45 * Math.sin(tt * 3.6);
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+
+        // soft aura around blade
+        const ag = ctx.createRadialGradient(0, -14, 2, 0, -14, 26);
+        ag.addColorStop(0, `rgba(255,80,140,${0.18 * pulse})`);
+        ag.addColorStop(0.35, `rgba(120,200,255,${0.22 * pulse})`);
+        ag.addColorStop(1, "rgba(120,200,255,0)");
+        ctx.fillStyle = ag;
+        ctx.beginPath();
+        ctx.ellipse(0, -14, 10, 26, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // sparkles along blade
+        for (let i = 0; i < 14; i++) {
+          const u = i / 13;
+          const y = lerp(-26, 2, u) + Math.sin(tt * 3.2 + i * 1.7) * 1.4;
+          const x = Math.sin(tt * 2.6 + i * 2.3) * 2.1;
+          const r = 1.2 + (Math.sin(tt * 6.1 + i * 4.9) * 0.5 + 0.5) * 1.6;
+
+          const g = ctx.createRadialGradient(x, y, 0, x, y, r * 6.5);
+          g.addColorStop(0, `rgba(255,255,255,${0.85 * pulse})`);
+          g.addColorStop(0.25, `rgba(180,240,255,${0.40 * pulse})`);
+          g.addColorStop(0.65, `rgba(255,45,85,${0.18 * pulse})`);
+          g.addColorStop(1, "rgba(255,45,85,0)");
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(x, y, r * 6.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      })();
+
+      const bladeGrad = ctx.createLinearGradient(0, -28, 0, 4);
+      bladeGrad.addColorStop(0, "#f4f7ff");
+      bladeGrad.addColorStop(0.65, steel);
+      bladeGrad.addColorStop(1, "rgba(10,14,24,0.22)");
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = bladeGrad;
+      roundRect(-2.6, -28, 5.2, 30, 2.6);
+      ctx.fill();
+
+      // blade highlight edge
+      ctx.globalAlpha = 0.22;
+      ctx.strokeStyle = "rgba(255,255,255,0.9)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-1.2, -26);
+      ctx.lineTo(-1.2, 1);
+      ctx.stroke();
+
+      // red rune line
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = red1;
+      roundRect(-0.8, -18, 1.6, 10, 1);
+      ctx.fill();
+
+      // guard + grip
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = gold;
+      roundRect(-7, 1, 14, 4, 2);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(10,14,24,0.82)";
+      roundRect(-2, 5, 4, 11, 2);
+      ctx.fill();
+
+      // pommel
+      ctx.fillStyle = red2;
+      ctx.beginPath();
+      ctx.arc(0, 18, 3.0, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.restore();
+      }
     }
 
-    function drawHeroGear(dir, swing) {
-  // Black + Red premium knight kit + shield shape + dark particle glow accents
-  const metalDark = "#1a1d24";
-  const metalMid  = "#2a2f3b";
-  const red1 = "#ff2d55";
-  const red2 = "#b00024";
-  const steel = "#c8cfdb";
-  const gold = "#ffcc00";
-  const dark = "rgba(10,14,24,0.72)";
-
-  // ===== Chest Armor (black base + red accents) =====
-  ctx.save();
-
-  // base plate
-  const cg = ctx.createLinearGradient(-14, 0, 14, 18);
-  cg.addColorStop(0, metalMid);
-  cg.addColorStop(1, "rgba(10,14,24,0.28)");
-  ctx.globalAlpha = 0.98;
-  ctx.fillStyle = cg;
-  roundRect(-15, 0, 30, 19, 9);
-  ctx.fill();
-
-  // inner plate
-  ctx.globalAlpha = 0.95;
-  ctx.fillStyle = metalDark;
-  roundRect(-12.5, 2.5, 25, 14, 8);
-  ctx.fill();
-
-  // red cross / stripe
-  ctx.globalAlpha = 0.9;
-  ctx.fillStyle = red1;
-  roundRect(-2.2, 2.5, 4.4, 14, 2.2);
-  ctx.fill();
-  roundRect(-10, 8.2, 20, 3.8, 2.2);
-  ctx.fill();
-
-  // tiny rivets
-  ctx.globalAlpha = 0.8;
-  ctx.fillStyle = "rgba(255,255,255,0.45)";
-  ctx.beginPath(); ctx.arc(-9.5, 4.5, 1.2, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc( 9.5, 4.5, 1.2, 0, Math.PI*2); ctx.fill();
-
-  // edge stroke
-  ctx.globalAlpha = 0.3;
-  ctx.strokeStyle = dark;
-  ctx.lineWidth = 2;
-  roundRect(-15, 0, 30, 19, 9);
-  ctx.stroke();
-
-  ctx.restore();
-
-  // ===== Pauldrons (black + red trim) =====
-  ctx.save();
-  ctx.globalAlpha = 0.98;
-  ctx.fillStyle = metalMid;
-  roundRect(-23, 2, 12, 10, 7);
-  ctx.fill();
-  roundRect(11, 2, 12, 10, 7);
-  ctx.fill();
-
-  ctx.globalAlpha = 0.9;
-  ctx.fillStyle = red2;
-  roundRect(-22, 10, 10, 2.8, 2);
-  ctx.fill();
-  roundRect(12, 10, 10, 2.8, 2);
-  ctx.fill();
-
-  ctx.restore();
-
-  // ===== Shield (real shield silhouette + rim + boss + emblem) =====
-  const shieldSide = (dir === "left") ? -1 : 1;
-  ctx.save();
-  ctx.translate(22 * shieldSide, 18);
-  ctx.rotate(0.12 * shieldSide);
-
-  // shadow
-  ctx.globalAlpha = 0.18;
-  ctx.fillStyle = "rgba(10,14,24,0.55)";
-  roundRect(-14, -10, 28, 30, 12);
-  ctx.fill();
-
-  // shield path (top round, bottom point)
-  function shieldPath() {
-    ctx.beginPath();
-    ctx.moveTo(0, -12);
-    ctx.quadraticCurveTo(14, -12, 14, -2);
-    ctx.lineTo(14, 10);
-    ctx.quadraticCurveTo(14, 20, 0, 24);
-    ctx.quadraticCurveTo(-14, 20, -14, 10);
-    ctx.lineTo(-14, -2);
-    ctx.quadraticCurveTo(-14, -12, 0, -12);
-    ctx.closePath();
-  }
-
-  // body gradient (black + red glow edge)
-  const sg = ctx.createLinearGradient(-14, -12, 14, 24);
-  sg.addColorStop(0, metalMid);
-  sg.addColorStop(0.6, metalDark);
-  sg.addColorStop(1, "rgba(10,14,24,0.22)");
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = sg;
-  shieldPath();
-  ctx.fill();
-
-  // rim
-  ctx.globalAlpha = 0.55;
-  ctx.strokeStyle = "rgba(255,255,255,0.35)";
-  ctx.lineWidth = 2.2;
-  shieldPath();
-  ctx.stroke();
-
-  // red edge glow
-  ctx.globalAlpha = 0.22;
-  ctx.strokeStyle = red1;
-  ctx.lineWidth = 4;
-  shieldPath();
-  ctx.stroke();
-
-  // center boss
-  ctx.globalAlpha = 0.95;
-  ctx.fillStyle = steel;
-  ctx.beginPath();
-  ctx.arc(0, 6, 4.2, 0, Math.PI*2);
-  ctx.fill();
-  ctx.globalAlpha = 0.25;
-  ctx.fillStyle = "rgba(255,255,255,0.92)";
-  ctx.beginPath();
-  ctx.arc(-1.2, 5.2, 1.8, 0, Math.PI*2);
-  ctx.fill();
-
-  // emblem (small red diamond)
-  ctx.globalAlpha = 0.92;
-  ctx.fillStyle = red1;
-  ctx.beginPath();
-  ctx.moveTo(0, -2);
-  ctx.lineTo(4, 2);
-  ctx.lineTo(0, 6);
-  ctx.lineTo(-4, 2);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.restore();
-
-  // ===== Sword (steel blade + red rune) =====
-  const swordSide = (dir === "left") ? -1 : 1;
-  ctx.save();
-  ctx.translate(-22 * swordSide, 18 - swing * 1.6);
-  ctx.rotate((-0.42 * swordSide) + swing * 0.11);
-
-  const bladeGrad = ctx.createLinearGradient(0, -28, 0, 4);
-  bladeGrad.addColorStop(0, "#f4f7ff");
-  bladeGrad.addColorStop(0.65, steel);
-  bladeGrad.addColorStop(1, "rgba(10,14,24,0.22)");
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = bladeGrad;
-  roundRect(-2.6, -28, 5.2, 30, 2.6);
-  ctx.fill();
-
-  // blade highlight edge
-  ctx.globalAlpha = 0.22;
-  ctx.strokeStyle = "rgba(255,255,255,0.9)";
-  ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  ctx.moveTo(-1.2, -26);
-  ctx.lineTo(-1.2, 1);
-  ctx.stroke();
-
-  // red rune line
-  ctx.globalAlpha = 0.55;
-  ctx.fillStyle = red1;
-  roundRect(-0.8, -18, 1.6, 10, 1);
-  ctx.fill();
-
-  // guard + grip
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = gold;
-  roundRect(-7, 1, 14, 4, 2);
-  ctx.fill();
-
-  ctx.fillStyle = "rgba(10,14,24,0.82)";
-  roundRect(-2, 5, 4, 11, 2);
-  ctx.fill();
-
-  // pommel
-  ctx.fillStyle = red2;
-  ctx.beginPath();
-  ctx.arc(0, 18, 3.0, 0, Math.PI*2);
-  ctx.fill();
-
-  ctx.restore();
-}
-
+    /* ----------------------- Character: minifig ----------------------- */
     function drawMinifig(x, y, opts = null) {
       const moving = opts?.moving ?? player.moving;
       const bob = moving ? Math.sin((opts?.bobT ?? player.bobT)) * 0.14 : 0;
       const dir = opts?.dir ?? player.dir;
       const swing = moving ? Math.sin((opts?.animT ?? player.animT) * 10) : 0;
       const isHero = opts?.isHero ?? false;
+      const equip = opts?.equip ?? playerEquip;
 
       ctx.save();
       ctx.globalAlpha = 0.24;
       ctx.fillStyle = "rgba(10,14,24,0.42)";
       ctx.beginPath();
-      ctx.ellipse(x, y + 28, 20, 7, 0, 0, Math.PI * 2);
+      ctx.ellipse(x - cam.x, y - cam.y + 28, 20, 7, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
       ctx.save();
-      ctx.translate(x, y + bob);
+      ctx.translate(x - cam.x, y - cam.y + bob);
 
       const side = (dir === "left" || dir === "right");
       if (dir === "left") ctx.scale(-1, 1);
@@ -2234,90 +2069,133 @@
 
       // HEAD
       ctx.save();
-      const headG = ctx.createRadialGradient(-6, -24, 6, 0, -18, 22);
-      headG.addColorStop(0, "rgba(255,255,255,0.95)");
-      headG.addColorStop(0.52, skin);
-      headG.addColorStop(1, "rgba(10,14,24,0.18)");
+      const headG = ctx.createRadialGradient(-6, -24, 6, 0, -18, 20);
+      headG.addColorStop(0, "rgba(255,214,107,1)");
+      headG.addColorStop(1, "rgba(242,188,70,1)");
       ctx.fillStyle = headG;
-      ctx.beginPath();
-      ctx.arc(0, -20, 16, 0, Math.PI * 2);
+      roundRect(-14, -34, 28, 24, 10);
       ctx.fill();
       ctx.strokeStyle = outline;
       ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(0, -20, 16, 0, Math.PI * 2);
+      roundRect(-14, -34, 28, 24, 10);
       ctx.stroke();
+      ctx.restore();
 
       // 헬멧 느낌(히어로)
-      if (isHero) {
-  ctx.save();
+      if (isHero && equip.helmet) {
+        ctx.save();
 
-  const black1 = "#1a1d24";
-  const black2 = "#2a2f3b";
-  const red1 = "#ff2d55";
-  const bone = "#e9e2d2";
+        const black1 = "#1a1d24";
+        const black2 = "#2a2f3b";
+        const red1 = "#ff2d55";
+        const bone = "#e9e2d2";
 
-  // helmet shell (black)
-  const hg = ctx.createLinearGradient(-16, -36, 16, -14);
-  hg.addColorStop(0, black2);
-  hg.addColorStop(0.7, black1);
-  hg.addColorStop(1, "rgba(10,14,24,0.25)");
-  ctx.fillStyle = hg;
-  roundRect(-16, -36, 32, 18, 10);
-  ctx.fill();
+        // helmet shell (black)
+        const hg = ctx.createLinearGradient(-16, -36, 16, -14);
+        hg.addColorStop(0, black2);
+        hg.addColorStop(0.7, black1);
+        hg.addColorStop(1, "rgba(10,14,24,0.25)");
+        ctx.fillStyle = hg;
+        roundRect(-16, -36, 32, 18, 10);
+        ctx.fill();
 
-  // red crest stripe
-  ctx.globalAlpha = 0.95;
-  ctx.fillStyle = red1;
-  roundRect(-2.2, -36, 4.4, 18, 2.2);
-  ctx.fill();
+        // red crest stripe
+        ctx.globalAlpha = 0.95;
+        ctx.fillStyle = red1;
+        roundRect(-2.2, -36, 4.4, 18, 2.2);
+        ctx.fill();
 
-  // visor
-  ctx.globalAlpha = 0.28;
-  ctx.fillStyle = "rgba(0,0,0,0.85)";
-  roundRect(-10, -28, 20, 6, 6);
-  ctx.fill();
+        // visor
+        ctx.globalAlpha = 0.28;
+        ctx.fillStyle = "rgba(0,0,0,0.85)";
+        roundRect(-10, -28, 20, 6, 6);
+        ctx.fill();
 
-  // horns (more “horned helmet”)
-  ctx.globalAlpha = 0.98;
-  ctx.fillStyle = bone;
+        // horns (more “horned helmet”)
+        ctx.globalAlpha = 0.98;
+        ctx.fillStyle = bone;
 
-  // left horn
-  ctx.save();
-  ctx.translate(-15, -30);
-  ctx.rotate(-0.25);
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.quadraticCurveTo(-12, -6, -14, -20);
-  ctx.quadraticCurveTo(-8, -16, 2, -10);
-  ctx.quadraticCurveTo(-2, -6, 0, 0);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
+        // left horn
+        ctx.save();
+        ctx.translate(-15, -30);
+        ctx.rotate(-0.25);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(-12, -6, -14, -20);
+        ctx.quadraticCurveTo(-8, -16, 2, -10);
+        ctx.quadraticCurveTo(-2, -6, 0, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
 
-  // right horn
-  ctx.save();
-  ctx.translate(15, -30);
-  ctx.rotate(0.25);
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.quadraticCurveTo(12, -6, 14, -20);
-  ctx.quadraticCurveTo(8, -16, -2, -10);
-  ctx.quadraticCurveTo(2, -6, 0, 0);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
+        // right horn
+        ctx.save();
+        ctx.translate(15, -30);
+        ctx.rotate(0.25);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(12, -6, 14, -20);
+        ctx.quadraticCurveTo(8, -16, -2, -10);
+        ctx.quadraticCurveTo(2, -6, 0, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
 
-  // highlight
-  ctx.globalAlpha = 0.14;
-  ctx.fillStyle = "rgba(255,255,255,0.92)";
-  roundRect(-12, -34, 24, 6, 8);
-  ctx.fill();
+        // ✨ horn glow (high quality)
+        (function hornGlow() {
+          const tt = performance.now() / 1000;
+          const pulse = 0.55 + 0.45 * Math.sin(tt * 3.2);
+          ctx.save();
+          ctx.globalCompositeOperation = "lighter";
 
-  ctx.restore();
-} else {
-  drawCapOnHead(hat);
-}
+          function tipGlow(tx, ty) {
+            // core glow
+            const g = ctx.createRadialGradient(tx, ty, 0, tx, ty, 22);
+            g.addColorStop(0, `rgba(180,240,255,${0.70 * pulse})`);
+            g.addColorStop(0.35, `rgba(120,210,255,${0.28 * pulse})`);
+            g.addColorStop(1, "rgba(120,210,255,0)");
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.arc(tx, ty, 22, 0, Math.PI * 2);
+            ctx.fill();
+
+            // sparkles (deterministic-ish)
+            for (let i = 0; i < 8; i++) {
+              const a = (i / 8) * Math.PI * 2 + tt * 0.8;
+              const rr = 10 + (Math.sin(tt * 2.4 + i * 11.7) * 0.5 + 0.5) * 10;
+              const px = tx + Math.cos(a) * rr;
+              const py = ty + Math.sin(a) * rr;
+              const r = 1.4 + (Math.sin(tt * 6.0 + i * 9.1) * 0.5 + 0.5) * 1.8;
+
+              const pg = ctx.createRadialGradient(px, py, 0, px, py, r * 4.5);
+              pg.addColorStop(0, `rgba(255,255,255,${0.85 * pulse})`);
+              pg.addColorStop(0.25, `rgba(170,235,255,${0.35 * pulse})`);
+              pg.addColorStop(1, "rgba(170,235,255,0)");
+              ctx.fillStyle = pg;
+              ctx.beginPath();
+              ctx.arc(px, py, r * 4.5, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+
+          // approximate horn tips
+          tipGlow(-28, -50);
+          tipGlow(28, -50);
+
+          ctx.restore();
+        })();
+
+        // highlight
+        ctx.globalAlpha = 0.14;
+        ctx.fillStyle = "rgba(255,255,255,0.92)";
+        roundRect(-12, -34, 24, 6, 8);
+        ctx.fill();
+
+        ctx.restore();
+      } else {
+        drawCapOnHead(hat);
+      }
 
       // face
       ctx.fillStyle = "rgba(10,14,24,0.74)";
@@ -2339,27 +2217,22 @@
         ctx.globalAlpha = 1;
       } else {
         ctx.beginPath();
-        ctx.arc(7, -22, 2.1, 0, Math.PI * 2);
+        ctx.arc(0, -22, 2.4, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = "rgba(10,14,24,0.62)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(9, -18, 6, -0.25, Math.PI - 0.55);
-        ctx.stroke();
       }
-      ctx.restore();
 
-      const armSwing = 2.2 * swing;
-      const legSwing = 3.0 * swing;
+      // TORSO + ARMS + LEGS
+      const armSwing = swing * 2.2;
+      const legSwing = swing * 1.8;
 
       if (!side) {
         // torso
         ctx.fillStyle = torso;
-        roundRect(-14, -4, 28, 28, 12);
+        roundRect(-12, -4, 24, 28, 12);
         ctx.fill();
-        glossyHighlight(-14, -4, 28, 28, 0.10);
+        glossyHighlight(-12, -4, 24, 28, 0.10);
 
-        // torso print (hero: emblem + belt)
+        // belt/armor details
         ctx.save();
         if (isHero) {
           ctx.globalAlpha = 0.22;
@@ -2415,8 +2288,8 @@
         ctx.fill();
         ctx.globalAlpha = 1;
 
-        // ✅ (2) 히어로 장비(갑옷/검/방패)
-        if (isHero) drawHeroGear(dir, swing);
+        // ✅ (2) 히어로 장비(갑옷/검/방패) - 인벤 장착 상태 반영
+        if (isHero) drawHeroGear(dir, swing, equip);
 
       } else {
         // side torso slimmer
@@ -2441,92 +2314,45 @@
         roundRect(9, 15 + armSwing, 10, 8, 6);
         ctx.fill();
 
-        // ONE leg
+        // ONE leg (✅ 중심 정렬로 수정)
         ctx.fillStyle = pants;
-        roundRect(2, 22, 12, 16, 6);
+        roundRect(-6, 22, 12, 16, 6);
         ctx.fill();
 
-        // shoe
+        // shoe (✅ 중심 정렬로 수정)
         ctx.fillStyle = "rgba(10,14,24,0.82)";
         ctx.beginPath();
-        ctx.ellipse(9, 40 + legSwing, 6.6, 3.1, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 40 + legSwing, 6.6, 3.1, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        if (isHero) drawHeroGear(dir, swing);
+        if (isHero) drawHeroGear(dir, swing, equip);
       }
 
       ctx.restore();
     }
-
-    function drawNPC(key, x, y) {
-      const theme = {
-        archery: { torso: "#34c759", pants: "#3b4251", hat: "#ffcc00", acc: "bow" },
-        janggi: { torso: "#b889ff", pants: "#2a2f3b", hat: "#ff3b30", acc: "stone" },
-        omok: { torso: "#ffffff", pants: "#3b4251", hat: "#0a84ff", acc: "stone2" }
-      }[key] || { torso: "#ffffff", pants: "#3b4251", hat: "#ff3b30", acc: "none" };
-
-      drawMinifig(x, y, { moving: false, dir: "right", torso: theme.torso, pants: theme.pants, hat: theme.hat });
-
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.scale(-1, 1);
-      if (theme.acc === "bow") {
-        ctx.strokeStyle = "rgba(10,14,24,0.55)";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(22, 12, 12, -1.2, 1.2);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(12, 12);
-        ctx.lineTo(32, 12);
-        ctx.stroke();
-      } else if (theme.acc === "stone") {
-        ctx.fillStyle = "rgba(10,14,24,0.20)";
-        roundRect(16, 18, 14, 10, 5);
-        ctx.fill();
-        ctx.fillStyle = "#ffffff";
-        roundRect(18, 20, 10, 6, 4);
-        ctx.fill();
-      } else if (theme.acc === "stone2") {
-        ctx.fillStyle = "rgba(255,255,255,0.98)";
-        ctx.beginPath();
-        ctx.arc(22, 22, 6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "rgba(10,14,24,0.92)";
-        ctx.beginPath();
-        ctx.arc(32, 22, 6, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
-    function drawRoamer(n, palette) {
-      const c = palette[n.colorIdx % palette.length];
-      drawMinifig(n.x, n.y, { moving: true, dir: n.dir, animT: n.t, bobT: n.t * 0.9, torso: c.torso, pants: c.pants, hat: c.hat });
-    }
-
-    /* ----------------------- Title ----------------------- */
+/* ===================== [PART 3 / 3] ===================== */
+    /* ----------------------- Title / Minimap / Depth sort ----------------------- */
     function drawWorldTitle() {
-      const text = "FA미니월드";
-      const padX = 18;
       ctx.save();
-      ctx.globalAlpha = 0.94;
-      ctx.font = "1100 20px system-ui";
-      const tw = ctx.measureText(text).width;
-      const bw = tw + padX * 2, bh = 40;
-      const x = VIEW.w * 0.5 - bw * 0.5, y = 14;
-      ctx.fillStyle = "rgba(255,255,255,0.86)";
+      ctx.globalAlpha = 0.92;
+      ctx.fillStyle = "rgba(255,255,255,0.84)";
       ctx.strokeStyle = "rgba(0,0,0,0.10)";
       ctx.lineWidth = 2;
-      roundRect(x, y, bw, bh, 18);
+      roundRect(16, VIEW.h - 62, 260, 46, 18);
       ctx.fill(); ctx.stroke();
-      glossyHighlight(x, y, bw, bh, 0.12);
-      ctx.fillStyle = "rgba(10,14,24,0.92)";
-      ctx.fillText(text, x + padX, y + 27);
+
+      ctx.fillStyle = "rgba(10,14,24,0.86)";
+      ctx.font = "1200 14px system-ui";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText("LEGO HUB", 34, VIEW.h - 39);
+
+      ctx.globalAlpha = 0.58;
+      ctx.font = "1000 12px system-ui";
+      ctx.fillText("Enter/E: Portal · I: Inventory", 34, VIEW.h - 22);
       ctx.restore();
     }
 
-    /* ----------------------- MiniMap ----------------------- */
     function drawMiniMap() {
       const pad = 16;
       const mw = 220, mh = 160;
@@ -2636,189 +2462,101 @@
       return entity.y;
     }
 
-    /* ----------------------- Update / Draw loop ----------------------- */
-    let lastT = performance.now();
-    let acc = 0, framesCount = 0;
-    let lastMobileZoneKey = "";
+    /* ----------------------- Draw loop ----------------------- */
+    function draw(t) {
+      drawBackground(t);
 
-    function update(dt, t, rng) {
-      let ax = 0, ay = 0;
-
-      if (!dragging && !modalState.open) {
-        if (keys.has("a") || keys.has("arrowleft")) ax -= 1;
-        if (keys.has("d") || keys.has("arrowright")) ax += 1;
-        if (keys.has("w") || keys.has("arrowup")) ay -= 1;
-        if (keys.has("s") || keys.has("arrowdown")) ay += 1;
-
-        if (isTouchDevice()) {
-          ax += UI.joyState.ax;
-          ay += UI.joyState.ay;
-          const len = Math.hypot(ax, ay);
-          if (len > 1) { ax /= len; ay /= len; }
-        }
-
-        const moving = ax !== 0 || ay !== 0;
-        player.moving = moving;
-
-        if (moving) {
-          updateDirFromAxes(ax, ay);
-          const len = Math.hypot(ax, ay) || 1;
-          player.x += (ax / len) * player.speed * dt;
-          player.y += (ay / len) * player.speed * dt;
-          clampPlayerToWorld();
-          player.animT += dt;
-        } else {
-          player.animT *= 0.9;
-        }
-      }
-
-      player.bobT += dt * 6.0;
-      addFootprint(dt, rng);
-
-      // cars
-      for (const c of cars) {
-        c.bob += dt * 3.0;
-        const r = roads.find(rr => rr._id === c.roadId) || roads[0];
-        if (!r) continue;
-
-        if (c.axis === "h") {
-          c.x += c.dir * c.speed * dt;
-          if (c.dir > 0 && c.x > r.x + r.w + 140) c.x = r.x - 140;
-          if (c.dir < 0 && c.x < r.x - 140) c.x = r.x + r.w + 140;
-        } else {
-          c.y += c.dir * c.speed * dt;
-          if (c.dir > 0 && c.y > r.y + r.h + 140) c.y = r.y - 140;
-          if (c.dir < 0 && c.y < r.y - 140) c.y = r.y + r.h + 140;
-        }
-      }
-
-      // clouds/birds
-      for (const c of clouds) {
-        c.x += c.v * (c.layer === 0 ? 1.0 : 0.75) * dt;
-        if (c.x > WORLD.w + 420) {
-          c.x = -420;
-          c.y = 40 + Math.random() * 280;
-          c.s = 0.7 + Math.random() * 1.2;
-          c.v = 9 + Math.random() * 18;
-          c.layer = Math.random() < 0.5 ? 0 : 1;
-        }
-      }
-      for (const b of birds) {
-        b.x += b.v * dt;
-        b.p += dt * 4.2;
-        if (b.x > WORLD.w + 240) {
-          b.x = -200;
-          b.y = 70 + Math.random() * 170;
-          b.v = 22 + Math.random() * 22;
-          b.p = Math.random() * 10;
-        }
-      }
-
-      // active portal check
-      activePortal = null;
-      for (const p of portals) {
-        const z = portalEnterZone(p);
-        if (circleRectHit(player.x, player.y, player.r, z)) { activePortal = p; break; }
-      }
-
-      if (isTouchDevice() && activePortal && !modalState.open) {
-        if (lastMobileZoneKey !== activePortal.key) {
-          lastMobileZoneKey = activePortal.key;
-          openPortalUI(activePortal);
-        }
-      }
-      if (!activePortal) lastMobileZoneKey = "";
-
-      if (!modalState.open && activePortal) {
-        UI.toast.hidden = false;
-        const p = activePortal;
-        if (p.status === "open" && p.url) {
-          UI.toast.innerHTML = blockSpan(`🧱 <b>${p.label}</b><br/>포탈 앞이에요. <b>Enter</b> 또는 <b>E</b>`, { bg: "rgba(10,14,24,0.86)" });
-        } else {
-          UI.toast.innerHTML = blockSpan(`🧱 <b>${p.label}</b><br/>오픈 준비중입니다`, { bg: "rgba(10,14,24,0.82)" });
-        }
-      } else if (!modalState.open) {
-        UI.toast.hidden = true;
-      }
-
-      for (let i = footprints.length - 1; i >= 0; i--) {
-        footprints[i].age += dt;
-        if (footprints[i].age >= footprints[i].life) footprints.splice(i, 1);
-      }
-
-      const roamerPalette = stepRoamers(dt, rng);
-      updateCamera(dt);
-
-      UI.coord.textContent = `x: ${Math.round(player.x)} · y: ${Math.round(player.y)}`;
-      acc += dt; framesCount++;
-      if (acc >= 0.45) {
-        UI.fps.textContent = `fps: ${Math.round(framesCount / acc)}`;
-        acc = 0; framesCount = 0;
-      }
-      return roamerPalette;
-    }
-
-    function draw(t, roamerPalette) {
-      ctx.clearRect(0, 0, VIEW.w, VIEW.h);
+      // world transform
       ctx.save();
+      ctx.scale(VIEW.zoom, VIEW.zoom);
       ctx.translate(-cam.x, -cam.y);
 
-      drawSkyWorld(t);
-      drawCloudsWorld();
-      drawGroundWorld();
-      drawRoadsAndSidewalks();
-      drawZonesWorld(t);
-      drawFootprints();
+      // sidewalks
+      for (const s of sidewalks) drawSidewalk(s);
 
-      const items = [];
-      for (const p of portals) items.push({ kind: "building", ref: p, footY: getFootY({ kind: "building", y: p.y, h: p.h }) });
-      for (const c of cars) items.push({ kind: "car", ref: c, footY: getFootY(c) });
-      for (const pr of props) items.push({ kind: pr.kind, ref: pr, footY: getFootY(pr) });
-      for (const e of portalEmblems) items.push({ kind: "emblem", ref: e, footY: getFootY(e) });
-      for (const n of portalNPCs) items.push({ kind: "npc", ref: n, footY: getFootY(n) });
-      for (const sg of signals) items.push({ kind: "signal", ref: sg, footY: getFootY({ kind: "signal", y: sg.y }) });
-      for (const r of roamers) items.push({ kind: "roamer", ref: r, footY: getFootY({ kind: "roamer", y: r.y }) });
-      items.push({ kind: "player", ref: player, footY: getFootY({ kind: "player", y: player.y }) });
+      // roads
+      for (const r of roads) drawRoad(r);
 
-      items.sort((a, b) => a.footY - b.footY);
+      // crossings
+      for (const c of crossings) drawCrossing(c);
 
-      for (const it of items) {
-        if (it.kind === "building") drawPortalBuilding(it.ref, t);
-        else if (it.kind === "car") drawCar(it.ref);
-        else if (it.kind === "tree") drawTree(it.ref);
-        else if (it.kind === "lamp") drawLamp(it.ref, t);
-        else if (it.kind === "bench") drawBench(it.ref);
-        else if (it.kind === "flower") drawFlower(it.ref, t);
-        else if (it.kind === "emblem") drawEmblem(it.ref);
-        else if (it.kind === "npc") drawNPC(it.ref.key, it.ref.x, it.ref.y);
-        else if (it.kind === "signal") drawSignal(it.ref, t);
-        else if (it.kind === "roamer") drawRoamer(it.ref, roamerPalette);
-        else if (it.kind === "player") {
-          if (!(SPRITE_SRC && USE_SPRITE_IF_LOADED && drawSpriteCharacter(player.x, player.y))) {
-            // ✅ (2) 플레이어는 히어로 장비 적용
-            drawMinifig(player.x, player.y, { isHero: true });
-          }
+      // buildings + props + entities sorted
+      const ents = [];
+
+      for (const p of portals) ents.push({ kind: "building", ...p });
+      for (const p of props) ents.push(p);
+      for (const s of signs) ents.push({ kind: "sign", ...s });
+      for (const n of portalNPCs) ents.push(n);
+      for (const e of portalEmblems) ents.push(e);
+      for (const n of roamers) ents.push(n);
+      for (const c of cars) ents.push(c);
+      ents.push({ kind: "player", x: player.x, y: player.y });
+
+      ents.sort((a, b) => getFootY(a) - getFootY(b));
+
+      for (const e of ents) {
+        if (e.kind === "building") drawBuilding(e, t);
+        else if (e.kind === "tree") drawTree(e);
+        else if (e.kind === "flower") drawFlower(e);
+        else if (e.kind === "bench") drawBench(e);
+        else if (e.kind === "lamp") drawLamp(e, t);
+        else if (e.kind === "sign") drawSign(e);
+        else if (e.kind === "npc") drawNPC(e.key, e.x, e.y);
+        else if (e.kind === "emblem") drawEmblem(e);
+        else if (e.kind === "roamer") drawMinifig(e.x, e.y, { moving: true, dir: e.dir, animT: e.t, bobT: e.t * 0.9, torso: e.c.torso, pants: e.c.pants, hat: e.c.hat });
+        else if (e.kind === "car") {
+          ctx.save();
+          ctx.translate(e.x - cam.x, e.y - cam.y);
+          ctx.globalAlpha = 0.92;
+          ctx.fillStyle = e.color;
+          roundRect(-e.w / 2, -e.h / 2, e.w, e.h, 12);
+          ctx.fill();
+          ctx.globalAlpha = 0.22;
+          ctx.fillStyle = "rgba(255,255,255,0.92)";
+          roundRect(-e.w / 2 + 6, -e.h / 2 + 6, e.w - 12, 8, 8);
+          ctx.fill();
+          ctx.restore();
+        } else if (e.kind === "player") {
+          drawMinifig(player.x, player.y, { isHero: true });
         }
       }
 
+      // signals on top
+      for (const s of signals) drawSignal(s, t);
+
+      // zone outlines + gates
+      ctx.save();
+      ctx.globalAlpha = 0.13;
+      ctx.strokeStyle = "#0a84ff";
+      ctx.lineWidth = 6;
+      roundRect(ZONES.game.x - cam.x, ZONES.game.y - cam.y, ZONES.game.w, ZONES.game.h, 32);
+      ctx.stroke();
+      ctx.strokeStyle = "#34c759";
+      roundRect(ZONES.community.x - cam.x, ZONES.community.y - cam.y, ZONES.community.w, ZONES.community.h, 32);
+      ctx.stroke();
+      ctx.strokeStyle = "#ff2d55";
+      roundRect(ZONES.ads.x - cam.x, ZONES.ads.y - cam.y, ZONES.ads.w, ZONES.ads.h, 32);
+      ctx.stroke();
       ctx.restore();
 
+      drawZoneGate(ZONES.game, t);
+      drawZoneGate(ZONES.community, t);
+      drawZoneGate(ZONES.ads, t);
+
+      ctx.restore(); // world transform end
+
+      // overlays
       drawWorldTitle();
       drawMiniMap();
 
-      ctx.save();
-      const vg = ctx.createRadialGradient(
-        VIEW.w * 0.5, VIEW.h * 0.45, Math.min(VIEW.w, VIEW.h) * 0.25,
-        VIEW.w * 0.5, VIEW.h * 0.5, Math.max(VIEW.w, VIEW.h) * 0.72
-      );
-      vg.addColorStop(0, "rgba(10,14,24,0.00)");
-      vg.addColorStop(1, "rgba(10,14,24,0.06)");
-      ctx.fillStyle = vg;
-      ctx.fillRect(0, 0, VIEW.w, VIEW.h);
-      ctx.restore();
+      // UI text
+      UI.coord.textContent = `x:${player.x.toFixed(0)} y:${player.y.toFixed(0)}`;
     }
 
     /* ----------------------- Loop ----------------------- */
+    let lastT = performance.now();
+    let acc = 0, framesCount = 0;
+
     function loop(now) {
       const dt = Math.min(0.033, (now - lastT) / 1000);
       lastT = now;
@@ -2827,8 +2565,16 @@
       const rng = mulberry32(frameSeed);
 
       try {
-        const roamerPalette = update(dt, t, rng);
-        draw(t, roamerPalette);
+        update(dt, t, rng);
+        draw(t);
+
+        // FPS
+        acc += dt; framesCount++;
+        if (acc > 0.35) {
+          const fps = Math.round(framesCount / acc);
+          UI.fps.textContent = `${fps} FPS`;
+          acc = 0; framesCount = 0;
+        }
       } catch (err) {
         console.error(err);
         UI.toast.hidden = false;
@@ -2843,7 +2589,7 @@
       const p = getPointer(e);
       const w = screenToWorld(p.x, p.y);
 
-      if (activePortal && !modalState.open) {
+      if (activePortal && !modalState.open && !invState.open) {
         const z = portalEnterZone(activePortal);
         if (w.x >= z.x - 20 && w.x <= z.x + z.w + 20 && w.y >= z.y - 20 && w.y <= z.y + z.h + 20) {
           openPortalUI(activePortal);
@@ -2859,10 +2605,7 @@
 
     /* ----------------------- Start ----------------------- */
     resize();
-    for (const b of birds) {
-      b.x = Math.random() * WORLD.w;
-      b.y = 70 + Math.random() * 170;
-    }
     requestAnimationFrame(loop);
   });
 })();
+    
