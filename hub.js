@@ -1154,10 +1154,12 @@
         `🧱 <b>${activePortal.label}</b><br/>${activePortal.message || "게임 준비중입니다."}`,
         { bg: "linear-gradient(180deg, rgba(10,14,24,0.96), rgba(18,25,40,0.94))", fg:"#f8fafc", bd:"rgba(148,163,184,0.16)", shadow:"0 14px 36px rgba(0,0,0,0.24)" }
       );
+      UI.enterBtn.style.display = "none";
       setTimeout(() => {
         if (!shopState.open && performance.now() >= mobileToastUntil) {
           UI.toast.hidden = true;
           UI.toast.style.display = "none";
+          UI.toast.innerHTML = "";
         }
       }, 1650);
     }
@@ -1209,8 +1211,12 @@
         triggerAttack();
       }
       if (k === "enter" || k === "e") {
-        if (modalState.open && modalState.portal) confirmEnter(modalState.portal);
-        else if (activePortal) openPortalUI(activePortal);
+        if (modalState.open && modalState.portal) {
+          confirmEnter(modalState.portal);
+        } else if (activePortal) {
+          if (isTouchDevice()) openPortalUI(activePortal);
+          else confirmEnter(activePortal);
+        }
       }
       if (k === "escape") {
         closeModal();
@@ -1563,14 +1569,14 @@
         if (["avoid", "shooting", "archery", "janggi", "omok"].includes(p.key)) {
           const z = ZONES.game;
           const gameLayout = touchLayout ? {
-            archery: { x: z.x + 20, y: z.y + 10 },
-            janggi: { x: z.x + z.w * 0.60 - p.w * 0.5, y: z.y + z.h - p.h - 8 },
-            omok: { x: z.x + z.w * 0.14, y: z.y + z.h * 0.45 - p.h * 0.5 },
-            avoid: { x: z.x + z.w * 0.83 - p.w * 0.5, y: z.y + z.h * 0.65 - p.h * 0.5 },
-            shooting: { x: z.x + z.w - p.w - 30, y: z.y + 8 }
+            archery: { x: z.x + 18, y: z.y + 8 },
+            janggi: { x: z.x + z.w * 0.67 - p.w * 0.5, y: z.y + z.h - p.h - 14 },
+            omok: { x: z.x + z.w * 0.12, y: z.y + z.h * 0.47 - p.h * 0.5 },
+            avoid: { x: z.x + z.w * 0.92 - p.w * 0.5, y: z.y + z.h * 0.68 - p.h * 0.5 },
+            shooting: { x: z.x + z.w - p.w - 42, y: z.y + 8 }
           } : {
             archery: { x: z.x + 52, y: z.y + 12 },
-            janggi: { x: z.x + z.w * 0.30 - p.w * 0.5, y: z.y + z.h * 0.58 - p.h * 0.5 },
+            janggi: { x: z.x + z.w * 0.34 - p.w * 0.5, y: z.y + z.h * 0.62 - p.h * 0.5 },
             omok: { x: z.x + z.w * 0.50 - p.w * 0.5, y: z.y + z.h * 0.40 - p.h * 0.5 },
             avoid: { x: z.x + z.w * 0.73 - p.w * 0.5, y: z.y + z.h * 0.60 - p.h * 0.5 },
             shooting: { x: z.x + z.w - p.w - 60, y: z.y + 18 }
@@ -1587,7 +1593,7 @@
           if (touchLayout) {
             if (p.key === "twitter") placeByRect(p, z, leftX, topY);
             else if (p.key === "wallet") placeByRect(p, z, rightX, topY + 6);
-            else if (p.key === "telegram") placeByRect(p, z, rightX + 6, bottomY + 4);
+            else if (p.key === "telegram") placeByRect(p, z, rightX + 18, bottomY + 18);
             else if (p.key === "market") placeByRect(p, z, leftX + 24, bottomY - 22);
           } else {
             if (p.key === "twitter") placeByRect(p, z, leftX, topY);
@@ -3656,20 +3662,24 @@
       }
 
       activePortal = null;
+      let activePortalDist = Infinity;
       for (const p of portals) {
         if (circleRectHit(player.x, player.y, player.r + 8, portalEnterZone(p))) {
-          activePortal = p;
-          break;
+          const cx = p.x + p.w * 0.5;
+          const cy = p.y + p.h * 0.5;
+          const dist = Math.hypot(player.x - cx, player.y - cy);
+          if (dist < activePortalDist) {
+            activePortalDist = dist;
+            activePortal = p;
+          }
         }
       }
 
       if (!modalState.open && activePortal) {
         if (isTouchDevice()) {
-          if (performance.now() >= mobileToastUntil) {
-            UI.toast.hidden = true;
-            UI.toast.style.display = "none";
-            UI.toast.innerHTML = "";
-          }
+          UI.toast.hidden = true;
+          UI.toast.style.display = "none";
+          UI.toast.innerHTML = "";
           UI.enterBtn.style.display = "block";
         } else {
           UI.toast.hidden = false;
