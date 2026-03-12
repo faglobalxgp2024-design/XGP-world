@@ -184,7 +184,7 @@
     fade.style.pointerEvents = "none";
     fade.style.opacity = "0";
     fade.style.transition = "opacity 240ms ease";
-    fade.style.background = "#ffffff";
+    fade.style.background = "radial-gradient(circle at 50% 50%, rgba(15,23,42,0.18), rgba(2,6,23,0.82))";
 
     const modal = ensureEl("lego_modal", "div");
     modal.style.position = "fixed";
@@ -193,8 +193,8 @@
     modal.style.display = "none";
     modal.style.alignItems = "center";
     modal.style.justifyContent = "center";
-    modal.style.background = "rgba(2,6,23,0.18)";
-    modal.style.backdropFilter = "blur(1.5px)";
+    modal.style.background = "rgba(2,6,23,0.08)";
+    modal.style.backdropFilter = "blur(0.5px)";
 
     const modalInner = ensureEl("lego_modal_inner", "div", modal);
     modalInner.style.width = "min(360px, calc(100vw - 28px))";
@@ -598,7 +598,8 @@
 
     const SHOP_IMAGE_FILES = {
       avoid: "%EB%B9%84%ED%96%89%EA%B8%B0%EA%B2%8C%EC%9E%84%EC%A1%B4.png",
-      shooting: "%EC%96%91%EA%B6%81%EA%B2%8C%EC%9E%84%EC%A1%B4.png",
+      shooting: "%EC%8A%88%ED%8C%85%EA%B2%8C%EC%9E%84%EC%A1%B4.png",
+      archery: "%EC%96%91%EA%B6%81%EA%B2%8C%EC%9E%84%EC%A1%B4.png",
       janggi: "%EC%9E%A5%EA%B8%B0%EC%A1%B4.png",
       omok: "%EC%98%A4%EB%AA%A9%EC%A1%B4.png",
       twitter: "%ED%8A%B8%EC%9C%84%ED%84%B0%EC%A1%B4.png",
@@ -641,6 +642,7 @@
     const portals = [
       { key: "avoid", label: "AIRPLANE", status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "shooting", label: "SHOOTING", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", message: "슈팅게임에 입장하시겠습니까?", type: "tower", size: "L", x: 0, y: 0, w: 0, h: 0 },
+      { key: "archery", label: "ARCHERY", status: "soon", url: "", message: "게임 준비중입니다.", type: "tower", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "janggi", label: "JANGGI", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "omok", label: "OMOK", status: "soon", url: "", message: "게임 준비중입니다.", type: "cafe", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "twitter", label: "TWITTER", status: "open", url: "https://x.com/FAGLOBAL_", type: "social", size: "L", x: 0, y: 0, w: 0, h: 0 },
@@ -695,10 +697,10 @@
       inventoryOpen: false,
       equipmentOpen: false,
       items: [
-        { id: "hat_royal", slot: "hat", name: "Royal Helm", desc: "기본 투구", color: "#dc2626", owned: true, icon: "helm", price: 0, tier: "starter" },
-        { id: "armor_shadow", slot: "armor", name: "Shadow Armor", desc: "기본 갑옷", color: "#111827", owned: true, icon: "armor", price: 0, tier: "starter" },
-        { id: "weapon_blade", slot: "weapon", name: "Crimson Blade", desc: "기본 검", color: "#ef4444", owned: true, icon: "sword", price: 0, tier: "starter" },
-        { id: "shield_guard", slot: "shield", name: "Aegis Guard", desc: "기본 방패", color: "#94a3b8", owned: true, icon: "shield", price: 0, tier: "starter" },
+        { id: "hat_royal", slot: "hat", name: "Royal Helm", desc: "기본 투구", color: "#dc2626", owned: true, icon: "helm", price: 0, tier: "starter", def: 4 },
+        { id: "armor_shadow", slot: "armor", name: "Shadow Armor", desc: "기본 갑옷", color: "#111827", owned: true, icon: "armor", price: 0, tier: "starter", def: 8 },
+        { id: "weapon_blade", slot: "weapon", name: "Crimson Blade", desc: "기본 검", color: "#ef4444", owned: true, icon: "sword", price: 0, tier: "starter", atk: 8 },
+        { id: "shield_guard", slot: "shield", name: "Aegis Guard", desc: "기본 방패", color: "#94a3b8", owned: true, icon: "shield", price: 0, tier: "starter", def: 6 },
       ],
       equipped: {
         hat: "hat_royal",
@@ -775,6 +777,14 @@
       return inventoryState.items.find((it) => it.id === id) || null;
     }
 
+    function statLine(item) {
+      if (!item) return "";
+      const parts = [];
+      if (item.atk) parts.push(`ATK +${item.atk}`);
+      if (item.def) parts.push(`DEF +${item.def}`);
+      return parts.join(" · ");
+    }
+
     const shopState = { open: false, filter: "all" };
 
     function closeShop() {
@@ -844,6 +854,7 @@
                 <span class="rarity-chip" style="color:${rare.color};background:${rare.glow}18;box-shadow:0 0 18px ${rare.glow}22">${rare.label}</span>
                 <b>${item.name}</b>
                 <span>${item.desc}</span>
+                <span style="color:${rare.color};font-weight:900">${statLine(item)}</span>
                 <div class="price">★ ${item.price}</div>
               </div>
               <button data-buy="${item.id}" ${disabled}>구매</button>
@@ -886,23 +897,26 @@
 
     function iconMarkup(item, equipped = false) {
       const mode = item?.icon || item?.slot || "item";
-      let bg = "linear-gradient(180deg,#334155,#0f172a)";
+      const rare = rarityStyle(item?.price || 0);
+      let bg = `radial-gradient(circle at 50% 18%, ${shade(rare.color, 50)}, #0f172a 76%)`;
       let shape = "";
       if (mode === "helm") {
-        bg = "radial-gradient(circle at 50% 28%, #fca5a5, #7f1d1d 68%)";
-        shape = '<div style="position:absolute;left:10px;right:10px;top:13px;height:16px;border-radius:12px 12px 7px 7px;background:#111827;"></div><div style="position:absolute;left:16px;right:16px;top:23px;height:10px;border-radius:0 0 10px 10px;background:#dc2626;"></div>';
+        bg = `radial-gradient(circle at 50% 26%, ${shade(rare.color, 34)}, #05070d 72%)`;
+        shape = '<div style="position:absolute;left:9px;right:9px;top:10px;height:20px;border-radius:14px 14px 8px 8px;background:linear-gradient(180deg,#020617,#1f2937);border:1px solid rgba(255,255,255,0.12)"></div><div style="position:absolute;left:13px;right:13px;top:17px;height:12px;border-radius:8px;background:linear-gradient(90deg,transparent,rgba(239,68,68,0.85),transparent)"></div><div style="position:absolute;left:18px;right:18px;top:26px;height:10px;border-radius:0 0 12px 12px;background:linear-gradient(180deg,#111827,#374151)"></div><div style="position:absolute;left:26px;top:6px;width:10px;height:10px;transform:rotate(45deg);background:'+rare.color+';box-shadow:0 0 10px '+rare.glow+'"></div>';
       } else if (mode === "armor") {
-        bg = "radial-gradient(circle at 50% 24%, #475569, #0f172a 74%)";
-        shape = '<div style="position:absolute;left:12px;right:12px;top:10px;height:28px;border-radius:10px;background:linear-gradient(180deg,#0f172a,#334155);border:1px solid rgba(255,255,255,0.10)"></div><div style="position:absolute;left:20px;right:20px;top:17px;height:12px;border-radius:8px;background:rgba(239,68,68,0.7)"></div>';
+        bg = `radial-gradient(circle at 50% 22%, ${shade(rare.color, 20)}, #020617 74%)`;
+        shape = '<div style="position:absolute;left:12px;right:12px;top:9px;height:30px;border-radius:12px;background:linear-gradient(180deg,#0f172a,#334155);border:1px solid rgba(255,255,255,0.10)"></div><div style="position:absolute;left:16px;right:16px;top:12px;height:8px;border-radius:8px;background:linear-gradient(90deg,transparent,'+rare.color+',transparent)"></div><div style="position:absolute;left:21px;right:21px;top:20px;height:14px;border-radius:8px;background:rgba(255,255,255,0.08)"></div><div style="position:absolute;left:27px;top:7px;width:8px;height:8px;transform:rotate(45deg);background:'+rare.color+';box-shadow:0 0 12px '+rare.glow+'"></div>';
       } else if (mode === "sword") {
-        bg = "radial-gradient(circle at 50% 24%, #64748b, #0f172a 74%)";
-        shape = '<div style="position:absolute;left:25px;top:8px;width:4px;height:26px;border-radius:3px;background:linear-gradient(180deg,#f8fafc,#94a3b8);transform:rotate(32deg);box-shadow:0 0 10px rgba(255,255,255,0.25)"></div><div style="position:absolute;left:18px;top:28px;width:18px;height:4px;border-radius:4px;background:#111827;transform:rotate(32deg)"></div><div style="position:absolute;left:16px;top:33px;width:6px;height:10px;border-radius:4px;background:#7f1d1d;transform:rotate(32deg)"></div>';
+        bg = `radial-gradient(circle at 50% 18%, ${shade(rare.color, 16)}, #020617 76%)`;
+        shape = '<div style="position:absolute;left:27px;top:7px;width:5px;height:30px;border-radius:3px;background:linear-gradient(180deg,#ffffff,#cbd5e1 42%,#94a3b8 100%);transform:rotate(32deg);box-shadow:0 0 12px rgba(255,255,255,0.38),0 0 22px '+rare.glow+'"></div><div style="position:absolute;left:17px;top:30px;width:22px;height:5px;border-radius:5px;background:'+rare.color+';transform:rotate(32deg)"></div><div style="position:absolute;left:15px;top:36px;width:7px;height:12px;border-radius:4px;background:#7f1d1d;transform:rotate(32deg)"></div><div style="position:absolute;left:11px;top:10px;width:12px;height:3px;background:rgba(255,255,255,0.8);transform:rotate(-24deg);filter:blur(0.4px)"></div>';
       } else if (mode === "shield") {
-        bg = "radial-gradient(circle at 50% 26%, #cbd5e1, #1e293b 74%)";
-        shape = '<div style="position:absolute;left:13px;right:13px;top:10px;bottom:11px;background:linear-gradient(180deg,#94a3b8,#334155);clip-path:polygon(50% 0%, 90% 18%, 86% 72%, 50% 100%, 14% 72%, 10% 18%);border:1px solid rgba(255,255,255,0.14)"></div><div style="position:absolute;left:24px;top:15px;width:4px;height:22px;border-radius:4px;background:#f8fafc"></div><div style="position:absolute;left:17px;top:24px;width:18px;height:4px;border-radius:4px;background:#ef4444"></div>';
+        bg = `radial-gradient(circle at 50% 20%, ${shade(rare.color, 28)}, #020617 74%)`;
+        shape = '<div style="position:absolute;left:12px;right:12px;top:8px;bottom:10px;background:linear-gradient(180deg,#cbd5e1,#475569);clip-path:polygon(50% 0%, 92% 18%, 86% 72%, 50% 100%, 14% 72%, 8% 18%);border:1px solid rgba(255,255,255,0.16);box-shadow:0 0 12px '+rare.glow+'44 inset"></div><div style="position:absolute;left:17px;right:17px;top:15px;height:6px;border-radius:6px;background:'+rare.color+'"></div><div style="position:absolute;left:24px;top:18px;width:4px;height:18px;border-radius:4px;background:#ffffff"></div><div style="position:absolute;left:18px;top:24px;width:16px;height:4px;border-radius:4px;background:#0f172a"></div>';
       }
-      const glow = item?.glow || item?.color || "rgba(148,163,184,0.45)";
-      return `<div class="item-icon${equipped ? " active" : ""}" style="background:${bg};box-shadow:inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 1px rgba(255,255,255,0.06), 0 0 18px ${glow}55, 0 10px 20px rgba(2,6,23,0.28)">${shape}</div>`;
+      const glow = item?.glow || item?.color || rare.glow || "rgba(148,163,184,0.45)";
+      const stars = Math.max(1, Math.min(5, Math.ceil((item?.price || 1) / 220)));
+      const gems = Array.from({ length: stars }).map((_, i) => `<div style="position:absolute;bottom:5px;left:${8 + i * 10}px;width:6px;height:6px;border-radius:999px;background:${rare.color};box-shadow:0 0 10px ${glow}"></div>`).join("");
+      return `<div class="item-icon${equipped ? " active" : ""}" style="background:${bg};box-shadow:inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 1px rgba(255,255,255,0.06), 0 0 24px ${glow}66, 0 10px 20px rgba(2,6,23,0.28)">${shape}${gems}</div>`;
     }
 
     function renderPanels() {
@@ -947,7 +961,7 @@
           ${iconMarkup(item, equipped)}
           <div class="meta">
             <b>${item.name}</b>
-            <span>${item.desc} · ${equipped ? "장착중" : "인벤토리 보관중"}</span>
+            <span>${item.desc} · ${statLine(item)} · ${equipped ? "장착중" : "인벤토리 보관중"}</span>
           </div>
         `;
         const btn = document.createElement("button");
@@ -972,7 +986,7 @@
           ${item ? iconMarkup(item, true) : '<div class="item-icon" style="background:linear-gradient(180deg,#1e293b,#0f172a)"></div>'}
           <div class="meta">
             <b>${label}</b>
-            <span>${item ? item.name : "비어 있음"}</span>
+            <span>${item ? `${item.name} (${statLine(item)})` : "비어 있음"}</span>
           </div>
         `;
         const btn = document.createElement("button");
@@ -1358,10 +1372,11 @@
       }
 
       const desired = {
-        shooting: { x: ZONES.game.x + ZONES.game.w * 0.20, y: ZONES.game.y + ZONES.game.h * 0.22 },
-        janggi:  { x: ZONES.game.x + ZONES.game.w * 0.74, y: ZONES.game.y + ZONES.game.h * 0.28 },
-        avoid:   { x: ZONES.game.x + ZONES.game.w * 0.26, y: ZONES.game.y + ZONES.game.h * 0.72 },
-        omok:    { x: ZONES.game.x + ZONES.game.w * 0.76, y: ZONES.game.y + ZONES.game.h * 0.78 },
+        archery: { x: ZONES.game.x + ZONES.game.w * 0.18, y: ZONES.game.y + ZONES.game.h * 0.22 },
+        shooting: { x: ZONES.game.x + ZONES.game.w * 0.76, y: ZONES.game.y + ZONES.game.h * 0.22 },
+        janggi:  { x: ZONES.game.x + ZONES.game.w * 0.22, y: ZONES.game.y + ZONES.game.h * 0.76 },
+        avoid:   { x: ZONES.game.x + ZONES.game.w * 0.78, y: ZONES.game.y + ZONES.game.h * 0.76 },
+        omok:    { x: ZONES.game.x + ZONES.game.w * 0.50, y: ZONES.game.y + ZONES.game.h * 0.52 },
 
         twitter:  { x: ZONES.community.x + ZONES.community.w * 0.24, y: ZONES.community.y + ZONES.community.h * 0.24 },
         wallet:   { x: ZONES.community.x + ZONES.community.w * 0.76, y: ZONES.community.y + ZONES.community.h * 0.30 },
@@ -1371,15 +1386,15 @@
       };
 
       function clampIntoZone(p, z, d) {
-        const padX = 110;
-        const padY = 110;
+        const padX = 140;
+        const padY = 140;
         p.x = clamp(d.x - p.w / 2, z.x + padX, z.x + z.w - padX - p.w);
         p.y = clamp(d.y - p.h / 2, z.y + padY, z.y + z.h - padY - p.h - 40);
       }
 
       for (const p of portals) {
         const d = desired[p.key] || { x: WORLD.w * 0.5, y: WORLD.h * 0.5 };
-        if (["avoid", "shooting", "janggi", "omok"].includes(p.key)) clampIntoZone(p, ZONES.game, d);
+        if (["avoid", "shooting", "archery", "janggi", "omok"].includes(p.key)) clampIntoZone(p, ZONES.game, d);
         else if (["blacksmith"].includes(p.key)) clampIntoZone(p, ZONES.ads, d);
         else clampIntoZone(p, ZONES.community, d);
       }
@@ -1996,15 +2011,6 @@
       const zones = [ZONES.game, ZONES.community, ZONES.ads];
       for (const z of zones) {
         ctx.save();
-        ctx.globalAlpha = 0.006;
-        ctx.fillStyle = z.color;
-        roundRect(z.x, z.y, z.w, z.h, 42);
-        ctx.fill();
-        ctx.globalAlpha = 0.022;
-        ctx.strokeStyle = z.color;
-        ctx.lineWidth = 2;
-        roundRect(z.x, z.y, z.w, z.h, 42);
-        ctx.stroke();
         drawZoneGate(z, t);
         ctx.restore();
       }
