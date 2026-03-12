@@ -242,7 +242,8 @@
     const shopCard = ensureEl("blacksmith_card", "div", shopModal);
     shopCard.style.width = "min(980px, calc(100vw - 28px))";
     shopCard.style.maxHeight = "min(84vh, 980px)";
-    shopCard.style.overflow = "auto";
+    shopCard.style.overflowY = "auto";
+    shopCard.style.overflowX = "hidden";
     shopCard.style.padding = "18px";
     shopCard.style.borderRadius = "24px";
     shopCard.style.border = "1px solid rgba(148,163,184,0.22)";
@@ -265,8 +266,10 @@
     panelWrap.style.pointerEvents = "none";
 
     const inventoryPanel = ensureEl("inventory_panel", "div", panelWrap);
-    inventoryPanel.style.width = "280px";
+    inventoryPanel.style.width = "340px";
     inventoryPanel.style.minHeight = "236px";
+    inventoryPanel.style.maxHeight = "74vh";
+    inventoryPanel.style.overflowY = "auto";
     inventoryPanel.style.padding = "14px";
     inventoryPanel.style.display = "none";
     inventoryPanel.style.pointerEvents = "auto";
@@ -351,8 +354,9 @@
         pointer-events:none;
       }
       .grid-wrap {
-        display:grid; grid-template-columns:repeat(4, 1fr);
+        display:grid; grid-template-columns:repeat(4, minmax(0,1fr));
         gap:10px; margin-top:10px;
+        align-items:start;
       }
       .grid-slot {
         aspect-ratio:1/1; border-radius:14px;
@@ -696,6 +700,8 @@
       attackT: 0,
       slashFx: [],
       slimes: [],
+      titans: [],
+      damageTexts: [],
       stars: 10000,
       canAttack: true
     };
@@ -761,6 +767,7 @@
           const rare = rarityStyle(price);
           const id = `${slot}_${base.toLowerCase().replace(/[^a-z0-9]+/g, "_")}_${i}`;
           if (used.has(id)) continue;
+          const power = Math.max(2, Math.round(price / 35));
           inventoryState.items.push({
             id,
             slot,
@@ -772,7 +779,9 @@
             icon: defs[slot].icon,
             price,
             tier: rare.tier,
-            rarityLabel: rare.label
+            rarityLabel: rare.label,
+            atk: slot === "weapon" ? power : 0,
+            def: slot !== "weapon" ? Math.max(1, Math.round(power * 0.82)) : 0
           });
           used.add(id);
         }
@@ -791,6 +800,15 @@
       if (item.atk) parts.push(`ATK +${item.atk}`);
       if (item.def) parts.push(`DEF +${item.def}`);
       return parts.join(" · ");
+    }
+
+    function playerAttackPower() {
+      const weapon = getItemById(inventoryState.equipped.weapon);
+      return 1 + (weapon?.atk || 6);
+    }
+
+    function spawnDamageText(x, y, text, color = "#ffffff", scale = 1) {
+      combatState.damageTexts.push({ x, y, text, color, life: 0.9, vy: -24, scale });
     }
 
     const shopState = { open: false, filter: "all" };
@@ -953,8 +971,14 @@
       }
       const stars = Math.max(1, Math.min(5, Math.ceil((item?.price || 1) / 220)));
       const gems = Array.from({ length: stars }).map((_, i) => `<div style="position:absolute;bottom:5px;left:${8 + i * 10}px;width:6px;height:6px;border-radius:999px;background:${rare.color};box-shadow:0 0 12px ${glow}"></div>`).join("");
-      const activeRing = equipped ? `0 0 0 2px ${rare.color}, 0 0 28px ${glow}` : `0 0 0 1px rgba(255,255,255,0.08)`;
-      return `<div class="item-icon${equipped ? " active" : ""}" style="background:${bg};box-shadow:${activeRing}, ${rim};overflow:hidden"><div style="position:absolute;inset:0;background:radial-gradient(circle at 22% 18%, rgba(255,255,255,0.22), transparent 34%), radial-gradient(circle at 80% 78%, ${glow}22, transparent 28%)"></div>${shape}${gems}</div>`;
+      const sparks = Array.from({ length: Math.max(3, stars + 1) }).map((_, i) => {
+        const px = 8 + ((i * 13) % 36);
+        const py = 8 + ((i * 11) % 32);
+        const size = i % 2 ? 3 : 2;
+        return `<div style="position:absolute;left:${px}px;top:${py}px;width:${size}px;height:${size}px;border-radius:999px;background:rgba(255,255,255,0.95);box-shadow:0 0 10px ${glow},0 0 18px ${glow};opacity:${0.45 + i * 0.08}"></div>`;
+      }).join("");
+      const activeRing = equipped ? `0 0 0 2px ${rare.color}, 0 0 28px ${glow}, 0 0 52px ${glow}66` : `0 0 0 1px rgba(255,255,255,0.08)`;
+      return `<div class="item-icon${equipped ? " active" : ""}" style="background:${bg};box-shadow:${activeRing}, ${rim};overflow:hidden"><div style="position:absolute;inset:0;background:radial-gradient(circle at 22% 18%, rgba(255,255,255,0.22), transparent 34%), radial-gradient(circle at 80% 78%, ${glow}22, transparent 28%), radial-gradient(circle at 50% 50%, ${glow}20, transparent 56%)"></div>${shape}${gems}${sparks}</div>`;
     }
 
     function renderPanels() {
@@ -962,6 +986,8 @@
       UI.equipmentPanel.style.display = inventoryState.equipmentOpen ? "block" : "none";
       UI.inventoryPanel.style.background = "linear-gradient(180deg, rgba(15,23,42,0.96), rgba(15,23,42,0.88))";
       UI.inventoryPanel.style.border = "1px solid rgba(148,163,184,0.18)";
+      UI.inventoryPanel.style.maxHeight = "74vh";
+      UI.inventoryPanel.style.overflowY = "auto";
       UI.equipmentPanel.style.background = "linear-gradient(180deg, rgba(15,23,42,0.96), rgba(15,23,42,0.88))";
       UI.equipmentPanel.style.border = "1px solid rgba(148,163,184,0.18)";
 
@@ -984,7 +1010,7 @@
         slot.innerHTML = `${iconMarkup(item, inventoryState.equipped[item.slot] === item.id)}<div class="mini-label">${item.name}</div>`;
         grid.appendChild(slot);
       });
-      for (let i = inv.length; i < 8; i++) {
+      for (let i = inv.length; i < 12; i++) {
         const slot = document.createElement("div");
         slot.className = "grid-slot";
         grid.appendChild(slot);
@@ -1832,6 +1858,7 @@
       seedProps(mulberry32(seedFromWorld(WORLD.w, WORLD.h) ^ 0x3456));
       seedRoamers(mulberry32(seedFromWorld(WORLD.w, WORLD.h) ^ 0x4567));
       seedSlimes(mulberry32(seedFromWorld(WORLD.w, WORLD.h) ^ 0x5678));
+      seedTitans(mulberry32(seedFromWorld(WORLD.w, WORLD.h) ^ 0x6789));
       player.x = clamp(player.x, WORLD.margin + 80, WORLD.w - WORLD.margin - 80);
       player.y = clamp(player.y, ART_BOUNDS.skyLineY + 120, WORLD.h - WORLD.margin - 80);
     }
@@ -2394,16 +2421,6 @@
       ctx.restore();
 
       const ez = portalEnterZone(p);
-      const hover = activePortal && activePortal.key === p.key;
-      if (hover) {
-        ctx.save();
-        ctx.globalAlpha = 0.10 + 0.04 * Math.sin(t * 6);
-        ctx.strokeStyle = "rgba(255,255,255,0.18)";
-        ctx.lineWidth = 2;
-        roundRect(ez.x + 8, ez.y + 8, ez.w - 16, ez.h - 16, 10);
-        ctx.stroke();
-        ctx.restore();
-      }
     }
 
     function drawCar(c) {
@@ -2684,6 +2701,13 @@
         ctx.arc(x + pad + (p.x + p.w * 0.5) * sx, y + pad + (p.y + p.h * 0.6) * sy, 2.8, 0, Math.PI * 2);
         ctx.fill();
       }
+      for (const m of combatState.titans) {
+        if (m.dead) continue;
+        ctx.fillStyle = m.key === "colossus" ? "#ef4444" : "#fb923c";
+        ctx.beginPath();
+        ctx.arc(x + pad + m.x * sx, y + pad + m.y * sy, m.key === "colossus" ? 4.2 : 3.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
       ctx.fillStyle = "#111827";
       ctx.beginPath();
       ctx.arc(x + pad + player.x * sx, y + pad + player.y * sy, 3.6, 0, Math.PI * 2);
@@ -2739,15 +2763,27 @@
     function drawGearEffect(x, y) {
       if (player.gearFlashT <= 0) return;
       const a = Math.min(1, player.gearFlashT / 0.65);
+      const gear = getEquippedVisuals();
+      const glow = gear.weaponTier?.glow || gear.hatTier?.glow || "#93c5fd";
       ctx.save();
       ctx.globalAlpha = 0.16 * a;
       const g = ctx.createRadialGradient(x, y - 10, 8, x, y - 10, 44);
       g.addColorStop(0, "rgba(255,255,255,0.95)");
+      g.addColorStop(0.45, glow + "88");
       g.addColorStop(1, "rgba(255,255,255,0)");
       ctx.fillStyle = g;
       ctx.beginPath();
       ctx.arc(x, y - 10, 44, 0, Math.PI * 2);
       ctx.fill();
+      for (let i = 0; i < 7; i++) {
+        const ang = i / 7 * Math.PI * 2 + performance.now() / 280;
+        const px = x + Math.cos(ang) * (18 + i * 1.2);
+        const py = y - 10 + Math.sin(ang) * (12 + i * 1.4);
+        ctx.fillStyle = i % 2 ? "rgba(255,255,255,0.9)" : glow + "cc";
+        ctx.beginPath();
+        ctx.arc(px, py, i % 2 ? 1.6 : 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
       ctx.restore();
     }
 
@@ -2980,6 +3016,7 @@
           x: s.x + (rng() - 0.5) * 40,
           y: s.y + (rng() - 0.5) * 30,
           hp: 2,
+          maxHp: 2,
           dead: false,
           wobble: rng() * 10,
           respawn: 0,
@@ -2988,6 +3025,91 @@
           turnT: 1.3 + rng() * 2.2
         });
       }
+    }
+
+    function seedTitans(rng) {
+      combatState.titans.length = 0;
+      const defs = [
+        { key: "brute", label: "MECHA BRUTE", scale: 10, maxHp: 90, reward: 5, x: ZONES.community.x + ZONES.community.w * 0.50, y: ZONES.community.y + ZONES.community.h + 330, speed: 20 },
+        { key: "colossus", label: "VOID COLOSSUS", scale: 30, maxHp: 280, reward: 20, x: ZONES.ads.x + ZONES.ads.w * 0.60, y: ZONES.ads.y + ZONES.ads.h + 460, speed: 10 }
+      ];
+      for (const d of defs) {
+        combatState.titans.push({
+          ...d,
+          hp: d.maxHp,
+          dead: false,
+          respawn: 0,
+          wobble: rng() * 10,
+          vx: (rng() < 0.5 ? -1 : 1) * d.speed,
+          vy: (rng() < 0.5 ? -1 : 1) * d.speed * 0.45,
+          turnT: 2.6 + rng() * 2.8,
+          hitFlash: 0
+        });
+      }
+    }
+
+    function drawMonsterHpBar(m, width) {
+      const ratio = clamp(m.hp / m.maxHp, 0, 1);
+      ctx.save();
+      ctx.translate(m.x, m.y - 20 - width * 0.08);
+      ctx.fillStyle = "rgba(2,6,23,0.68)";
+      roundRect(-width * 0.5, 0, width, 10, 6);
+      ctx.fill();
+      const grad = ctx.createLinearGradient(-width * 0.5, 0, width * 0.5, 0);
+      grad.addColorStop(0, "#ef4444");
+      grad.addColorStop(0.55, "#f59e0b");
+      grad.addColorStop(1, "#22c55e");
+      ctx.fillStyle = grad;
+      roundRect(-width * 0.5 + 1.5, 1.5, (width - 3) * ratio, 7, 5);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.font = "900 10px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText(`${Math.max(0, Math.ceil(m.hp))} / ${m.maxHp}`, 0, -4);
+      ctx.restore();
+    }
+
+    function drawTitan(m, t) {
+      if (m.dead) return;
+      const s = m.scale;
+      const bob = Math.sin(t * 2 + m.wobble) * (s > 20 ? 4 : 2);
+      ctx.save();
+      ctx.translate(m.x, m.y + bob);
+      ctx.globalAlpha = 0.24;
+      ctx.fillStyle = "rgba(10,14,24,0.82)";
+      ctx.beginPath();
+      ctx.ellipse(0, s * 2.1, s * 1.45, s * 0.42, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      const flash = m.hitFlash > 0 ? 0.45 + m.hitFlash * 0.35 : 0;
+      const bodyGrad = ctx.createLinearGradient(0, -s * 2.2, 0, s * 1.8);
+      bodyGrad.addColorStop(0, flash ? "#e5e7eb" : "#334155");
+      bodyGrad.addColorStop(0.5, flash ? "#94a3b8" : "#0f172a");
+      bodyGrad.addColorStop(1, "#020617");
+      ctx.fillStyle = bodyGrad;
+      roundRect(-s * 0.8, -s * 1.8, s * 1.6, s * 2.5, Math.max(18, s * 0.25));
+      ctx.fill();
+      ctx.strokeStyle = flash ? "rgba(248,250,252,0.95)" : "rgba(148,163,184,0.42)";
+      ctx.lineWidth = Math.max(2, s * 0.05);
+      roundRect(-s * 0.8, -s * 1.8, s * 1.6, s * 2.5, Math.max(18, s * 0.25));
+      ctx.stroke();
+      ctx.fillStyle = "rgba(59,130,246,0.95)";
+      ctx.fillRect(-s * 0.34, -s * 1.18, s * 0.68, s * 0.16);
+      ctx.fillStyle = "rgba(34,211,238,0.88)";
+      ctx.fillRect(-s * 0.12, -s * 0.72, s * 0.24, s * 0.38);
+      ctx.fillStyle = "#0f172a";
+      roundRect(-s * 0.48, s * 0.72, s * 0.36, s * 1.15, s * 0.14); ctx.fill();
+      roundRect(s * 0.12, s * 0.72, s * 0.36, s * 1.15, s * 0.14); ctx.fill();
+      roundRect(-s * 1.06, -s * 1.05, s * 0.28, s * 1.5, s * 0.12); ctx.fill();
+      roundRect(s * 0.78, -s * 1.05, s * 0.28, s * 1.5, s * 0.12); ctx.fill();
+      ctx.fillStyle = "rgba(239,68,68,0.95)";
+      ctx.beginPath(); ctx.arc(0, -s * 1.42, s * 0.18, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.95)";
+      ctx.font = `900 ${Math.max(10, s * 0.16)}px system-ui`;
+      ctx.textAlign = "center";
+      ctx.fillText(m.label, 0, -s * 2.15);
+      ctx.restore();
+      drawMonsterHpBar(m, Math.max(90, s * 2.3));
     }
 
     function drawSlime(m, t) {
@@ -3031,6 +3153,7 @@
       if (entity.kind === "roamer") return entity.y + 30;
       if (entity.kind === "player") return entity.y + 28;
       if (entity.kind === "slime") return entity.y + 18;
+      if (entity.kind === "titan") return entity.y + entity.scale * 2.2;
       return entity.y;
     }
 
@@ -3132,7 +3255,7 @@
         if (m.dead) {
           m.respawn -= dt;
           if (m.respawn <= 0) {
-            m.dead = false; m.hp = 2;
+            m.dead = false; m.hp = m.maxHp || 2;
             m.turnT = 1.1 + rng() * 1.8;
             m.vx = (rng() < 0.5 ? -1 : 1) * (28 + rng() * 24);
             m.vy = (rng() < 0.5 ? -1 : 1) * (14 + rng() * 16);
@@ -3161,24 +3284,79 @@
         if (m.x < minX || m.x > maxX) { m.vx *= -1; m.x = clamp(m.x, minX, maxX); }
         if (m.y < minY || m.y > maxY) { m.vy *= -1; m.y = clamp(m.y, minY, maxY); }
       }
+      for (const m of combatState.titans) {
+        if (m.dead) {
+          m.respawn -= dt;
+          if (m.respawn <= 0) {
+            m.dead = false;
+            m.hp = m.maxHp;
+            m.hitFlash = 0;
+            m.turnT = 2.2 + rng() * 2.4;
+          }
+          continue;
+        }
+        m.wobble += dt * 1.2;
+        if (m.hitFlash > 0) m.hitFlash = Math.max(0, m.hitFlash - dt * 2.4);
+        m.turnT -= dt;
+        if (m.turnT <= 0) {
+          m.turnT = 2.0 + rng() * 3.0;
+          m.vx = (rng() < 0.5 ? -1 : 1) * m.speed;
+          m.vy = (rng() < 0.5 ? -1 : 1) * m.speed * 0.45;
+        }
+        const dx = player.x - m.x, dy = player.y - m.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        if (dist < 340) {
+          m.vx += (dx / dist) * dt * (m.key === "colossus" ? 10 : 14);
+          m.vy += (dy / dist) * dt * (m.key === "colossus" ? 8 : 10);
+        }
+        const sp = Math.hypot(m.vx, m.vy) || 1;
+        const maxSp = m.speed;
+        if (sp > maxSp) { m.vx = m.vx / sp * maxSp; m.vy = m.vy / sp * maxSp; }
+        m.x += m.vx * dt;
+        m.y += m.vy * dt;
+        const minX = 150, maxX = WORLD.w - 150, minY = ART_BOUNDS.village.y + ART_BOUNDS.village.h * 0.36, maxY = WORLD.h - 140;
+        if (m.x < minX || m.x > maxX) { m.vx *= -1; m.x = clamp(m.x, minX, maxX); }
+        if (m.y < minY || m.y > maxY) { m.vy *= -1; m.y = clamp(m.y, minY, maxY); }
+      }
       if (combatState.attackT > 0.14 && combatState.canAttack) {
         combatState.canAttack = false;
-        const range = 92;
+        const range = 96;
         let fxX = player.x, fxY = player.y;
         if (player.dir === 'left') fxX -= 36;
         else if (player.dir === 'right') fxX += 36;
         else if (player.dir === 'up') fxY -= 32;
         else fxY += 18;
-        combatState.slashFx.push({ x: fxX, y: fxY, dir: player.dir, life: 0.16 });
+        const damage = playerAttackPower();
+        combatState.slashFx.push({ x: fxX, y: fxY, dir: player.dir, life: 0.20 });
         for (const m of combatState.slimes) {
           if (m.dead) continue;
-          const inFront = Math.hypot(m.x - fxX, m.y - fxY) < range;
-          if (inFront) {
-            m.hp -= 1;
+          if (Math.hypot(m.x - fxX, m.y - fxY) < range) {
+            m.hp -= damage;
+            spawnDamageText(m.x, m.y - 18, `-${damage}`, "#fca5a5", 0.9);
             if (m.hp <= 0) {
               m.dead = true;
               m.respawn = 7;
               combatState.stars += 1;
+              spawnDamageText(m.x, m.y - 34, "+1 STAR", "#fde68a", 0.95);
+              renderPanels();
+            }
+          }
+        }
+        for (const m of combatState.titans) {
+          if (m.dead) continue;
+          const hitR = m.scale * 1.2;
+          if (Math.hypot(m.x - fxX, m.y - fxY) < range + hitR) {
+            const bossDamage = Math.max(2, Math.round(damage * 0.85));
+            m.hp -= bossDamage;
+            m.hitFlash = 0.8;
+            m.vx += (m.x - player.x) * 0.08;
+            m.vy += (m.y - player.y) * 0.05;
+            spawnDamageText(m.x, m.y - m.scale * 1.9, `-${bossDamage}`, "#fda4af", 1.15);
+            if (m.hp <= 0) {
+              m.dead = true;
+              m.respawn = 18;
+              combatState.stars += m.reward;
+              spawnDamageText(m.x, m.y - m.scale * 2.1, `+${m.reward} STAR`, "#fde68a", 1.2);
               renderPanels();
             }
           }
@@ -3188,6 +3366,12 @@
       for (let i = combatState.slashFx.length - 1; i >= 0; i--) {
         combatState.slashFx[i].life -= dt;
         if (combatState.slashFx[i].life <= 0) combatState.slashFx.splice(i, 1);
+      }
+      for (let i = combatState.damageTexts.length - 1; i >= 0; i--) {
+        const d = combatState.damageTexts[i];
+        d.life -= dt;
+        d.y += d.vy * dt;
+        if (d.life <= 0) combatState.damageTexts.splice(i, 1);
       }
 
       activePortal = null;
@@ -3266,6 +3450,7 @@
       for (const c of cars) renderables.push({ kind: "car", ref: c });
       for (const r of roamers) renderables.push({ kind: "roamer", ref: r });
       for (const m of combatState.slimes) if (!m.dead) renderables.push({ kind: "slime", ref: m });
+      for (const m of combatState.titans) if (!m.dead) renderables.push({ kind: "titan", ref: m });
       renderables.push({ kind: "player", ref: player });
 
       renderables.sort((a, b) => getFootY({ ...a.ref, kind: a.kind }) - getFootY({ ...b.ref, kind: b.kind }));
@@ -3285,6 +3470,7 @@
           case "npc": drawNPC(r.key, r.x, r.y); break;
           case "roamer": drawRoamer(r, roamerPalette); break;
           case "slime": drawSlime(r, t); break;
+          case "titan": drawTitan(r, t); break;
           case "player":
             if (!drawSpriteCharacter(player.x, player.y)) {
               drawMinifig(player.x, player.y, { isHero: true, moving: player.moving, walkPhase: player.walkPhase });
@@ -3294,7 +3480,7 @@
       }
       for (const fx of combatState.slashFx) {
         ctx.save();
-        const a = Math.max(0, fx.life / 0.16);
+        const a = Math.max(0, fx.life / 0.20);
         ctx.globalAlpha = a;
         ctx.translate(fx.x, fx.y);
         const rot = fx.dir === 'left' ? Math.PI : fx.dir === 'up' ? -Math.PI/2 : fx.dir === 'down' ? Math.PI/2 : 0;
@@ -3302,18 +3488,32 @@
         ctx.strokeStyle = 'rgba(255,255,255,0.98)';
         ctx.lineWidth = 7;
         ctx.beginPath();
-        ctx.arc(0, 0, 36, -1.15, 0.48);
+        ctx.arc(0, 0, 42, -1.32, 0.62);
         ctx.stroke();
         ctx.strokeStyle = 'rgba(147,197,253,0.92)';
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.arc(0, 0, 44, -1.22, 0.40);
+        ctx.arc(0, 0, 54, -1.34, 0.50);
         ctx.stroke();
         ctx.strokeStyle = 'rgba(255,255,255,0.45)';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(0, 0, 52, -1.28, 0.30);
         ctx.stroke();
+        ctx.restore();
+      }
+      for (const d of combatState.damageTexts) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, d.life / 0.9);
+        ctx.translate(d.x, d.y);
+        ctx.scale(d.scale || 1, d.scale || 1);
+        ctx.fillStyle = d.color || "#fff";
+        ctx.strokeStyle = "rgba(2,6,23,0.82)";
+        ctx.lineWidth = 4;
+        ctx.font = "1000 16px system-ui";
+        ctx.textAlign = "center";
+        ctx.strokeText(d.text, 0, 0);
+        ctx.fillText(d.text, 0, 0);
         ctx.restore();
       }
 
