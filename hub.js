@@ -12,6 +12,12 @@
 (() => {
   "use strict";
 
+  const __legacyUiIds = ["world","toast","coord","fps","fade","lego_modal","blacksmith_modal","mobile_hud_buttons","btn_inventory","btn_equipment","btn_attack","joystick","inventory_panel","equipment_panel","lego_style_injected"];
+  for (const __id of __legacyUiIds) {
+    const __el = document.getElementById(__id);
+    if (__el) __el.remove();
+  }
+
   /* ----------------------- CONFIG ----------------------- */
   const SPRITE_SRC = "";
   const WORLD_ART_BASE_SRC =
@@ -183,8 +189,8 @@
     fade.style.zIndex = "9998";
     fade.style.pointerEvents = "none";
     fade.style.opacity = "0";
-    fade.style.transition = "opacity 240ms ease";
-    fade.style.background = "radial-gradient(circle at 50% 50%, rgba(15,23,42,0.00), rgba(2,6,23,0.08))";
+    fade.style.transition = "opacity 160ms ease";
+    fade.style.background = "transparent";
 
     const modal = ensureEl("lego_modal", "div");
     modal.innerHTML = "";
@@ -194,12 +200,22 @@
     modal.style.display = "none";
     modal.style.alignItems = "flex-start";
     modal.style.justifyContent = "center";
-    modal.style.paddingTop = "72px";
+    modal.style.paddingTop = "22px";
     modal.style.background = "transparent";
+    modal.style.pointerEvents = "none";
+    modal.style.backdropFilter = "none";
+    modal.style.webkitBackdropFilter = "none";
     modal.style.backdropFilter = "none";
 
     const modalInner = ensureEl("lego_modal_inner", "div", modal);
-    modalInner.style.width = "min(360px, calc(100vw - 24px))";
+    modalInner.style.width = "min(320px, calc(100vw - 24px))";
+    modalInner.style.maxWidth = "320px";
+    modalInner.style.minHeight = "0";
+    modalInner.style.height = "auto";
+    modalInner.style.display = "flex";
+    modalInner.style.flexDirection = "column";
+    modalInner.style.alignItems = "center";
+    modalInner.style.gap = "8px";
     modalInner.style.padding = "0";
     modalInner.style.pointerEvents = "auto";
     modalInner.style.textAlign = "center";
@@ -209,6 +225,7 @@
     modalInner.style.webkitUserSelect = "none";
     modalInner.style.background = "transparent";
     modalInner.style.border = "none";
+    modalInner.style.filter = "none";
     modalInner.style.boxShadow = "none";
     modalInner.style.backdropFilter = "none";
     modalInner.style.webkitBackdropFilter = "none";
@@ -220,12 +237,14 @@
     const modalBody = ensureEl("lego_modal_body", "div", modalInner);
     modalBody.style.font = "1000 16px system-ui";
     modalBody.style.opacity = "0.94";
-    modalBody.style.marginBottom = "8px";
+    modalBody.style.marginBottom = "0";
+    modalBody.style.maxWidth = "100%";
     modalBody.style.lineHeight = "1.35";
 
     const modalHint = ensureEl("lego_modal_hint", "div", modalInner);
     modalHint.style.font = "900 13px system-ui";
     modalHint.style.opacity = "0.72";
+    modalHint.style.marginTop = "2px";
 
     const shopModal = ensureEl("blacksmith_modal", "div");
     shopModal.innerHTML = "";
@@ -235,12 +254,14 @@
     shopModal.style.display = "none";
     shopModal.style.alignItems = "center";
     shopModal.style.justifyContent = "center";
-    shopModal.style.background = "rgba(2,6,23,0.22)";
+    shopModal.style.background = "rgba(2,6,23,0.12)";
     shopModal.style.backdropFilter = "none";
     shopModal.style.padding = "24px";
 
     const shopCard = ensureEl("blacksmith_card", "div", shopModal);
     shopCard.style.width = "min(980px, calc(100vw - 28px))";
+    shopCard.style.maxHeight = "min(82vh, 980px)";
+    shopCard.style.overflow = "hidden";
     shopCard.style.maxHeight = "min(84vh, 980px)";
     shopCard.style.overflowY = "auto";
     shopCard.style.overflowX = "hidden";
@@ -316,7 +337,7 @@
 
     const style = ensureEl("lego_style_injected", "style", document.head);
     style.textContent = `
-      #fade.on { opacity: 0.22; }
+      #fade.on { opacity: 0.03; }
       #lego_modal { animation: legoPop 160ms ease both; }
       @keyframes legoPop {
         from { opacity: 0; transform: translateY(8px); }
@@ -661,7 +682,7 @@
       { key: "telegram", label: "TELEGRAM", status: "open", url: "https://t.me/faglobalgp", type: "social", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "wallet", label: "WALLET", status: "open", url: "https://faglobal.site/", type: "wallet", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "market", label: "MARKET", status: "open", url: "https://famarket.store/", type: "market", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "blacksmith", label: "BLACKSMITH", status: "shop", url: "", message: "상점에 입장하시겠습니까?", type: "building", size: "L", x: 0, y: 0, w: 0, h: 0 }
+      { key: "blacksmith", label: "BLACKSMITH", status: "shop", url: "", message: "상점에 입장하시겠습니까?", type: "building", size: "M", x: 0, y: 0, w: 0, h: 0 }
     ];
 
           const portalsByKey = (k) => portals.find((p) => p.key === k);
@@ -1335,12 +1356,12 @@
     function layoutZonesFromArt() {
       const a = ART_BOUNDS.village || { x: WORLD.w * 0.05, y: WORLD.h * 0.08, w: WORLD.w * 0.90, h: WORLD.h * 0.80 };
       const sideGap = a.w * 0.09;
-      const topGap = a.h * 0.06;
-      const midGap = a.h * 0.14;
+      const topGap = a.h * 0.05;
+      const midGap = a.h * 0.20;
       const boxW = (a.w - sideGap) * 0.5;
-      const topH = a.h * 0.58;
+      const topH = a.h * 0.48;
       const adW = a.w * 0.94;
-      const adH = a.h * 0.24;
+      const adH = a.h * 0.18;
       ZONES = {
         game: {
           x: a.x,
@@ -1459,7 +1480,7 @@
         wallet:   { x: ZONES.community.x + ZONES.community.w * 0.78, y: ZONES.community.y + ZONES.community.h * 0.16 },
         telegram: { x: ZONES.community.x + ZONES.community.w * 0.22, y: ZONES.community.y + ZONES.community.h * 0.86 },
         market:   { x: ZONES.community.x + ZONES.community.w * 0.78, y: ZONES.community.y + ZONES.community.h * 0.86 },
-        blacksmith: { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.70 }
+        blacksmith: { x: ZONES.ads.x + ZONES.ads.w * 0.82, y: ZONES.ads.y + ZONES.ads.h * 0.34 }
       };
 
       function clampIntoZone(p, z, d) {
@@ -1778,6 +1799,7 @@
       modalState.open = false;
       modalState.portal = null;
       UI.modal.style.display = "none";
+      UI.modal.style.pointerEvents = "none";
       UI.modalTitle.innerHTML = "";
       UI.modalBody.innerHTML = "";
       UI.modalHint.innerHTML = "";
@@ -1807,12 +1829,12 @@
       if (p.key === "blacksmith") {
         modalState.open = true;
         modalState.portal = p;
-        UI.modal.style.display = "flex"; UI.modal.style.pointerEvents = "auto"; UI.modal.style.background = "transparent";
+        UI.modal.style.display = "flex"; UI.modal.style.pointerEvents = "auto"; UI.modal.style.background = "transparent"; UI.modal.style.backdropFilter = "none"; UI.modal.style.webkitBackdropFilter = "none"; UI.modalInner.style.background = "transparent"; UI.modalInner.style.boxShadow = "none"; UI.modal.style.backdropFilter = "none"; UI.modal.style.webkitBackdropFilter = "none"; UI.modalInner.style.background = "transparent"; UI.modalInner.style.boxShadow = "none";
         UI.modalTitle.innerHTML = blockSpan(`⚒ <b>${p.label}</b>`, {
-          bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#f8fafc", pad: "12px 18px", radius: "18px", border: "1px solid rgba(148,163,184,0.18)"
+          bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#f8fafc", pad: "10px 14px", radius: "16px", border: "1px solid rgba(148,163,184,0.16)", shadow:"0 8px 18px rgba(2,6,23,0.12)"
         });
         UI.modalBody.innerHTML = blockSpan(`상점에 입장하시겠습니까?<br/><b>Enter</b> 또는 화면을 한 번 더 터치`, {
-          bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#e2e8f0", pad: "14px 18px", radius: "18px", border: "1px solid rgba(148,163,184,0.18)"
+          bg: "linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.96))", fg: "#e2e8f0", pad: "10px 14px", radius: "14px", border: "1px solid rgba(148,163,184,0.16)", shadow:"0 8px 18px rgba(2,6,23,0.12)"
         });
         UI.modalHint.innerHTML = blockSpan(`닫기: <b>ESC</b> / 바깥 터치`, {
           bg: "rgba(2,6,23,0.86)", fg: "#cbd5e1", pad: "7px 11px", radius: "13px", border: "1px solid rgba(148,163,184,0.14)", shadow:"0 10px 24px rgba(2,6,23,0.18)"
@@ -1821,17 +1843,17 @@
       }
       modalState.open = true;
       modalState.portal = p;
-      UI.modal.style.display = "flex"; UI.modal.style.pointerEvents = "auto"; UI.modal.style.background = "transparent";
+      UI.modal.style.display = "flex"; UI.modal.style.pointerEvents = "auto"; UI.modal.style.background = "transparent"; UI.modal.style.backdropFilter = "none"; UI.modal.style.webkitBackdropFilter = "none"; UI.modalInner.style.background = "transparent"; UI.modalInner.style.boxShadow = "none";
       const isOpen = p.status === "open" && (!!p.url || !!p.message);
       UI.modalTitle.innerHTML = blockSpan(`🧱 <b>${p.label}</b>`, {
-        bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#f8fafc", pad: "12px 18px", radius: "18px", border: "1px solid rgba(148,163,184,0.18)"
+        bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#f8fafc", pad: "10px 14px", radius: "16px", border: "1px solid rgba(148,163,184,0.16)", shadow:"0 8px 18px rgba(2,6,23,0.12)"
       });
       UI.modalBody.innerHTML = isOpen
         ? blockSpan(`입장하시겠습니까?<br/><b>Enter</b> 또는 화면을 한 번 더 터치`, {
-            bg: "linear-gradient(180deg, rgba(2,6,23,0.98), rgba(15,23,42,0.96))", fg: "#e2e8f0", pad: "12px 16px", radius: "16px", border: "1px solid rgba(56,189,248,0.18)", shadow:"0 14px 32px rgba(2,6,23,0.22)"
+            bg: "linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.96))", fg: "#e2e8f0", pad: "10px 14px", radius: "14px", border: "1px solid rgba(56,189,248,0.16)", shadow:"0 8px 18px rgba(2,6,23,0.12)"
           })
         : blockSpan(`게임 준비중입니다.`, {
-            bg: "linear-gradient(180deg, rgba(2,6,23,0.98), rgba(15,23,42,0.96))", fg: "#e2e8f0", pad: "12px 16px", radius: "16px", border: "1px solid rgba(148,163,184,0.18)", shadow:"0 14px 32px rgba(2,6,23,0.22)"
+            bg: "linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.96))", fg: "#e2e8f0", pad: "10px 14px", radius: "14px", border: "1px solid rgba(148,163,184,0.16)", shadow:"0 8px 18px rgba(2,6,23,0.12)"
           });
       UI.modalHint.innerHTML = blockSpan(`닫기: <b>ESC</b> / 바깥 터치`, {
         bg: "rgba(15,23,42,0.88)", fg: "#cbd5e1", pad: "8px 12px", radius: "14px", border: "1px solid rgba(148,163,184,0.14)"
@@ -2365,34 +2387,48 @@
       } else {
         if (p.key === "blacksmith") {
           ctx.save();
-          const forgeWall = ctx.createLinearGradient(x, y + 12, x, y + h);
-          forgeWall.addColorStop(0, "#433025");
+          const roofH = h * 0.18;
+          const wallY = y + roofH * 0.75;
+          const wallH = h - roofH * 0.75;
+          const forgeWall = ctx.createLinearGradient(x, wallY, x, y + h);
+          forgeWall.addColorStop(0, "#5b3a28");
           forgeWall.addColorStop(1, "#241711");
           ctx.fillStyle = forgeWall;
-          roundRect(x, y + 26, w, h - 26, 24);
+          roundRect(x + w * 0.02, wallY, w * 0.96, wallH, 26);
+          ctx.fill();
+          ctx.fillStyle = "#6b1d1d";
+          ctx.beginPath();
+          ctx.moveTo(x + w * 0.08, wallY + 10);
+          ctx.lineTo(x + w * 0.92, wallY + 10);
+          ctx.lineTo(x + w * 0.80, y + 12);
+          ctx.lineTo(x + w * 0.20, y + 12);
+          ctx.closePath();
           ctx.fill();
           ctx.fillStyle = "#111827";
-          roundRect(x + w * 0.08, y + 34, w * 0.84, 58, 18);
+          roundRect(x + w * 0.10, y + 24, w * 0.80, 44, 16);
           ctx.fill();
-          ctx.strokeStyle = "rgba(251,191,36,0.55)";
-          ctx.lineWidth = 4;
-          roundRect(x + w * 0.08, y + 34, w * 0.84, 58, 18);
+          ctx.strokeStyle = "rgba(251,191,36,0.65)";
+          ctx.lineWidth = 3;
+          roundRect(x + w * 0.10, y + 24, w * 0.80, 44, 16);
           ctx.stroke();
           ctx.fillStyle = "#fde68a";
-          ctx.font = `1000 ${Math.max(18, Math.floor(w * 0.10))}px system-ui`;
+          ctx.font = `1000 ${Math.max(14, Math.floor(w * 0.085))}px system-ui`;
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.fillText("BLACKSMITH", x + w * 0.5, y + 64);
+          ctx.fillText("BLACKSMITH", x + w * 0.5, y + 46);
           ctx.fillStyle = "#0f172a";
-          roundRect(x + w * 0.36, y + h * 0.55, w * 0.28, h * 0.28, 18);
+          roundRect(x + w * 0.39, y + h * 0.56, w * 0.22, h * 0.22, 18);
           ctx.fill();
           ctx.fillStyle = "#94a3b8";
-          roundRect(x + w * 0.16, y + h * 0.50, w * 0.14, h * 0.18, 12);
-          roundRect(x + w * 0.70, y + h * 0.50, w * 0.14, h * 0.18, 12);
+          roundRect(x + w * 0.16, y + h * 0.56, w * 0.13, h * 0.14, 10);
+          roundRect(x + w * 0.71, y + h * 0.56, w * 0.13, h * 0.14, 10);
           ctx.fill();
-          ctx.fillStyle = "rgba(251,191,36,0.85)";
-          ctx.beginPath(); ctx.arc(x + w * 0.22, y + h * 0.44, 10, 0, Math.PI * 2); ctx.fill();
-          ctx.beginPath(); ctx.arc(x + w * 0.78, y + h * 0.44, 10, 0, Math.PI * 2); ctx.fill();
+          const ember = ctx.createRadialGradient(x + w * 0.5, y + h * 0.62, 6, x + w * 0.5, y + h * 0.62, 30);
+          ember.addColorStop(0, "rgba(251,191,36,0.95)");
+          ember.addColorStop(0.5, "rgba(249,115,22,0.55)");
+          ember.addColorStop(1, "rgba(249,115,22,0.00)");
+          ctx.fillStyle = ember;
+          ctx.beginPath(); ctx.arc(x + w * 0.5, y + h * 0.62, 30, 0, Math.PI * 2); ctx.fill();
           ctx.restore();
         } else {
         drawLegoBrickGrid(x, y + 18, w, h - 18);
@@ -3068,8 +3104,8 @@
     function seedTitans(rng) {
       combatState.titans.length = 0;
       const defs = [
-        { key: "brute", label: "MECHA BRUTE", scale: 10, maxHp: 90, reward: 5, x: ZONES.community.x + ZONES.community.w * 0.50, y: ZONES.community.y + ZONES.community.h + 330, speed: 20 },
-        { key: "colossus", label: "VOID COLOSSUS", scale: 30, maxHp: 280, reward: 20, x: ZONES.ads.x + ZONES.ads.w * 0.60, y: ZONES.ads.y + ZONES.ads.h + 460, speed: 10 }
+        { key: "brute", label: "MECHA BRUTE", scale: 10, maxHp: 300, reward: 10, x: ZONES.community.x + ZONES.community.w * 0.50, y: ZONES.community.y + ZONES.community.h + 360, speed: 18 },
+        { key: "colossus", label: "VOID COLOSSUS", scale: 30, maxHp: 2000, reward: 50, x: ZONES.ads.x + ZONES.ads.w * 0.54, y: ZONES.ads.y + ZONES.ads.h + 520, speed: 8 }
       ];
       for (const d of defs) {
         combatState.titans.push({
