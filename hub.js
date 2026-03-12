@@ -329,10 +329,12 @@
     const invBtn = ensureEl("btn_inventory", "button", mobileBtns);
     const eqBtn = ensureEl("btn_equipment", "button", mobileBtns);
     const atkBtn = ensureEl("btn_attack", "button", mobileBtns);
+    const enterBtn = ensureEl("btn_enter_portal", "button", mobileBtns);
     invBtn.textContent = "I / 인벤";
     eqBtn.textContent = "TAB / 장착";
     atkBtn.textContent = "ATTACK";
-    [invBtn, eqBtn, atkBtn].forEach((b) => {
+    enterBtn.textContent = "입장";
+    [invBtn, eqBtn, atkBtn, enterBtn].forEach((b) => {
       b.style.minWidth = "96px";
       b.style.cursor = "pointer";
       b.style.border = "1px solid rgba(0,0,0,0.10)";
@@ -358,6 +360,14 @@
     atkBtn.style.left = "auto";
     atkBtn.style.right = "22px";
     atkBtn.style.bottom = "26px";
+    enterBtn.style.background = "linear-gradient(180deg,#22c55e,#15803d)";
+    enterBtn.style.color = "#fff";
+    enterBtn.style.fontWeight = "1000";
+    enterBtn.style.minWidth = "110px";
+    enterBtn.style.left = "auto";
+    enterBtn.style.right = "22px";
+    enterBtn.style.bottom = "88px";
+    enterBtn.style.display = "none";
 
     const style = ensureEl("lego_style_injected", "style", document.head);
     style.textContent = `
@@ -571,11 +581,15 @@
       e.preventDefault();
       window.__metaWorldAttackTap = performance.now();
     }, { passive: false });
+    enterBtn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      window.__metaWorldPortalTap = performance.now();
+    }, { passive: false });
 
     return {
       canvas, toast, coord, fps, fade, modal, modalTitle, modalBody, modalHint,
       shopModal, shopCard, shopTitle, shopBody, shopHint,
-      inventoryPanel, equipmentPanel, invBtn, eqBtn, atkBtn, joyState
+      inventoryPanel, equipmentPanel, invBtn, eqBtn, atkBtn, enterBtn, joyState
     };
   }
 
@@ -1854,35 +1868,8 @@
       setTimeout(() => { UI.fade.classList.remove("on"); }, ms + 50);
     }
 
-    function resetMobilePortalState() {
-      UI.joyState.active = false;
-      UI.joyState.id = -1;
-      UI.joyState.ax = 0;
-      UI.joyState.ay = 0;
-      try {
-        const knob = document.getElementById("joystick_knob");
-        const base = document.getElementById("joystick_base");
-        if (knob) knob.style.transform = "translate(-50%, -50%)";
-        if (base) base.style.background = "rgba(255,255,255,0.72)";
-      } catch (_) {}
-      if (document.activeElement && typeof document.activeElement.blur === "function") {
-        try { document.activeElement.blur(); } catch (_) {}
-      }
-      setTimeout(() => {
-        UI.joyState.active = false;
-        UI.joyState.id = -1;
-        UI.joyState.ax = 0;
-        UI.joyState.ay = 0;
-      }, 0);
-      setTimeout(() => {
-        UI.joyState.active = false;
-        UI.joyState.id = -1;
-        UI.joyState.ax = 0;
-        UI.joyState.ay = 0;
-      }, 80);
-    }
-
     function closeModal() {
+      const portalKey = modalState.portal ? modalState.portal.key : "";
       modalState.open = false;
       modalState.portal = null;
       UI.modal.style.display = "none";
@@ -1896,13 +1883,24 @@
       UI.modalHint.innerHTML = "";
       UI.toast.style.pointerEvents = "none";
       if (!shopState.open) UI.toast.hidden = true;
-      resetMobilePortalState();
+      if (isTouchDevice() && portalKey) {
+        mobilePortalSuppressKey = portalKey;
+        mobilePortalSuppressUntil = performance.now() + 900;
+      }
+      UI.joyState.active = false;
+      UI.joyState.id = -1;
+      UI.joyState.ax = 0;
+      UI.joyState.ay = 0;
+      const knob = document.getElementById("joystick_knob");
+      if (knob) knob.style.transform = "translate(-50%, -50%)";
+      const enterBtn = UI.enterBtn;
+      if (enterBtn) enterBtn.style.display = "none";
     }
 
     function showPortalToast(html, actions = []) {
       UI.toast.hidden = false;
       UI.toast.style.pointerEvents = actions.length ? "auto" : "none";
-      UI.toast.innerHTML = `<div id="portal_toast_card" style="display:inline-flex;flex-direction:column;gap:10px;align-items:center;padding:12px 16px;border-radius:18px;background:linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.95));color:#f8fafc;border:1px solid rgba(148,163,184,0.16);box-shadow:0 14px 30px rgba(2,6,23,0.22);min-width:min(320px, calc(100vw - 28px));">${html}<div id="portal_toast_actions" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"></div></div>`;
+      UI.toast.innerHTML = `<div style="display:inline-flex;flex-direction:column;gap:10px;align-items:center;padding:12px 16px;border-radius:18px;background:linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.95));color:#f8fafc;border:1px solid rgba(148,163,184,0.16);box-shadow:0 14px 30px rgba(2,6,23,0.22);min-width:min(320px, calc(100vw - 28px));">${html}<div id="portal_toast_actions" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"></div></div>`;
       const wrap = document.getElementById("portal_toast_actions");
       if (wrap) {
         actions.forEach((a) => {
@@ -1916,25 +1914,10 @@
           b.style.font = "900 12px system-ui";
           b.style.background = a.primary ? "linear-gradient(180deg,#38bdf8,#2563eb)" : "linear-gradient(180deg,#334155,#0f172a)";
           b.style.color = "#fff";
-          b.onclick = (ev) => {
-            ev.preventDefault();
-            ev.stopPropagation();
-            a.onClick && a.onClick();
-            resetMobilePortalState();
-          };
+          b.onclick = a.onClick;
           wrap.appendChild(b);
         });
       }
-    }
-
-    function dismissPortalToast() {
-      UI.toast.hidden = true;
-      UI.toast.style.pointerEvents = "none";
-      if (!shopState.open) {
-        modalState.open = false;
-        modalState.portal = null;
-      }
-      resetMobilePortalState();
     }
 
     function confirmEnter(p) {
@@ -1949,10 +1932,23 @@
         fadeTo(() => { window.location.href = p.url; }, 220);
       } else {
         showPortalToast(`🧱 <b>${p.label}</b><br/>${p.message || "게임 준비중입니다."}`, [
-          { label: "나가기", onClick: () => dismissPortalToast() }
+          { label: "나가기", onClick: () => {
+              UI.toast.hidden = true;
+              UI.toast.style.pointerEvents = "none";
+              if (isTouchDevice()) {
+                mobilePortalSuppressKey = p.key;
+                mobilePortalSuppressUntil = performance.now() + 1200;
+                UI.joyState.active = false;
+                UI.joyState.id = -1;
+                UI.joyState.ax = 0;
+                UI.joyState.ay = 0;
+                const knob = document.getElementById("joystick_knob");
+                if (knob) knob.style.transform = "translate(-50%, -50%)";
+              }
+            } }
         ]);
         setTimeout(() => {
-          if (!modalState.open && !shopState.open) { dismissPortalToast(); }
+          if (!modalState.open && !shopState.open) { UI.toast.hidden = true; UI.toast.style.pointerEvents = "none"; }
         }, 1800);
       }
     }
@@ -1972,11 +1968,12 @@
       UI.modalTitle.innerHTML = "";
       UI.modalBody.innerHTML = "";
       UI.modalHint.innerHTML = "";
+      const mobileHint = isTouchDevice() ? "모바일 버튼으로 진행" : "터치 / Enter";
       const body = p.key === "blacksmith"
-        ? `⚒ <b>${p.label}</b><br/>상점에 입장하시겠습니까?<br/><span style="font-size:12px;opacity:.85">터치 / Enter</span>`
+        ? `⚒ <b>${p.label}</b><br/>상점에 입장하시겠습니까?<br/><span style="font-size:12px;opacity:.85">${mobileHint}</span>`
         : (p.status === "open"
-            ? `🧱 <b>${p.label}</b><br/>입장하시겠습니까?<br/><span style="font-size:12px;opacity:.85">터치 / Enter</span>`
-            : `🧱 <b>${p.label}</b><br/>게임 준비중입니다.`);
+            ? `🧱 <b>${p.label}</b><br/>입장하시겠습니까?<br/><span style="font-size:12px;opacity:.85">${mobileHint}</span>`
+            : `🧱 <b>${p.label}</b><br/>게임 준비중입니다.<br/><span style="font-size:12px;opacity:.85">나가기 버튼으로 종료</span>`);
       const actions = p.status === "open" || p.key === "blacksmith"
         ? [
             { label: p.key === "blacksmith" ? "상점 열기" : "입장", primary: true, onClick: () => confirmEnter(p) },
@@ -1994,11 +1991,6 @@
     });
     UI.shopModal.addEventListener("click", (e) => {
       if (e.target === UI.shopModal) closeShop();
-    });
-    UI.toast.addEventListener("pointerdown", (e) => {
-      if (UI.toast.hidden) return;
-      const card = document.getElementById("portal_toast_card");
-      if (card && !card.contains(e.target) && !shopState.open) dismissPortalToast();
     });
 
     /* ----------------------- Recalc / resize ----------------------- */
@@ -3451,6 +3443,8 @@
     let acc = 0, framesCount = 0;
     let lastMobileZoneKey = "";
     let touchTapAt = 0;
+    let mobilePortalSuppressKey = "";
+    let mobilePortalSuppressUntil = 0;
 
     function update(dt, t, rng) {
       let ax = 0, ay = 0;
@@ -3708,26 +3702,39 @@
         }
       }
 
-      if (!modalState.open && activePortal) {
-        UI.toast.hidden = false;
-        UI.toast.innerHTML = blockSpan(
-          activePortal.key === "blacksmith"
-            ? `⚒ <b>${activePortal.label}</b><br/>상점을 열려면 <b>E</b> 또는 <b>Enter</b>`
-            : activePortal.status === "open"
-            ? `🧱 <b>${activePortal.label}</b><br/>입장하시겠습니까? <b>E</b> 또는 <b>Enter</b>`
-            : `🧱 <b>${activePortal.label}</b><br/>게임 준비중입니다.`,
-          { bg: "linear-gradient(180deg, rgba(10,14,24,0.96), rgba(18,25,40,0.94))", fg:"#f8fafc", bd:"rgba(148,163,184,0.16)", shadow:"0 14px 36px rgba(0,0,0,0.24)" }
-        );
-      } else if (!modalState.open) {
-        UI.toast.hidden = true;
-      }
-
       if (isTouchDevice()) {
-        if (activePortal && !modalState.open && lastMobileZoneKey !== activePortal.key) {
-          lastMobileZoneKey = activePortal.key;
-          openPortalUI(activePortal);
+        const suppressing = activePortal && activePortal.key === mobilePortalSuppressKey && performance.now() < mobilePortalSuppressUntil;
+        if (!modalState.open && !shopState.open && activePortal && !suppressing) {
+          UI.enterBtn.style.display = "block";
+          UI.enterBtn.textContent = activePortal.key === "blacksmith"
+            ? "상점 입장"
+            : (activePortal.status === "open" ? "입장" : "안내 보기");
+        } else {
+          UI.enterBtn.style.display = "none";
         }
-        if (!activePortal) lastMobileZoneKey = "";
+        if (!modalState.open && !shopState.open) {
+          UI.toast.hidden = true;
+          UI.toast.style.pointerEvents = "none";
+        }
+        if (!activePortal) {
+          lastMobileZoneKey = "";
+          mobilePortalSuppressKey = "";
+          mobilePortalSuppressUntil = 0;
+        }
+      } else {
+        if (!modalState.open && activePortal) {
+          UI.toast.hidden = false;
+          UI.toast.innerHTML = blockSpan(
+            activePortal.key === "blacksmith"
+              ? `⚒ <b>${activePortal.label}</b><br/>상점을 열려면 <b>E</b> 또는 <b>Enter</b>`
+              : activePortal.status === "open"
+              ? `🧱 <b>${activePortal.label}</b><br/>입장하시겠습니까? <b>E</b> 또는 <b>Enter</b>`
+              : `🧱 <b>${activePortal.label}</b><br/>게임 준비중입니다.`,
+            { bg: "linear-gradient(180deg, rgba(10,14,24,0.96), rgba(18,25,40,0.94))", fg:"#f8fafc", bd:"rgba(148,163,184,0.16)", shadow:"0 14px 36px rgba(0,0,0,0.24)" }
+          );
+        } else if (!modalState.open) {
+          UI.toast.hidden = true;
+        }
       }
 
       updateCamera(dt);
@@ -3900,21 +3907,21 @@
 
     canvas.addEventListener("pointerdown", (e) => {
       if (!isTouchDevice()) return;
-      const now = performance.now();
       if (shopState.open) return;
-      if (modalState.open && modalState.portal) {
-        if (now - touchTapAt < 340) confirmEnter(modalState.portal);
-        touchTapAt = now;
-        return;
-      }
-      if (!UI.toast.hidden && UI.toast.style.pointerEvents === "none") {
-        UI.toast.hidden = true;
-      }
-      if (activePortal) {
+      if (modalState.open || !UI.toast.hidden) return;
+      if (activePortal && performance.now() >= mobilePortalSuppressUntil) {
         openPortalUI(activePortal);
       }
     }, { passive: true });
 
+
+    if (UI.enterBtn) {
+      UI.enterBtn.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (activePortal) openPortalUI(activePortal);
+      }, { passive: false });
+    }
     resize();
     for (const b of birds) {
       b.x = Math.random() * WORLD.w;
