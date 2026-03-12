@@ -450,8 +450,8 @@
     const ctx = canvas.getContext("2d", { alpha: true });
 
     let W = 0, H = 0, DPR = 1;
-    const VIEW = { zoom: 0.86, w: 0, h: 0 };
-    const WORLD = { w: 3000, h: 2200, margin: 160 };
+    const VIEW = { zoom: 0.70, w: 0, h: 0 };
+    const WORLD = { w: 4600, h: 3200, margin: 220 };
     const cam = { x: 0, y: 0, targetX: 0, targetY: 0 };
     const ART_BOUNDS = { x: 0, y: 0, w: 0, h: 0, skyLineY: 0, village: null };
 
@@ -988,8 +988,8 @@
     function syncArtBounds() {
       const marginX = WORLD.w * 0.06;
       const marginTop = WORLD.h * 0.04;
-      const artW = WORLD.w * 0.78;
-      const artH = WORLD.h * 0.68;
+      const artW = WORLD.w * 0.92;
+      const artH = WORLD.h * 0.88;
       ART_BOUNDS.x = marginX;
       ART_BOUNDS.y = marginTop;
       ART_BOUNDS.w = artW;
@@ -998,23 +998,23 @@
       ART_BOUNDS.village = {
         x: ART_BOUNDS.x + ART_BOUNDS.w * 0.06,
         y: ART_BOUNDS.skyLineY + ART_BOUNDS.h * 0.05,
-        w: ART_BOUNDS.w * 0.88,
-        h: ART_BOUNDS.h * 0.72
+        w: ART_BOUNDS.w * 0.92,
+        h: ART_BOUNDS.h * 0.82
       };
     }
 
     function layoutZonesFromArt() {
       const a = ART_BOUNDS.village || { x: WORLD.w * 0.06, y: WORLD.h * 0.08, w: WORLD.w * 0.88, h: WORLD.h * 0.78 };
-      const gapX = a.w * 0.07;
-      const gapY = a.h * 0.12;
-      const topH = a.h * 0.28;
+      const gapX = a.w * 0.12;
+      const gapY = a.h * 0.14;
+      const topH = a.h * 0.42;
       const boxW = (a.w - gapX) * 0.5;
-      const adW = a.w * 0.78;
-      const adH = a.h * 0.22;
+      const adW = a.w * 0.90;
+      const adH = a.h * 0.26;
       ZONES = {
         game: {
           x: a.x,
-          y: a.y + a.h * 0.06,
+          y: a.y + a.h * 0.05,
           w: boxW,
           h: topH,
           label: "GAME ZONE",
@@ -1023,7 +1023,7 @@
         },
         community: {
           x: a.x + boxW + gapX,
-          y: a.y + a.h * 0.06,
+          y: a.y + a.h * 0.05,
           w: boxW,
           h: topH,
           label: "COMMUNITY ZONE",
@@ -1032,7 +1032,7 @@
         },
         ads: {
           x: a.x + (a.w - adW) * 0.5,
-          y: a.y + topH + gapY + a.h * 0.08,
+          y: a.y + topH + gapY + a.h * 0.06,
           w: adW,
           h: adH,
           label: "AD ZONE",
@@ -1041,8 +1041,8 @@
         }
       };
       function setEntrance(z) {
-        const gateW = 250;
-        const gateH = 78;
+        const gateW = 340;
+        const gateH = 96;
         z.entrance = {
           x: z.x + z.w * 0.5 - gateW * 0.5,
           y: z.y + z.h - gateH * 0.44,
@@ -1082,13 +1082,14 @@
       const right = a.x + a.w * 0.98;
       const top = a.y + a.h * 0.02;
       const bottom = a.y + a.h * 0.96;
-      addRoadH(top, left, right, 108);
-      addRoadH(ZONES.game.y + ZONES.game.h + 120, left, right, 112);
-      addRoadH(ZONES.ads.y + ZONES.ads.h + 120, left, right, 112);
+      const gapX = a.w * 0.12;
+      addRoadH(top, left, right, 120);
+      addRoadH(ZONES.game.y + ZONES.game.h + 180, left, right, 126);
+      addRoadH(ZONES.ads.y + ZONES.ads.h + 180, left, right, 126);
 
-      addRoadV(ZONES.game.x + ZONES.game.w + 110, top, bottom, 102);
-      addRoadV(ZONES.community.x - 210, top, bottom, 102);
-      addRoadV(right - 120, top, bottom, 102);
+      addRoadV(ZONES.game.x + ZONES.game.w + gapX * 0.34, top, bottom, 118);
+      addRoadV(ZONES.community.x - gapX * 0.34 - 118, top, bottom, 118);
+      addRoadV(right - 150, top, bottom, 112);
 
       const Hs = roads.filter((r) => r.axis === "h");
       const Vs = roads.filter((r) => r.axis === "v");
@@ -1104,13 +1105,13 @@
     }
 
     function portalSizeScale(size) {
-      if (size === "L") return 0.82;
-      if (size === "M") return 0.74;
-      return 0.68;
+      if (size === "L") return 1.65;
+      if (size === "M") return 1.52;
+      return 1.42;
     }
 
     function layoutPortals() {
-      const base = 380;
+      const base = 430;
       for (const p of portals) {
         const m = portalSizeScale(p.size);
         p.w = base * 1.08 * m;
@@ -1118,19 +1119,19 @@
       }
 
       const desired = {
-        archery: { x: ZONES.game.x + ZONES.game.w * 0.24, y: ZONES.game.y + ZONES.game.h * 0.34 },
-        omok: { x: ZONES.game.x + ZONES.game.w * 0.76, y: ZONES.game.y + ZONES.game.h * 0.34 },
-        avoid: { x: ZONES.game.x + ZONES.game.w * 0.24, y: ZONES.game.y + ZONES.game.h * 0.72 },
-        janggi: { x: ZONES.game.x + ZONES.game.w * 0.76, y: ZONES.game.y + ZONES.game.h * 0.72 },
-        twitter: { x: ZONES.community.x + ZONES.community.w * 0.24, y: ZONES.community.y + ZONES.community.h * 0.34 },
-        telegram: { x: ZONES.community.x + ZONES.community.w * 0.76, y: ZONES.community.y + ZONES.community.h * 0.34 },
-        wallet: { x: ZONES.community.x + ZONES.community.w * 0.24, y: ZONES.community.y + ZONES.community.h * 0.72 },
-        market: { x: ZONES.community.x + ZONES.community.w * 0.76, y: ZONES.community.y + ZONES.community.h * 0.72 }
+        archery: { x: ZONES.game.x + ZONES.game.w * 0.26, y: ZONES.game.y + ZONES.game.h * 0.28 },
+        omok: { x: ZONES.game.x + ZONES.game.w * 0.74, y: ZONES.game.y + ZONES.game.h * 0.28 },
+        avoid: { x: ZONES.game.x + ZONES.game.w * 0.26, y: ZONES.game.y + ZONES.game.h * 0.74 },
+        janggi: { x: ZONES.game.x + ZONES.game.w * 0.74, y: ZONES.game.y + ZONES.game.h * 0.74 },
+        twitter: { x: ZONES.community.x + ZONES.community.w * 0.26, y: ZONES.community.y + ZONES.community.h * 0.28 },
+        telegram: { x: ZONES.community.x + ZONES.community.w * 0.74, y: ZONES.community.y + ZONES.community.h * 0.28 },
+        wallet: { x: ZONES.community.x + ZONES.community.w * 0.26, y: ZONES.community.y + ZONES.community.h * 0.74 },
+        market: { x: ZONES.community.x + ZONES.community.w * 0.74, y: ZONES.community.y + ZONES.community.h * 0.74 }
       };
 
       function clampIntoZone(p, z, d) {
-        const padX = 28;
-        const padY = 28;
+        const padX = 72;
+        const padY = 72;
         p.x = clamp(d.x - p.w / 2, z.x + padX, z.x + z.w - padX - p.w);
         p.y = clamp(d.y - p.h / 2, z.y + padY, z.y + z.h - padY - p.h - 12);
       }
@@ -1681,7 +1682,7 @@
       for (const c of crossings) {
         if (rectInAnyZone(c, 0)) continue;
         ctx.save();
-        ctx.globalAlpha = 0.16;
+        ctx.globalAlpha = 0.08;
         ctx.fillStyle = "rgba(255,255,255,0.20)";
         roundRect(c.x, c.y, c.w, c.h, 14);
         ctx.fill();
@@ -1732,11 +1733,11 @@
       const zones = [ZONES.game, ZONES.community, ZONES.ads];
       for (const z of zones) {
         ctx.save();
-        ctx.globalAlpha = 0.045;
+        ctx.globalAlpha = 0.018;
         ctx.fillStyle = z.color;
         roundRect(z.x, z.y, z.w, z.h, 42);
         ctx.fill();
-        ctx.globalAlpha = 0.16;
+        ctx.globalAlpha = 0.08;
         ctx.strokeStyle = z.color;
         ctx.lineWidth = 3;
         roundRect(z.x, z.y, z.w, z.h, 42);
@@ -2419,6 +2420,7 @@
       const armSwing = moving ? Math.sin(walkPhase) * 0.45 : 0;
       const legSwing = moving ? Math.sin(walkPhase + Math.PI) * 0.42 : 0;
       const atk = isHero ? combatState.attackT / 0.28 : 0;
+      const attackPose = isHero && combatState.attackT > 0;
 
       ctx.save();
       ctx.translate(x, y + bob + 4);
@@ -2431,8 +2433,8 @@
       ctx.fill();
       ctx.globalAlpha = 1;
 
-      const armorBase = gear && gear.armorColor ? gear.armorColor : pal.torso;
-      const blueGlow = shade(armorBase, 18);
+      const armorBase = gear && gear.armorColor ? gear.armorColor : '#111827';
+      const blueGlow = '#60a5fa';
 
       ctx.save();
       ctx.translate(0, 10);
@@ -2466,14 +2468,14 @@
       ctx.fillStyle = "rgba(255,255,255,0.16)";
       roundRect(-10, -10, 20, 9, 5);
       ctx.fill();
-      ctx.strokeStyle = "rgba(125,211,252,0.40)";
+      ctx.strokeStyle = "rgba(96,165,250,0.55)";
       ctx.lineWidth = 2;
       roundRect(-14, -7, 28, 16, 7);
       ctx.stroke();
       ctx.fillStyle = "#111827";
       roundRect(-5, -4, 10, 18, 4);
       ctx.fill();
-      ctx.fillStyle = "#93c5fd";
+      ctx.fillStyle = "#60a5fa";
       roundRect(-2, -1, 4, 10, 2);
       ctx.fill();
 
@@ -2500,48 +2502,50 @@
 
       if (isHero && gear && gear.weaponColor) {
         ctx.save();
-        ctx.translate(12, 10);
-        ctx.rotate(0.28 + (combatState.attackT>0 ? -1.1 * atk : 0));
-        const bladeGrad = ctx.createLinearGradient(0, -34, 0, 10);
+        ctx.translate(14, 9);
+        ctx.rotate(0.18 + (attackPose ? -1.55 * atk : 0));
+        const bladeGrad = ctx.createLinearGradient(0, -46, 0, 12);
         bladeGrad.addColorStop(0, "#ffffff");
-        bladeGrad.addColorStop(0.4, "#dbeafe");
-        bladeGrad.addColorStop(1, "#64748b");
+        bladeGrad.addColorStop(0.35, "#e2e8f0");
+        bladeGrad.addColorStop(0.72, "#94a3b8");
+        bladeGrad.addColorStop(1, "#334155");
         ctx.fillStyle = bladeGrad;
         ctx.beginPath();
-        ctx.moveTo(-2, -32); ctx.lineTo(2, -32); ctx.lineTo(5, 0); ctx.lineTo(0, 11); ctx.lineTo(-5, 0); ctx.closePath();
+        ctx.moveTo(-2.5, -44); ctx.lineTo(2.5, -44); ctx.lineTo(7, -2); ctx.lineTo(0, 14); ctx.lineTo(-7, -2); ctx.closePath();
         ctx.fill();
-        ctx.strokeStyle = "rgba(255,255,255,0.9)";
-        ctx.lineWidth = 1.1;
-        ctx.beginPath(); ctx.moveTo(0, -28); ctx.lineTo(0, 3); ctx.stroke();
-        ctx.fillStyle = "#111827";
-        roundRect(-10, 2, 20, 4, 3); ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.95)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(0, -39); ctx.lineTo(0, 6); ctx.stroke();
+        ctx.fillStyle = "#0f172a";
+        roundRect(-12, -1, 24, 5, 3); ctx.fill();
         ctx.fillStyle = gear.weaponColor;
-        roundRect(-4, 6, 8, 12, 3); ctx.fill();
-        ctx.fillStyle = "rgba(255,255,255,0.9)";
-        ctx.beginPath(); ctx.arc(8, -20, 1.8 + Math.sin(performance.now()/150)*0.6, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(-6, -10, 1.1, 0, Math.PI*2); ctx.fill();
+        roundRect(-5, 4, 10, 15, 3); ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.98)";
+        ctx.beginPath(); ctx.arc(10, -30, 2.6 + Math.sin(performance.now()/120)*0.9, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-7, -18, 1.5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(4, -12, 1.2, 0, Math.PI*2); ctx.fill();
         ctx.restore();
       }
       ctx.restore();
 
       if (isHero && gear && gear.shieldColor) {
         ctx.save();
-        ctx.translate(-21, -2);
-        ctx.rotate(-0.24);
-        const shieldGrad = ctx.createLinearGradient(0, -20, 0, 20);
+        ctx.translate(-22, -1);
+        ctx.rotate(-0.20);
+        const shieldGrad = ctx.createLinearGradient(0, -24, 0, 24);
         shieldGrad.addColorStop(0, "#f8fafc");
-        shieldGrad.addColorStop(0.45, "#9ca3af");
-        shieldGrad.addColorStop(0.75, gear.shieldColor);
-        shieldGrad.addColorStop(1, "#1f2937");
+        shieldGrad.addColorStop(0.32, "#94a3b8");
+        shieldGrad.addColorStop(0.72, gear.shieldColor);
+        shieldGrad.addColorStop(1, "#020617");
         ctx.fillStyle = shieldGrad;
         ctx.beginPath();
-        ctx.moveTo(0, -20); ctx.lineTo(15, -12); ctx.lineTo(12, 8); ctx.lineTo(0, 21); ctx.lineTo(-12, 8); ctx.lineTo(-15, -12); ctx.closePath();
+        ctx.moveTo(0, -24); ctx.lineTo(17, -14); ctx.lineTo(14, 10); ctx.lineTo(0, 24); ctx.lineTo(-14, 10); ctx.lineTo(-17, -14); ctx.closePath();
         ctx.fill();
-        ctx.strokeStyle = "rgba(125,211,252,0.55)";
-        ctx.lineWidth = 2; ctx.stroke();
-        ctx.fillStyle = "rgba(255,255,255,0.72)";
-        roundRect(-1.2, -13, 2.4, 24, 1.2); ctx.fill();
-        roundRect(-8, -1.4, 16, 2.8, 1.2); ctx.fill();
+        ctx.strokeStyle = "rgba(96,165,250,0.72)";
+        ctx.lineWidth = 2.6; ctx.stroke();
+        ctx.fillStyle = "rgba(255,255,255,0.75)";
+        roundRect(-1.3, -15, 2.6, 28, 1.3); ctx.fill();
+        roundRect(-9, -1.5, 18, 3, 1.3); ctx.fill();
         ctx.restore();
       }
 
@@ -2550,25 +2554,38 @@
       ctx.fill();
 
       if (isHero) {
-        const helmColor = (gear && gear.hatColor) ? gear.hatColor : "#dc2626";
-        const helmGrad = ctx.createLinearGradient(0, -50, 0, -22);
-        helmGrad.addColorStop(0, shade(helmColor, 24));
-        helmGrad.addColorStop(0.55, helmColor);
-        helmGrad.addColorStop(1, shade(helmColor, -32));
-        ctx.fillStyle = "#0f172a";
+        const helmColor = "#05070c";
+        const helmGrad = ctx.createLinearGradient(0, -58, 0, -18);
+        helmGrad.addColorStop(0, "#4b5563");
+        helmGrad.addColorStop(0.32, helmColor);
+        helmGrad.addColorStop(1, "#000000");
+        ctx.save();
+        for (let i = 0; i < 4; i++) {
+          const flameA = 0.14 - i * 0.025;
+          ctx.globalAlpha = flameA;
+          ctx.fillStyle = i % 2 ? "#111827" : "#000000";
+          ctx.beginPath();
+          ctx.moveTo(-10 - i, -28); ctx.quadraticCurveTo(-18 - i, -44 - i * 2, -9, -54 - i * 3);
+          ctx.quadraticCurveTo(-3, -45, -4, -32); ctx.closePath(); ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(10 + i, -28); ctx.quadraticCurveTo(18 + i, -44 - i * 2, 9, -54 - i * 3);
+          ctx.quadraticCurveTo(3, -45, 4, -32); ctx.closePath(); ctx.fill();
+        }
+        ctx.restore();
+        ctx.fillStyle = "#020617";
         ctx.beginPath();
-        ctx.moveTo(-16,-31); ctx.lineTo(-13,-46); ctx.lineTo(-5,-50); ctx.lineTo(0,-46); ctx.lineTo(5,-50); ctx.lineTo(13,-46); ctx.lineTo(16,-31); ctx.lineTo(12,-17); ctx.lineTo(6,-14); ctx.lineTo(6,-27); ctx.lineTo(-6,-27); ctx.lineTo(-6,-14); ctx.lineTo(-12,-17); ctx.closePath();
+        ctx.moveTo(-18,-28); ctx.lineTo(-14,-46); ctx.lineTo(-7,-56); ctx.lineTo(-2,-50); ctx.lineTo(0,-58); ctx.lineTo(2,-50); ctx.lineTo(7,-56); ctx.lineTo(14,-46); ctx.lineTo(18,-28); ctx.lineTo(13,-14); ctx.lineTo(7,-9); ctx.lineTo(5,-23); ctx.lineTo(-5,-23); ctx.lineTo(-7,-9); ctx.lineTo(-13,-14); ctx.closePath();
         ctx.fill();
         ctx.fillStyle = helmGrad;
         ctx.beginPath();
-        ctx.moveTo(-15,-31); ctx.quadraticCurveTo(-13,-48,0,-50); ctx.quadraticCurveTo(13,-48,15,-31); ctx.lineTo(11,-18); ctx.lineTo(6,-14); ctx.lineTo(4,-25); ctx.lineTo(-4,-25); ctx.lineTo(-6,-14); ctx.lineTo(-11,-18); ctx.closePath();
+        ctx.moveTo(-16,-28); ctx.quadraticCurveTo(-13,-50,0,-54); ctx.quadraticCurveTo(13,-50,16,-28); ctx.lineTo(12,-15); ctx.lineTo(6,-10); ctx.lineTo(4,-21); ctx.lineTo(-4,-21); ctx.lineTo(-6,-10); ctx.lineTo(-12,-15); ctx.closePath();
         ctx.fill();
-        ctx.fillStyle = "#93c5fd";
-        roundRect(-8, -31, 16, 5, 3); ctx.fill();
         ctx.fillStyle = "#111827";
-        roundRect(-10, -28, 20, 4, 3); ctx.fill();
-        ctx.fillStyle = "rgba(255,255,255,0.24)";
-        roundRect(-6,-43,12,4,2); ctx.fill();
+        roundRect(-12, -28, 24, 7, 4); ctx.fill();
+        ctx.fillStyle = "#60a5fa";
+        roundRect(-9, -29, 18, 4, 2); ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.12)";
+        roundRect(-7,-45,14,4,2); ctx.fill();
       } else {
         ctx.fillStyle = pal.hair || "#1f2937";
         roundRect(-14, -38, 28, 10, 7);
@@ -2592,11 +2609,11 @@
     function seedSlimes(rng) {
       combatState.slimes.length = 0;
       const spots = [
-        { x: ZONES.game.x + 220, y: ZONES.game.y + ZONES.game.h + 170 },
-        { x: ZONES.game.x + ZONES.game.w - 240, y: ZONES.game.y + ZONES.game.h + 180 },
-        { x: ZONES.community.x + 220, y: ZONES.community.y + ZONES.community.h + 170 },
-        { x: ZONES.community.x + ZONES.community.w - 240, y: ZONES.community.y + ZONES.community.h + 180 },
-        { x: ZONES.ads.x + 240, y: ZONES.ads.y + ZONES.ads.h + 170 }
+        { x: ZONES.game.x + 420, y: ZONES.game.y + ZONES.game.h + 210 },
+        { x: ZONES.game.x + ZONES.game.w - 420, y: ZONES.game.y + ZONES.game.h + 250 },
+        { x: ZONES.community.x + 420, y: ZONES.community.y + ZONES.community.h + 210 },
+        { x: ZONES.community.x + ZONES.community.w - 420, y: ZONES.community.y + ZONES.community.h + 250 },
+        { x: ZONES.ads.x + 520, y: ZONES.ads.y + ZONES.ads.h + 210 }
       ];
       for (let i = 0; i < spots.length; i++) {
         const s = spots[i];
@@ -2606,7 +2623,10 @@
           hp: 2,
           dead: false,
           wobble: rng() * 10,
-          respawn: 0
+          respawn: 0,
+          vx: (rng() < 0.5 ? -1 : 1) * (32 + rng() * 26),
+          vy: (rng() < 0.5 ? -1 : 1) * (18 + rng() * 20),
+          turnT: 1.3 + rng() * 2.2
         });
       }
     }
@@ -2749,13 +2769,33 @@
           m.respawn -= dt;
           if (m.respawn <= 0) {
             m.dead = false; m.hp = 2;
+            m.turnT = 1.1 + rng() * 1.8;
+            m.vx = (rng() < 0.5 ? -1 : 1) * (28 + rng() * 24);
+            m.vy = (rng() < 0.5 ? -1 : 1) * (14 + rng() * 16);
           }
           continue;
         }
         m.wobble += dt * 3;
-        if (Math.hypot(player.x - m.x, player.y - m.y) < 150) {
-          m.x += Math.sin(t + m.wobble) * dt * 10;
+        m.turnT -= dt;
+        if (m.turnT <= 0) {
+          m.turnT = 1.0 + rng() * 2.0;
+          m.vx = (rng() < 0.5 ? -1 : 1) * (28 + rng() * 28);
+          m.vy = (rng() < 0.5 ? -1 : 1) * (14 + rng() * 18);
         }
+        if (Math.hypot(player.x - m.x, player.y - m.y) < 170) {
+          const dx = player.x - m.x, dy = player.y - m.y;
+          const len = Math.hypot(dx, dy) || 1;
+          m.vx += (dx / len) * dt * 20;
+          m.vy += (dy / len) * dt * 20;
+        }
+        const sp = Math.hypot(m.vx, m.vy) || 1;
+        const maxSp = 54;
+        if (sp > maxSp) { m.vx = m.vx / sp * maxSp; m.vy = m.vy / sp * maxSp; }
+        m.x += m.vx * dt;
+        m.y += m.vy * dt;
+        const minX = 80, maxX = WORLD.w - 80, minY = ART_BOUNDS.village.y + ART_BOUNDS.village.h * 0.36, maxY = WORLD.h - 120;
+        if (m.x < minX || m.x > maxX) { m.vx *= -1; m.x = clamp(m.x, minX, maxX); }
+        if (m.y < minY || m.y > maxY) { m.vy *= -1; m.y = clamp(m.y, minY, maxY); }
       }
       if (combatState.attackT > 0.14 && combatState.canAttack) {
         combatState.canAttack = false;
@@ -2888,19 +2928,25 @@
       }
       for (const fx of combatState.slashFx) {
         ctx.save();
-        ctx.globalAlpha = Math.max(0, fx.life / 0.16);
+        const a = Math.max(0, fx.life / 0.16);
+        ctx.globalAlpha = a;
         ctx.translate(fx.x, fx.y);
         const rot = fx.dir === 'left' ? Math.PI : fx.dir === 'up' ? -Math.PI/2 : fx.dir === 'down' ? Math.PI/2 : 0;
         ctx.rotate(rot);
-        ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.98)';
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        ctx.arc(0, 0, 36, -1.15, 0.48);
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(147,197,253,0.92)';
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.arc(0, 0, 22, -0.9, 0.4);
+        ctx.arc(0, 0, 44, -1.22, 0.40);
         ctx.stroke();
-        ctx.strokeStyle = 'rgba(147,197,253,0.85)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.45)';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(0, 0, 28, -0.95, 0.35);
+        ctx.arc(0, 0, 52, -1.28, 0.30);
         ctx.stroke();
         ctx.restore();
       }
