@@ -310,7 +310,8 @@
     joy.style.zIndex = "10001";
     joy.style.width = `${JOY_SIZE}px`;
     joy.style.height = `${JOY_SIZE}px`;
-        joy.style.display = isTouchDevice() ? "block" : "none";
+
+      joy.style.display = isTouchDevice() ? "block" : "none";
     joy.style.touchAction = "none";
     joy.style.userSelect = "none";
     joy.style.webkitUserSelect = "none";
@@ -509,7 +510,8 @@
       { key: "baskin", label: "BASKIN", status: "soon", url: "", type: "baskin", size: "M", x: 0, y: 0, w: 0, h: 0 },
       { key: "paris", label: "PARIS", status: "soon", url: "", type: "paris", size: "M", x: 0, y: 0, w: 0, h: 0 },
     ];
-        const portalsByKey = (k) => portals.find((p) => p.key === k);
+
+          const portalsByKey = (k) => portals.find((p) => p.key === k);
 
     let ZONES = {
       game: { x: 0, y: 0, w: 0, h: 0, label: "GAME ZONE", color: "#0a84ff", entrance: null },
@@ -1782,7 +1784,222 @@
         drawLegoWindow(x + w * 0.12, winY, w * 0.28, h * 0.18, c.frame, c.glassA, c.glassB);
         drawLegoDoor(x + w * 0.58, doorY, w * 0.22, h * 0.28, c.accent, c.frame, c.knob);
       }
-          function drawNPC(key, x, y) {
+            ctx.save();
+      ctx.globalAlpha = 0.90;
+      ctx.fillStyle = c.grass;
+      roundRect(x + 14, y + h - 14, w - 28, 10, 8);
+      ctx.fill();
+      ctx.restore();
+
+      const ez = portalEnterZone(p);
+      const hover = activePortal && activePortal.key === p.key;
+      if (hover) {
+        ctx.save();
+        ctx.globalAlpha = 0.12 + 0.08 * Math.sin(t * 6);
+        ctx.fillStyle = c.sign;
+        roundRect(ez.x, ez.y, ez.w, ez.h, 12);
+        ctx.fill();
+        ctx.globalAlpha = 0.75;
+        ctx.strokeStyle = c.sign;
+        ctx.lineWidth = 3;
+        roundRect(ez.x, ez.y, ez.w, ez.h, 12);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    function drawCar(c) {
+      ctx.save();
+      ctx.translate(c.x, c.y + Math.sin(c.bob) * 0.8);
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = "rgba(10,14,24,0.95)";
+      ctx.beginPath();
+      ctx.ellipse(0, c.axis === "h" ? 14 : 22, c.axis === "h" ? c.w * 0.45 : c.w * 0.60, c.axis === "h" ? 7 : 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      if (c.axis === "h") {
+        if (c.dir < 0) ctx.scale(-1, 1);
+        ctx.fillStyle = c.color;
+        roundRect(-c.w / 2, -c.h / 2, c.w, c.h, 10);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.16)";
+        roundRect(-c.w * 0.42, -c.h * 0.40, c.w * 0.84, c.h * 0.36, 8);
+        ctx.fill();
+        ctx.fillStyle = "#c7ecff";
+        roundRect(-c.w * 0.22, -c.h * 0.32, c.w * 0.36, c.h * 0.28, 6);
+        ctx.fill();
+        ctx.fillStyle = "#111827";
+        ctx.beginPath(); ctx.arc(-c.w * 0.28, c.h * 0.42, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(c.w * 0.28, c.h * 0.42, 6, 0, Math.PI * 2); ctx.fill();
+      } else {
+        if (c.dir < 0) ctx.scale(1, -1);
+        ctx.fillStyle = c.color;
+        roundRect(-c.w / 2, -c.h / 2, c.w, c.h, 10);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.16)";
+        roundRect(-c.w * 0.40, -c.h * 0.42, c.w * 0.80, c.h * 0.30, 8);
+        ctx.fill();
+        ctx.fillStyle = "#c7ecff";
+        roundRect(-c.w * 0.26, -c.h * 0.18, c.w * 0.52, c.h * 0.24, 6);
+        ctx.fill();
+        ctx.fillStyle = "#111827";
+        ctx.beginPath(); ctx.arc(-c.w * 0.44, -c.h * 0.24, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(c.w * 0.44, -c.h * 0.24, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-c.w * 0.44, c.h * 0.24, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(c.w * 0.44, c.h * 0.24, 5, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawTree(o) {
+      ctx.save();
+      ctx.translate(o.x, o.y);
+      ctx.scale(o.s, o.s);
+      ctx.globalAlpha = 0.16;
+      ctx.fillStyle = "rgba(10,14,24,0.95)";
+      ctx.beginPath();
+      ctx.ellipse(0, 42, 26, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#8b5a2b";
+      roundRect(-10, -8, 20, 52, 8);
+      ctx.fill();
+      const greens = ["#3bcf74", "#35c96d", "#4bd985"];
+      ctx.fillStyle = greens[(hash01(`${o.x},${o.y}`) * greens.length) | 0];
+      ctx.beginPath(); ctx.arc(0, -28, 30, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(-18, -4, 24, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(18, -2, 22, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(0, 10, 26, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 0.14;
+      ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.arc(-8, -36, 12, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
+    function drawLamp(o, t) {
+      ctx.save();
+      ctx.translate(o.x, o.y);
+      ctx.scale(o.s, o.s);
+      ctx.globalAlpha = 0.16;
+      ctx.fillStyle = "rgba(10,14,24,0.95)";
+      ctx.beginPath();
+      ctx.ellipse(0, 42, 14, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#374151";
+      roundRect(-4, -42, 8, 78, 4);
+      ctx.fill();
+      ctx.fillStyle = "#4b5563";
+      roundRect(-16, -48, 32, 10, 5);
+      ctx.fill();
+      ctx.fillStyle = "#fff6b3";
+      roundRect(-10, -38, 20, 18, 6);
+      ctx.fill();
+      ctx.globalAlpha = 0.18 + 0.06 * Math.sin(t * 4 + o.x * 0.01);
+      const g = ctx.createRadialGradient(0, -30, 2, 0, -30, 34);
+      g.addColorStop(0, "rgba(255,246,179,0.70)");
+      g.addColorStop(1, "rgba(255,246,179,0.0)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(0, -30, 34, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawBench(o) {
+      ctx.save();
+      ctx.translate(o.x, o.y);
+      ctx.scale(o.s, o.s);
+      ctx.globalAlpha = 0.14;
+      ctx.fillStyle = "rgba(10,14,24,0.90)";
+      ctx.beginPath();
+      ctx.ellipse(0, 14, 24, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#7c5a3b";
+      roundRect(-26, -8, 52, 10, 5);
+      ctx.fill();
+      roundRect(-22, -18, 44, 8, 4);
+      ctx.fill();
+      ctx.fillStyle = "#4b5563";
+      roundRect(-20, 2, 5, 16, 3);
+      ctx.fill();
+      roundRect(15, 2, 5, 16, 3);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawFlower(o, t) {
+      ctx.save();
+      ctx.translate(o.x, o.y);
+      ctx.scale(o.s, o.s);
+      ctx.strokeStyle = "#2f9e59";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, 8);
+      ctx.lineTo(0, -10);
+      ctx.stroke();
+      const cols = ["#ff6b81", "#ffd166", "#7bdff2", "#c77dff", "#ff9f1c"];
+      const col = cols[((hash01(`${o.x}:${o.y}`) * cols.length) | 0)];
+      ctx.fillStyle = col;
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + t * 0.2;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * 5, -13 + Math.sin(a) * 5, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = "#ffe082";
+      ctx.beginPath();
+      ctx.arc(0, -13, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawEmblem(e) {
+      const p = portalsByKey(e.key);
+      if (!p) return;
+      const c = legoStyleForType(p.type);
+      ctx.save();
+      ctx.translate(e.x, e.y);
+      ctx.globalAlpha = 0.12;
+      ctx.fillStyle = "rgba(10,14,24,0.9)";
+      ctx.beginPath();
+      ctx.ellipse(0, 8, 18, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(0, 0, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = c.sign;
+      ctx.stroke();
+      ctx.fillStyle = c.sign;
+      ctx.font = "900 10px system-ui";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText((p.label || "?").slice(0, 2), 0, 1);
+      ctx.restore();
+    }
+
+    function drawSignal(sg, t) {
+      ctx.save();
+      ctx.translate(sg.x, sg.y);
+      ctx.fillStyle = "#374151";
+      roundRect(-4, -32, 8, 54, 4);
+      ctx.fill();
+      ctx.fillStyle = "#111827";
+      roundRect(-12, -54, 24, 22, 8);
+      ctx.fill();
+      const phase = (Math.sin(t * 1.7 + sg.x * 0.001 + sg.y * 0.001) + 1) * 0.5;
+      ctx.fillStyle = phase > 0.5 ? "#ef4444" : "#3f3f46";
+      ctx.beginPath(); ctx.arc(0, -46, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = phase <= 0.5 ? "#22c55e" : "#3f3f46";
+      ctx.beginPath(); ctx.arc(0, -38, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+        function drawNPC(key, x, y) {
       ctx.save();
       ctx.translate(x, y);
       const paletteMap = {
