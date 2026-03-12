@@ -21,6 +21,8 @@
     "https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EB%A9%94%ED%83%80%EC%9B%94%EB%93%9C.png";
   const USE_CUSTOM_WORLD_ART = true;
   const USE_SPRITE_IF_LOADED = true;
+  const SHOP_IMAGE_ROOT =
+    "https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EC%82%AC%EC%9D%B4%EC%A6%88%EB%A7%9E%EC%B6%98%EC%98%A4%EB%B8%8C%EC%A0%9C/";
 
   /* ----------------------- Utilities ----------------------- */
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -279,16 +281,53 @@
       * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
       .slot-card {
         display:flex; align-items:center; justify-content:space-between;
-        gap:10px; margin:8px 0; padding:10px 12px;
-        border-radius:12px; border:1px solid rgba(0,0,0,0.08);
-        background:rgba(255,255,255,0.72);
+        gap:10px; margin:10px 0; padding:12px;
+        border-radius:16px; border:1px solid rgba(148,163,184,0.18);
+        background:linear-gradient(180deg, rgba(18,25,39,0.96), rgba(30,41,59,0.92));
+        box-shadow:inset 0 1px 0 rgba(255,255,255,0.06), 0 14px 30px rgba(2,6,23,0.20);
       }
-      .slot-card .meta { display:flex; flex-direction:column; gap:3px; }
-      .slot-card .meta b { font:900 13px system-ui; color:#0a0e18; }
-      .slot-card .meta span { font:700 11px system-ui; color:rgba(10,14,24,0.62); }
+      .slot-card .meta { display:flex; flex-direction:column; gap:4px; flex:1; min-width:0; }
+      .slot-card .meta b { font:900 13px system-ui; color:#f8fafc; letter-spacing:0.02em; }
+      .slot-card .meta span { font:700 11px system-ui; color:rgba(226,232,240,0.72); }
       .slot-card button {
-        cursor:pointer; border:none; border-radius:10px; padding:8px 10px;
-        background:#0a0e18; color:#fff; font:900 11px system-ui;
+        cursor:pointer; border:none; border-radius:12px; padding:9px 12px;
+        background:linear-gradient(180deg,#38bdf8,#2563eb); color:#fff; font:900 11px system-ui;
+        box-shadow:0 8px 20px rgba(37,99,235,0.32);
+      }
+      .slot-card button[disabled] {
+        background:linear-gradient(180deg,#475569,#334155);
+        box-shadow:none;
+      }
+      .item-icon {
+        width:52px; height:52px; border-radius:14px; flex:0 0 52px;
+        border:1px solid rgba(255,255,255,0.10);
+        box-shadow:inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 20px rgba(2,6,23,0.28);
+        position:relative; overflow:hidden;
+      }
+      .item-icon::after {
+        content:""; position:absolute; inset:0;
+        background:linear-gradient(135deg, rgba(255,255,255,0.22), transparent 42%, transparent 100%);
+        pointer-events:none;
+      }
+      .grid-wrap {
+        display:grid; grid-template-columns:repeat(4, 1fr);
+        gap:10px; margin-top:10px;
+      }
+      .grid-slot {
+        aspect-ratio:1/1; border-radius:14px;
+        background:linear-gradient(180deg, rgba(15,23,42,0.88), rgba(30,41,59,0.92));
+        border:1px solid rgba(148,163,184,0.18);
+        box-shadow:inset 0 1px 0 rgba(255,255,255,0.05);
+        position:relative;
+      }
+      .grid-slot.active {
+        outline:2px solid rgba(56,189,248,0.75);
+        box-shadow:0 0 0 3px rgba(56,189,248,0.16), inset 0 1px 0 rgba(255,255,255,0.08);
+      }
+      .grid-slot .mini-label {
+        position:absolute; left:6px; right:6px; bottom:5px;
+        font:800 9px system-ui; color:rgba(226,232,240,0.75);
+        text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
       }
       .panel-title {
         display:flex; align-items:center; justify-content:space-between;
@@ -479,6 +518,34 @@
       return true;
     }
 
+    const SHOP_IMAGE_FILES = {
+      jump: "%EB%B9%84%ED%96%89%EA%B8%B0%EA%B2%8C%EC%9E%84%EC%A1%B4.png",
+      archery: "%EC%96%91%EA%B6%81%EA%B2%8C%EC%9E%84%EC%A1%B4.png",
+      janggi: "%EC%9E%A5%EA%B8%B0%EC%A1%B4.png",
+      omok: "%EC%98%A4%EB%AA%A9%EC%A1%B4.png",
+      snow: "%EC%8A%88%ED%8C%85%EA%B2%8C%EC%9E%84%EC%A1%B4.png",
+      twitter: "%ED%8A%B8%EC%9C%84%ED%84%B0%EC%A1%B4.png",
+      telegram: "%ED%85%94%EB%A0%88%EA%B7%B8%EB%9E%A8%EC%A1%B4.png",
+      wallet: "%EC%9B%94%EB%A0%9B%EC%A1%B4.png",
+      market: "%EB%A7%88%EC%BC%93%EC%A1%B4.png"
+    };
+    const shopArt = Object.create(null);
+    function loadShopArt() {
+      Object.entries(SHOP_IMAGE_FILES).forEach(([key, file]) => {
+        const im = new Image();
+        im.crossOrigin = "anonymous";
+        shopArt[key] = { img: im, loaded: false };
+        im.onload = () => { shopArt[key].loaded = true; };
+        im.onerror = () => { shopArt[key].loaded = false; };
+        im.src = SHOP_IMAGE_ROOT + file;
+      });
+    }
+    loadShopArt();
+
+    function hasShopArt(key) {
+      return !!(shopArt[key] && shopArt[key].loaded && shopArt[key].img);
+    }
+
     /* ----------------------- World data ----------------------- */
     const roads = [];
     const sidewalks = [];
@@ -548,14 +615,16 @@
       inventoryOpen: false,
       equipmentOpen: false,
       items: [
-        { id: "hat_royal", slot: "hat", name: "Royal Helm", desc: "모자 슬롯", color: "#dc2626", owned: true },
-        { id: "armor_shadow", slot: "armor", name: "Shadow Armor", desc: "옷 슬롯", color: "#111827", owned: true },
-        { id: "weapon_blade", slot: "weapon", name: "Crimson Blade", desc: "무기 슬롯", color: "#ef4444", owned: true },
+        { id: "hat_royal", slot: "hat", name: "Royal Helm", desc: "모자 슬롯", color: "#dc2626", owned: true, icon: "helm" },
+        { id: "armor_shadow", slot: "armor", name: "Shadow Armor", desc: "갑옷 슬롯", color: "#111827", owned: true, icon: "armor" },
+        { id: "weapon_blade", slot: "weapon", name: "Crimson Blade", desc: "무기 슬롯", color: "#ef4444", owned: true, icon: "sword" },
+        { id: "shield_guard", slot: "shield", name: "Aegis Guard", desc: "방패 슬롯", color: "#94a3b8", owned: true, icon: "shield" },
       ],
       equipped: {
-        hat: null,
-        armor: null,
-        weapon: null
+        hat: "hat_royal",
+        armor: "armor_shadow",
+        weapon: "weapon_blade",
+        shield: "shield_guard"
       }
     };
 
@@ -583,55 +652,90 @@
       renderPanels();
     }
 
+    function iconMarkup(item, equipped = false) {
+      const mode = item?.icon || item?.slot || "item";
+      let bg = "linear-gradient(180deg,#334155,#0f172a)";
+      let shape = "";
+      if (mode === "helm") {
+        bg = "radial-gradient(circle at 50% 28%, #fca5a5, #7f1d1d 68%)";
+        shape = '<div style="position:absolute;left:10px;right:10px;top:13px;height:16px;border-radius:12px 12px 7px 7px;background:#111827;"></div><div style="position:absolute;left:16px;right:16px;top:23px;height:10px;border-radius:0 0 10px 10px;background:#dc2626;"></div>';
+      } else if (mode === "armor") {
+        bg = "radial-gradient(circle at 50% 24%, #475569, #0f172a 74%)";
+        shape = '<div style="position:absolute;left:12px;right:12px;top:10px;height:28px;border-radius:10px;background:linear-gradient(180deg,#0f172a,#334155);border:1px solid rgba(255,255,255,0.10)"></div><div style="position:absolute;left:20px;right:20px;top:17px;height:12px;border-radius:8px;background:rgba(239,68,68,0.7)"></div>';
+      } else if (mode === "sword") {
+        bg = "radial-gradient(circle at 50% 24%, #64748b, #0f172a 74%)";
+        shape = '<div style="position:absolute;left:25px;top:8px;width:4px;height:26px;border-radius:3px;background:linear-gradient(180deg,#f8fafc,#94a3b8);transform:rotate(32deg);box-shadow:0 0 10px rgba(255,255,255,0.25)"></div><div style="position:absolute;left:18px;top:28px;width:18px;height:4px;border-radius:4px;background:#111827;transform:rotate(32deg)"></div><div style="position:absolute;left:16px;top:33px;width:6px;height:10px;border-radius:4px;background:#7f1d1d;transform:rotate(32deg)"></div>';
+      } else if (mode === "shield") {
+        bg = "radial-gradient(circle at 50% 26%, #cbd5e1, #1e293b 74%)";
+        shape = '<div style="position:absolute;left:13px;right:13px;top:10px;bottom:11px;background:linear-gradient(180deg,#94a3b8,#334155);clip-path:polygon(50% 0%, 90% 18%, 86% 72%, 50% 100%, 14% 72%, 10% 18%);border:1px solid rgba(255,255,255,0.14)"></div><div style="position:absolute;left:24px;top:15px;width:4px;height:22px;border-radius:4px;background:#f8fafc"></div><div style="position:absolute;left:17px;top:24px;width:18px;height:4px;border-radius:4px;background:#ef4444"></div>';
+      }
+      return `<div class="item-icon${equipped ? " active" : ""}" style="background:${bg}">${shape}</div>`;
+    }
+
     function renderPanels() {
       UI.inventoryPanel.style.display = inventoryState.inventoryOpen ? "block" : "none";
       UI.equipmentPanel.style.display = inventoryState.equipmentOpen ? "block" : "none";
+      UI.inventoryPanel.style.background = "linear-gradient(180deg, rgba(15,23,42,0.96), rgba(15,23,42,0.88))";
+      UI.inventoryPanel.style.border = "1px solid rgba(148,163,184,0.18)";
+      UI.equipmentPanel.style.background = "linear-gradient(180deg, rgba(15,23,42,0.96), rgba(15,23,42,0.88))";
+      UI.equipmentPanel.style.border = "1px solid rgba(148,163,184,0.18)";
 
       const inv = inventoryState.items.filter((it) => it.owned);
       UI.inventoryPanel.innerHTML = `
         <div class="panel-title">
-          <b>INVENTORY</b>
-          <span>I 키</span>
+          <b style="color:#f8fafc">INVENTORY</b>
+          <span style="color:rgba(226,232,240,0.65)">I 키</span>
         </div>
       `;
-      if (!inv.length) {
-        const empty = document.createElement("div");
-        empty.className = "empty-text";
-        empty.textContent = "아이템이 없습니다.";
-        UI.inventoryPanel.appendChild(empty);
-      } else {
-        inv.forEach((item) => {
-          const row = document.createElement("div");
-          row.className = "slot-card";
-          const equipped = inventoryState.equipped[item.slot] === item.id;
-          row.innerHTML = `
-            <div class="meta">
-              <b>${item.name}</b>
-              <span>${item.desc} · ${equipped ? "장착중" : "인벤토리"}</span>
-            </div>
-          `;
-          const btn = document.createElement("button");
-          btn.textContent = equipped ? "해제" : "장착";
-          btn.addEventListener("click", () => equipItem(item.id));
-          row.appendChild(btn);
-          UI.inventoryPanel.appendChild(row);
-        });
+
+      const grid = document.createElement("div");
+      grid.className = "grid-wrap";
+      inv.forEach((item) => {
+        const slot = document.createElement("div");
+        slot.className = "grid-slot" + (inventoryState.equipped[item.slot] === item.id ? " active" : "");
+        slot.innerHTML = `${iconMarkup(item, inventoryState.equipped[item.slot] === item.id)}<div class="mini-label">${item.name}</div>`;
+        grid.appendChild(slot);
+      });
+      for (let i = inv.length; i < 8; i++) {
+        const slot = document.createElement("div");
+        slot.className = "grid-slot";
+        grid.appendChild(slot);
       }
+      UI.inventoryPanel.appendChild(grid);
+
+      inv.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "slot-card";
+        const equipped = inventoryState.equipped[item.slot] === item.id;
+        row.innerHTML = `
+          ${iconMarkup(item, equipped)}
+          <div class="meta">
+            <b>${item.name}</b>
+            <span>${item.desc} · ${equipped ? "장착중" : "인벤토리 보관중"}</span>
+          </div>
+        `;
+        const btn = document.createElement("button");
+        btn.textContent = equipped ? "해제" : "장착";
+        btn.addEventListener("click", () => equipItem(item.id));
+        row.appendChild(btn);
+        UI.inventoryPanel.appendChild(row);
+      });
 
       UI.equipmentPanel.innerHTML = `
         <div class="panel-title">
-          <b>EQUIPMENT</b>
-          <span>Tab 키</span>
+          <b style="color:#f8fafc">EQUIPMENT</b>
+          <span style="color:rgba(226,232,240,0.65)">Tab 키</span>
         </div>
       `;
-      ["hat", "armor", "weapon"].forEach((slot) => {
+      [["hat","헬멧"],["armor","갑옷"],["weapon","무기"],["shield","방패"]].forEach(([slot, label]) => {
         const row = document.createElement("div");
         row.className = "slot-card";
         const itemId = inventoryState.equipped[slot];
         const item = itemId ? getItemById(itemId) : null;
         row.innerHTML = `
+          ${item ? iconMarkup(item, true) : '<div class="item-icon" style="background:linear-gradient(180deg,#1e293b,#0f172a)"></div>'}
           <div class="meta">
-            <b>${slot === "hat" ? "모자" : slot === "armor" ? "옷" : "무기"}</b>
+            <b>${label}</b>
             <span>${item ? item.name : "비어 있음"}</span>
           </div>
         `;
@@ -874,8 +978,8 @@
     function syncArtBounds() {
       const marginX = WORLD.w * 0.06;
       const marginTop = WORLD.h * 0.04;
-      const artW = WORLD.w * 0.88;
-      const artH = WORLD.h * 0.78;
+      const artW = WORLD.w * 0.78;
+      const artH = WORLD.h * 0.68;
       ART_BOUNDS.x = marginX;
       ART_BOUNDS.y = marginTop;
       ART_BOUNDS.w = artW;
@@ -991,7 +1095,7 @@
     }
 
     function layoutPortals() {
-      const base = 172;
+      const base = 150;
       for (const p of portals) {
         const m = portalSizeScale(p.size);
         p.w = base * 1.14 * m;
@@ -1370,12 +1474,12 @@
 
     /* ----------------------- Recalc / resize ----------------------- */
     function recalcWorld() {
-      VIEW.zoom = Math.min(1.05, Math.max(0.76, Math.min(W / 1280, H / 860) * 0.95));
+      VIEW.zoom = Math.min(0.98, Math.max(0.70, Math.min(W / 1340, H / 900) * 0.88));
       VIEW.w = W / VIEW.zoom;
       VIEW.h = H / VIEW.zoom;
 
-      WORLD.w = Math.max(4200, Math.floor(W * 4.2));
-      WORLD.h = Math.max(3000, Math.floor(H * 3.55));
+      WORLD.w = Math.max(3800, Math.floor(W * 3.7));
+      WORLD.h = Math.max(2680, Math.floor(H * 3.1));
 
       syncArtBounds();
       layoutZonesFromArt();
@@ -1759,32 +1863,65 @@
     function drawPortalBuilding(p, t) {
       const c = legoStyleForType(p.type);
       const x = p.x, y = p.y, w = p.w, h = p.h;
-      groundAO(x + 16, y + h - 10, w - 32, 30, 0.20);
-      softShadow(x + 10, y + h - 12, w - 20, 18, 0.10);
+      groundAO(x + 8, y + h - 16, w - 16, 34, 0.22);
+      softShadow(x + 8, y + h - 14, w - 16, 22, 0.11);
 
-      drawLegoBrickGrid(x, y + 18, w, h - 18);
+      if (hasShopArt(p.key)) {
+        const art = shopArt[p.key].img;
+        const pad = 4;
+        const drawW = w - pad * 2;
+        const drawH = h - pad * 2;
+        ctx.save();
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        roundRect(x, y, w, h, 20);
+        ctx.clip();
+        ctx.drawImage(art, x + pad, y + pad, drawW, drawH);
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalAlpha = 0.12;
+        const gloss = ctx.createLinearGradient(x, y, x, y + h);
+        gloss.addColorStop(0, "rgba(255,255,255,0.34)");
+        gloss.addColorStop(0.38, "rgba(255,255,255,0.08)");
+        gloss.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = gloss;
+        roundRect(x, y, w, h * 0.46, 20);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.save();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "rgba(255,255,255,0.30)";
+        roundRect(x, y, w, h, 20);
+        ctx.stroke();
+        ctx.restore();
+      } else {
+        drawLegoBrickGrid(x, y + 18, w, h - 18);
+
+        ctx.save();
+        ctx.fillStyle = shade(c.wall, -10);
+        roundRect(x + 10, y, w - 20, 28, 16);
+        ctx.fill();
+        drawLegoStudRow(x + 30, y + 8, w - 60, Math.max(4, Math.floor((w - 60) / 44)), shade(c.wall, -12));
+        ctx.restore();
+
+        const signH = Math.max(40, h * 0.19);
+        drawLegoSignPlaque(x + w * 0.10, y + 28, w * 0.80, signH, p.label, Math.max(15, Math.floor(signH * 0.34)), c.sign);
+
+        const winY = y + 28 + signH + 14;
+        const doorY = y + h * 0.54;
+        if (p.size === "L") {
+          drawLegoWindow(x + w * 0.10, winY, w * 0.24, h * 0.18, c.frame, c.glassA, c.glassB);
+          drawLegoDoor(x + w * 0.39, doorY, w * 0.22, h * 0.30, c.accent, c.frame, c.knob);
+          drawLegoWindow(x + w * 0.66, winY, w * 0.24, h * 0.18, c.frame, c.glassA, c.glassB);
+        } else {
+          drawLegoWindow(x + w * 0.12, winY, w * 0.28, h * 0.18, c.frame, c.glassA, c.glassB);
+          drawLegoDoor(x + w * 0.58, doorY, w * 0.22, h * 0.28, c.accent, c.frame, c.knob);
+        }
+      }
 
       ctx.save();
-      ctx.fillStyle = shade(c.wall, -10);
-      roundRect(x + 10, y, w - 20, 28, 16);
-      ctx.fill();
-      drawLegoStudRow(x + 30, y + 8, w - 60, Math.max(4, Math.floor((w - 60) / 44)), shade(c.wall, -12));
-      ctx.restore();
-
-      const signH = Math.max(40, h * 0.19);
-      drawLegoSignPlaque(x + w * 0.10, y + 28, w * 0.80, signH, p.label, Math.max(15, Math.floor(signH * 0.34)), c.sign);
-
-      const winY = y + 28 + signH + 14;
-      const doorY = y + h * 0.54;
-      if (p.size === "L") {
-        drawLegoWindow(x + w * 0.10, winY, w * 0.24, h * 0.18, c.frame, c.glassA, c.glassB);
-        drawLegoDoor(x + w * 0.39, doorY, w * 0.22, h * 0.30, c.accent, c.frame, c.knob);
-        drawLegoWindow(x + w * 0.66, winY, w * 0.24, h * 0.18, c.frame, c.glassA, c.glassB);
-      } else {
-        drawLegoWindow(x + w * 0.12, winY, w * 0.28, h * 0.18, c.frame, c.glassA, c.glassB);
-        drawLegoDoor(x + w * 0.58, doorY, w * 0.22, h * 0.28, c.accent, c.frame, c.knob);
-      }
-            ctx.save();
       ctx.globalAlpha = 0.90;
       ctx.fillStyle = c.grass;
       roundRect(x + 14, y + h - 14, w - 28, 10, 8);
@@ -1795,11 +1932,11 @@
       const hover = activePortal && activePortal.key === p.key;
       if (hover) {
         ctx.save();
-        ctx.globalAlpha = 0.12 + 0.08 * Math.sin(t * 6);
+        ctx.globalAlpha = 0.15 + 0.08 * Math.sin(t * 6);
         ctx.fillStyle = c.sign;
         roundRect(ez.x, ez.y, ez.w, ez.h, 12);
         ctx.fill();
-        ctx.globalAlpha = 0.75;
+        ctx.globalAlpha = 0.80;
         ctx.strokeStyle = c.sign;
         ctx.lineWidth = 3;
         roundRect(ez.x, ez.y, ez.w, ez.h, 12);
@@ -2100,7 +2237,7 @@
       if (!sprite.loaded || !sprite.img) return false;
       const bob = player.moving ? Math.sin(player.walkPhase * 1.7) * 1.2 : 0;
       const stretch = player.moving ? 0.98 + 0.02 * Math.sin(player.walkPhase * 2.2) : 1;
-      const baseW = 84, baseH = 92;
+      const baseW = 74, baseH = 84;
 
       ctx.save();
       ctx.globalAlpha = 0.22;
@@ -2116,7 +2253,7 @@
       ctx.scale(stretch, 1);
       ctx.imageSmoothingEnabled = false;
       ctx.imageSmoothingQuality = "low";
-      ctx.drawImage(sprite.img, -baseW / 2, -78, baseW, baseH);
+      ctx.drawImage(sprite.img, -baseW / 2, -74, baseW, baseH);
       ctx.restore();
       return true;
     }
@@ -2125,10 +2262,12 @@
       const hat = getItemById(inventoryState.equipped.hat);
       const armor = getItemById(inventoryState.equipped.armor);
       const weapon = getItemById(inventoryState.equipped.weapon);
+      const shield = getItemById(inventoryState.equipped.shield);
       return {
         hatColor: hat ? hat.color : null,
         armorColor: armor ? armor.color : null,
-        weaponColor: weapon ? weapon.color : null
+        weaponColor: weapon ? weapon.color : null,
+        shieldColor: shield ? shield.color : null
       };
     }
 
@@ -2236,24 +2375,36 @@
 
       if (isHero && gear && gear.weaponColor) {
         ctx.save();
-        ctx.translate(9, 10);
-        ctx.rotate(0.18);
-        ctx.fillStyle = gear.weaponColor;
-        roundRect(-2, -4, 4, 24, 2);
+        ctx.translate(11, 10);
+        ctx.rotate(0.32);
+        const bladeGrad = ctx.createLinearGradient(0, -30, 0, 10);
+        bladeGrad.addColorStop(0, "#f8fafc");
+        bladeGrad.addColorStop(0.45, "#cbd5e1");
+        bladeGrad.addColorStop(1, "#64748b");
+        ctx.fillStyle = bladeGrad;
+        ctx.beginPath();
+        ctx.moveTo(-2, -28);
+        ctx.lineTo(2, -28);
+        ctx.lineTo(4, 2);
+        ctx.lineTo(0, 10);
+        ctx.lineTo(-4, 2);
+        ctx.closePath();
         ctx.fill();
-        ctx.fillStyle = "#d1d5db";
-        roundRect(-1.5, -18, 3, 16, 2);
+        ctx.strokeStyle = "rgba(255,255,255,0.55)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(0, -24);
+        ctx.lineTo(0, 4);
+        ctx.stroke();
+        ctx.fillStyle = gear.weaponColor;
+        roundRect(-9, 2, 18, 4, 3);
         ctx.fill();
         ctx.fillStyle = "#111827";
-        roundRect(-4, 18, 8, 4, 2);
+        roundRect(-3, 6, 6, 12, 3);
         ctx.fill();
-        ctx.globalAlpha = 0.25;
-        ctx.strokeStyle = "rgba(255,255,255,0.7)";
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(0, -18);
-        ctx.lineTo(0, -28);
-        ctx.stroke();
+        ctx.fillStyle = "#7f1d1d";
+        roundRect(-4, 17, 8, 5, 3);
+        ctx.fill();
         ctx.restore();
       } else if (isHero) {
         ctx.fillStyle = "#111827";
@@ -2270,6 +2421,35 @@
         ctx.stroke();
       }
       ctx.restore();
+
+      if (isHero && gear && gear.shieldColor) {
+        ctx.save();
+        ctx.translate(-20, -2);
+        ctx.rotate(-0.18);
+        const shieldGrad = ctx.createLinearGradient(0, -18, 0, 18);
+        shieldGrad.addColorStop(0, "#e2e8f0");
+        shieldGrad.addColorStop(0.52, gear.shieldColor);
+        shieldGrad.addColorStop(1, "#334155");
+        ctx.fillStyle = shieldGrad;
+        ctx.beginPath();
+        ctx.moveTo(0, -18);
+        ctx.lineTo(14, -12);
+        ctx.lineTo(12, 7);
+        ctx.lineTo(0, 20);
+        ctx.lineTo(-12, 7);
+        ctx.lineTo(-14, -12);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.32)";
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+        ctx.fillStyle = "rgba(255,255,255,0.65)";
+        roundRect(-1.3, -12, 2.6, 22, 1.3);
+        ctx.fill();
+        roundRect(-8, -1.2, 16, 2.4, 1.2);
+        ctx.fill();
+        ctx.restore();
+      }
 
       ctx.fillStyle = pal.skin || "#ffd7b5";
       roundRect(-13, -34, 26, 19, 8);
@@ -2502,8 +2682,6 @@
           case "roamer": drawRoamer(r, roamerPalette); break;
           case "player":
             if (!drawSpriteCharacter(player.x, player.y)) {
-              drawMinifig(player.x, player.y, { isHero: true, moving: player.moving, walkPhase: player.walkPhase });
-            } else {
               drawMinifig(player.x, player.y, { isHero: true, moving: player.moving, walkPhase: player.walkPhase });
             }
             break;
