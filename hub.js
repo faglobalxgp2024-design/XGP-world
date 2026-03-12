@@ -1494,19 +1494,16 @@
       for (const p of portals) {
         if (["avoid", "shooting", "archery", "janggi", "omok"].includes(p.key)) {
           const z = ZONES.game;
-          const leftX = z.x + 72;
-          const rightX = z.x + z.w - p.w - 72;
-          const centerX = z.x + (z.w - p.w) * 0.5;
-          const topY = z.y + 26;
-          const bottomY = z.y + z.h - p.h - 44;
-          const middleY = z.y + (z.h - p.h) * 0.50;
-          if (p.key === "archery") placeByRect(p, z, leftX, topY);
-          else if (p.key === "janggi") placeByRect(p, z, leftX, bottomY);
-          else if (p.key === "shooting") placeByRect(p, z, rightX, topY);
-          else if (p.key === "avoid") placeByRect(p, z, rightX, bottomY);
-          else placeByRect(p, z, centerX, middleY);
+          const gameLayout = {
+            archery: { x: z.x + 52, y: z.y + 12 },
+            janggi: { x: z.x + z.w * 0.24 - p.w * 0.5, y: z.y + z.h * 0.50 - p.h * 0.5 },
+            omok: { x: z.x + z.w * 0.50 - p.w * 0.5, y: z.y + z.h * 0.40 - p.h * 0.5 },
+            avoid: { x: z.x + z.w * 0.73 - p.w * 0.5, y: z.y + z.h * 0.60 - p.h * 0.5 },
+            shooting: { x: z.x + z.w - p.w - 60, y: z.y + 18 }
+          };
+          placeByRect(p, z, gameLayout[p.key].x, gameLayout[p.key].y);
         } else if (p.key === "blacksmith") {
-          placeByRect(p, ZONES.ads, ZONES.ads.x + ZONES.ads.w * 0.78, ZONES.ads.y + 12);
+          placeByRect(p, ZONES.ads, ZONES.ads.x + ZONES.ads.w * 0.76, ZONES.ads.y - 22);
         } else {
           const z = ZONES.community;
           const leftX = z.x + 72;
@@ -2051,7 +2048,7 @@
         ctx.fill();
         ctx.globalAlpha = 0.42;
         ctx.strokeStyle = "rgba(255,255,255,0.88)";
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 3;
         ctx.setLineDash([18, 16]);
         ctx.beginPath();
         if (r.axis === "h") {
@@ -3026,48 +3023,46 @@
 
       if (isHero && gear && gear.weaponColor) {
         ctx.save();
-        ctx.translate(14, 9);
-        ctx.rotate(0.12 + (attackPose ? -1.42 * atk : -0.05));
+        ctx.translate(13, 10);
+        ctx.rotate(0.10 + (attackPose ? -1.18 * atk : -0.04));
         const weaponGlow = gear.weaponTier ? gear.weaponTier.glow : gear.weaponColor;
-        const bladeGrad = ctx.createLinearGradient(0, -52, 0, 18);
+        const bladeGrad = ctx.createLinearGradient(0, -40, 0, 14);
         bladeGrad.addColorStop(0, "#ffffff");
-        bladeGrad.addColorStop(0.20, weaponGlow);
-        bladeGrad.addColorStop(0.58, gear.weaponColor);
-        bladeGrad.addColorStop(1, "#0f172a");
+        bladeGrad.addColorStop(0.22, weaponGlow);
+        bladeGrad.addColorStop(0.60, gear.weaponColor);
+        bladeGrad.addColorStop(1, shade(gear.weaponColor, -35));
         ctx.shadowColor = weaponGlow;
-        ctx.shadowBlur = 26 + ((gear.weaponTier && gear.weaponTier.label==="MYTHIC") ? 18 : (gear.weaponTier && gear.weaponTier.label==="LEGEND") ? 10 : 0);
+        ctx.shadowBlur = 18 + ((gear.weaponTier && gear.weaponTier.label==="MYTHIC") ? 12 : (gear.weaponTier && gear.weaponTier.label==="LEGEND") ? 7 : 0);
         ctx.fillStyle = bladeGrad;
         ctx.beginPath();
-        ctx.moveTo(-4.2, 16);
-        ctx.lineTo(-7.5, -4);
-        ctx.lineTo(-4.4, -46);
-        ctx.lineTo(0, -58);
-        ctx.lineTo(4.4, -46);
-        ctx.lineTo(7.5, -4);
-        ctx.lineTo(4.2, 16);
+        ctx.moveTo(-3.2, 12);
+        ctx.lineTo(-5.4, -2);
+        ctx.lineTo(-3.4, -30);
+        ctx.lineTo(0, -40);
+        ctx.lineTo(3.4, -30);
+        ctx.lineTo(5.4, -2);
+        ctx.lineTo(3.2, 12);
         ctx.closePath();
         ctx.fill();
-        ctx.lineWidth = 1.5;
-        ctx.strokeStyle = "rgba(255,255,255,0.92)";
+        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = "rgba(255,255,255,0.95)";
         ctx.beginPath();
-        ctx.moveTo(0, -52); ctx.lineTo(0, 8);
+        ctx.moveTo(0, -35); ctx.lineTo(0, 6);
         ctx.stroke();
-        ctx.shadowBlur = 0;
-        const guardGrad = ctx.createLinearGradient(-12, 0, 12, 0);
-        guardGrad.addColorStop(0, shade(gear.weaponColor, -25));
+        const guardGrad = ctx.createLinearGradient(-9, 0, 9, 0);
+        guardGrad.addColorStop(0, shade(gear.weaponColor, -28));
         guardGrad.addColorStop(0.5, weaponGlow);
-        guardGrad.addColorStop(1, shade(gear.weaponColor, -25));
+        guardGrad.addColorStop(1, shade(gear.weaponColor, -28));
+        ctx.shadowBlur = 8;
         ctx.fillStyle = guardGrad;
-        roundRect(-13, 10, 26, 5.5, 3); ctx.fill();
-        ctx.fillStyle = shade(gear.weaponColor, -12);
-        roundRect(-4.5, 14, 9, 16, 4); ctx.fill();
-        const spark = 0.4 + 0.6 * Math.sin(performance.now()/150);
-        ctx.shadowColor = weaponGlow;
-        ctx.shadowBlur = 18;
+        roundRect(-10, 8, 20, 4.5, 2.4); ctx.fill();
+        ctx.fillStyle = shade(gear.weaponColor, -18);
+        roundRect(-3.2, 11, 6.4, 12, 3.2); ctx.fill();
+        const spark = 0.35 + 0.45 * Math.sin(performance.now()/170);
         ctx.fillStyle = "rgba(255,255,255,0.98)";
-        ctx.beginPath(); ctx.arc(0, -48, 2.2 + spark, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(5, -28, 1.4 + spark*0.6, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(-4, -16, 1.1 + spark*0.4, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, -31, 1.8 + spark, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(3.2, -18, 1.0 + spark*0.5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-2.6, -9, 0.9 + spark*0.35, 0, Math.PI*2); ctx.fill();
         ctx.restore();
       }
       ctx.restore();
@@ -3658,19 +3653,19 @@
         const rot = fx.dir === 'left' ? Math.PI : fx.dir === 'up' ? -Math.PI/2 : fx.dir === 'down' ? Math.PI/2 : 0;
         ctx.rotate(rot);
         ctx.strokeStyle = 'rgba(255,255,255,0.98)';
-        ctx.lineWidth = 7;
+        ctx.lineWidth = 5;
         ctx.beginPath();
-        ctx.arc(0, 0, 34, -1.16, 0.48);
+        ctx.arc(0, 0, 24, -1.10, 0.34);
         ctx.stroke();
         ctx.strokeStyle = 'rgba(147,197,253,0.92)';
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.arc(0, 0, 42, -1.18, 0.42);
+        ctx.arc(0, 0, 30, -1.12, 0.26);
         ctx.stroke();
         ctx.strokeStyle = 'rgba(255,255,255,0.45)';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(0, 0, 40, -1.10, 0.22);
+        ctx.arc(0, 0, 28, -1.04, 0.14);
         ctx.stroke();
         ctx.restore();
       }
@@ -3681,7 +3676,7 @@
         ctx.scale(d.scale || 1, d.scale || 1);
         ctx.fillStyle = d.color || "#fff";
         ctx.strokeStyle = "rgba(2,6,23,0.82)";
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 3;
         ctx.font = "1000 16px system-ui";
         ctx.textAlign = "center";
         ctx.strokeText(d.text, 0, 0);
