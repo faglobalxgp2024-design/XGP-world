@@ -12,14 +12,14 @@
 (() => {
   "use strict";
 
-  const __legacyUiIds = ["world","toast","coord","fps","fade","lego_modal","lego_modal_inner","lego_modal_title","lego_modal_body","lego_modal_hint","blacksmith_modal","blacksmith_card","blacksmith_title","blacksmith_body","blacksmith_hint","mobile_hud_buttons","btn_inventory","btn_equipment","btn_attack","joystick","inventory_panel","equipment_panel","hud_panels","lego_style_injected"];
+  const __legacyUiIds = ["world","toast","coord","fps","fade","lego_modal","lego_modal_inner","lego_modal_title","lego_modal_body","lego_modal_hint","blacksmith_modal","blacksmith_card","blacksmith_title","blacksmith_body","blacksmith_hint","mobile_hud_buttons","btn_inventory","btn_equipment","btn_attack","btn_exit","joystick","inventory_panel","equipment_panel","hud_panels","lego_style_injected"];
   for (const __id of __legacyUiIds) {
     const __el = document.getElementById(__id);
     if (__el) __el.remove();
   }
 
   try {
-    const keepIds = new Set(["world","toast","coord","fps","fade","lego_modal","lego_modal_inner","lego_modal_title","lego_modal_body","lego_modal_hint","blacksmith_modal","blacksmith_card","blacksmith_title","blacksmith_body","blacksmith_hint","mobile_hud_buttons","btn_inventory","btn_equipment","btn_attack","joystick","inventory_panel","equipment_panel","hud_panels","lego_style_injected"]);
+    const keepIds = new Set(["world","toast","coord","fps","fade","lego_modal","lego_modal_inner","lego_modal_title","lego_modal_body","lego_modal_hint","blacksmith_modal","blacksmith_card","blacksmith_title","blacksmith_body","blacksmith_hint","mobile_hud_buttons","btn_inventory","btn_equipment","btn_attack","btn_exit","joystick","inventory_panel","equipment_panel","hud_panels","lego_style_injected"]);
     document.querySelectorAll("body > div, body > section, body > aside").forEach((el) => {
       if (!el || keepIds.has(el.id)) return;
       const cs = getComputedStyle(el);
@@ -318,10 +318,11 @@
     const mobileBtns = ensureEl("mobile_hud_buttons", "div");
     mobileBtns.style.position = "fixed";
     mobileBtns.style.right = "18px";
-    mobileBtns.style.bottom = "198px";
+    mobileBtns.style.bottom = "128px";
     mobileBtns.style.zIndex = "10002";
     mobileBtns.style.display = isTouchDevice() ? "flex" : "none";
     mobileBtns.style.flexDirection = "column";
+    mobileBtns.style.alignItems = "stretch";
     mobileBtns.style.gap = "10px";
 
     const invBtn = ensureEl("btn_inventory", "button", mobileBtns);
@@ -455,12 +456,12 @@
     `;
 
     const joy = ensureEl("joystick", "div");
-    const JOY_SIZE = 136;
-    const JOY_KNOB = 58;
-    const JOY_RING = 104;
+    const JOY_SIZE = 112;
+    const JOY_KNOB = 46;
+    const JOY_RING = 82;
     joy.style.position = "fixed";
-    joy.style.right = "18px";
-    joy.style.left = "auto";
+    joy.style.right = "auto";
+    joy.style.left = "18px";
     joy.style.bottom = "18px";
     joy.style.zIndex = "10001";
     joy.style.width = `${JOY_SIZE}px`;
@@ -482,8 +483,8 @@
 
     const joyRing = ensureEl("joystick_ring", "div", joy);
     joyRing.style.position = "absolute";
-    joyRing.style.left = "16px";
-    joyRing.style.top = "16px";
+    joyRing.style.left = "15px";
+    joyRing.style.top = "15px";
     joyRing.style.width = `${JOY_RING}px`;
     joyRing.style.height = `${JOY_RING}px`;
     joyRing.style.borderRadius = "999px";
@@ -504,7 +505,7 @@
     joyKnob.style.display = "flex";
     joyKnob.style.alignItems = "center";
     joyKnob.style.justifyContent = "center";
-    joyKnob.style.font = "1200 14px system-ui";
+    joyKnob.style.font = "1200 12px system-ui";
     joyKnob.style.color = "rgba(10,14,24,0.80)";
     joyKnob.textContent = "MOVE";
 
@@ -512,7 +513,7 @@
     function setJoy(ax, ay) {
       joyState.ax = ax;
       joyState.ay = ay;
-      const max = 52;
+      const max = 40;
       const px = ax * max;
       const py = ay * max;
       joyKnob.style.transform = `translate(calc(-50% + ${px}px), calc(-50% + ${py}px))`;
@@ -558,11 +559,15 @@
       e.preventDefault();
       window.__metaWorldAttackTap = performance.now();
     }, { passive: false });
+    exitBtn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      if (window.__closeMetaWorldUi) window.__closeMetaWorldUi();
+    }, { passive: false });
 
     return {
       canvas, toast, coord, fps, fade, modal, modalTitle, modalBody, modalHint,
       shopModal, shopCard, shopTitle, shopBody, shopHint,
-      inventoryPanel, equipmentPanel, invBtn, eqBtn, atkBtn, joyState
+      inventoryPanel, equipmentPanel, invBtn, eqBtn, atkBtn, exitBtn, joyState
     };
   }
 
@@ -1467,9 +1472,10 @@
     }
 
     function portalSizeScale(size) {
-      if (size === "L") return 1.48;
-      if (size === "M") return 1.36;
-      return 1.24;
+      const touchMul = isTouchDevice() ? 0.88 : 1;
+      if (size === "L") return 1.48 * touchMul;
+      if (size === "M") return 1.36 * touchMul;
+      return 1.24 * touchMul;
     }
 
     function layoutPortals() {
@@ -1479,8 +1485,8 @@
         p.w = base * 1.02 * m;
         p.h = base * 0.74 * m;
         if (p.key === "blacksmith") {
-          p.w *= 0.58;
-          p.h *= 0.58;
+          p.w *= 0.48;
+          p.h *= 0.48;
         }
       }
 
@@ -1494,16 +1500,20 @@
       for (const p of portals) {
         if (["avoid", "shooting", "archery", "janggi", "omok"].includes(p.key)) {
           const z = ZONES.game;
+          const touch = isTouchDevice();
+          const topY = z.y + 18;
+          const midY = z.y + z.h * (touch ? 0.43 : 0.41) - p.h * 0.5;
+          const lowerY = z.y + z.h * (touch ? 0.78 : 0.72) - p.h * 0.5;
           const gameLayout = {
-            archery: { x: z.x + 52, y: z.y + 12 },
-            janggi: { x: z.x + z.w * 0.24 - p.w * 0.5, y: z.y + z.h * 0.50 - p.h * 0.5 },
-            omok: { x: z.x + z.w * 0.50 - p.w * 0.5, y: z.y + z.h * 0.40 - p.h * 0.5 },
-            avoid: { x: z.x + z.w * 0.73 - p.w * 0.5, y: z.y + z.h * 0.60 - p.h * 0.5 },
-            shooting: { x: z.x + z.w - p.w - 60, y: z.y + 18 }
+            archery: { x: z.x + 56, y: topY },
+            janggi: { x: z.x + z.w * (touch ? 0.32 : 0.34) - p.w * 0.5, y: z.y + z.h * (touch ? 0.23 : 0.22) - p.h * 0.5 },
+            omok: { x: z.x + z.w * 0.50 - p.w * 0.5, y: midY },
+            avoid: { x: z.x + z.w * (touch ? 0.68 : 0.70) - p.w * 0.5, y: lowerY },
+            shooting: { x: z.x + z.w - p.w - 56, y: topY }
           };
           placeByRect(p, z, gameLayout[p.key].x, gameLayout[p.key].y);
         } else if (p.key === "blacksmith") {
-          placeByRect(p, ZONES.ads, ZONES.ads.x + ZONES.ads.w * 0.76, ZONES.ads.y - 22);
+          placeByRect(p, ZONES.ads, ZONES.ads.x + ZONES.ads.w * 0.78, ZONES.ads.y - 92);
         } else {
           const z = ZONES.community;
           const leftX = z.x + 72;
@@ -1870,7 +1880,7 @@
             ? `🧱 <b>${p.label}</b><br/>입장하시겠습니까?<br/><span style="font-size:12px;opacity:.85">Enter / 한 번 더 터치</span>`
             : `🧱 <b>${p.label}</b><br/>게임 준비중입니다.`);
       UI.toast.hidden = false;
-      UI.toast.innerHTML = blockSpan(message, {
+      UI.toast.innerHTML = blockSpan(message + `<br/><span style="font-size:11px;opacity:.72">${p.status === "soon" ? "바깥 터치로 닫기" : "다시 터치하면 닫기 / Enter로 입장"}</span>`, {
         bg: "linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.95))",
         fg: "#f8fafc",
         pad: "12px 18px",
@@ -1887,6 +1897,20 @@
     UI.shopModal.addEventListener("click", (e) => {
       if (e.target === UI.shopModal) closeShop();
     });
+    window.__closeMetaWorldUi = () => {
+      closeModal();
+      closeShop();
+      toggleInventory(false);
+      toggleEquipment(false);
+      UI.toast.hidden = true;
+    };
+    UI.toast.addEventListener("pointerdown", (e) => {
+      if (!modalState.open) return;
+      e.preventDefault();
+      const p = modalState.portal;
+      if (p && p.status === "open" && p.url) confirmEnter(p);
+      else closeModal();
+    }, { passive: false });
 
     /* ----------------------- Recalc / resize ----------------------- */
     function recalcWorld() {
@@ -3023,10 +3047,12 @@
 
       if (isHero && gear && gear.weaponColor) {
         ctx.save();
-        ctx.translate(13, 10);
-        ctx.rotate(0.10 + (attackPose ? -1.18 * atk : -0.04));
+        const weaponScale = gear.weaponTier && gear.weaponTier.label === "STARTER" ? 0.78 : 1;
+        ctx.translate(12, 10);
+        ctx.rotate(0.12 + (attackPose ? -1.08 * atk : -0.03));
+        ctx.scale(weaponScale, weaponScale);
         const weaponGlow = gear.weaponTier ? gear.weaponTier.glow : gear.weaponColor;
-        const bladeGrad = ctx.createLinearGradient(0, -40, 0, 14);
+        const bladeGrad = ctx.createLinearGradient(0, -34, 0, 12);
         bladeGrad.addColorStop(0, "#ffffff");
         bladeGrad.addColorStop(0.22, weaponGlow);
         bladeGrad.addColorStop(0.60, gear.weaponColor);
@@ -3035,19 +3061,19 @@
         ctx.shadowBlur = 18 + ((gear.weaponTier && gear.weaponTier.label==="MYTHIC") ? 12 : (gear.weaponTier && gear.weaponTier.label==="LEGEND") ? 7 : 0);
         ctx.fillStyle = bladeGrad;
         ctx.beginPath();
-        ctx.moveTo(-3.2, 12);
-        ctx.lineTo(-5.4, -2);
-        ctx.lineTo(-3.4, -30);
-        ctx.lineTo(0, -40);
-        ctx.lineTo(3.4, -30);
-        ctx.lineTo(5.4, -2);
-        ctx.lineTo(3.2, 12);
+        ctx.moveTo(-2.6, 10);
+        ctx.lineTo(-4.1, -1.5);
+        ctx.lineTo(-2.6, -24);
+        ctx.lineTo(0, -34);
+        ctx.lineTo(2.6, -24);
+        ctx.lineTo(4.1, -1.5);
+        ctx.lineTo(2.6, 10);
         ctx.closePath();
         ctx.fill();
         ctx.lineWidth = 1.2;
         ctx.strokeStyle = "rgba(255,255,255,0.95)";
         ctx.beginPath();
-        ctx.moveTo(0, -35); ctx.lineTo(0, 6);
+        ctx.moveTo(0, -29); ctx.lineTo(0, 5);
         ctx.stroke();
         const guardGrad = ctx.createLinearGradient(-9, 0, 9, 0);
         guardGrad.addColorStop(0, shade(gear.weaponColor, -28));
@@ -3055,14 +3081,14 @@
         guardGrad.addColorStop(1, shade(gear.weaponColor, -28));
         ctx.shadowBlur = 8;
         ctx.fillStyle = guardGrad;
-        roundRect(-10, 8, 20, 4.5, 2.4); ctx.fill();
+        roundRect(-8, 7, 16, 4.2, 2.2); ctx.fill();
         ctx.fillStyle = shade(gear.weaponColor, -18);
-        roundRect(-3.2, 11, 6.4, 12, 3.2); ctx.fill();
+        roundRect(-2.7, 10, 5.4, 10, 2.8); ctx.fill();
         const spark = 0.35 + 0.45 * Math.sin(performance.now()/170);
         ctx.fillStyle = "rgba(255,255,255,0.98)";
-        ctx.beginPath(); ctx.arc(0, -31, 1.8 + spark, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(3.2, -18, 1.0 + spark*0.5, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(-2.6, -9, 0.9 + spark*0.35, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, -27, 1.6 + spark, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(2.4, -15, 0.9 + spark*0.45, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-2.0, -7, 0.8 + spark*0.3, 0, Math.PI*2); ctx.fill();
         ctx.restore();
       }
       ctx.restore();
