@@ -193,11 +193,13 @@
     modal.style.display = "none";
     modal.style.alignItems = "center";
     modal.style.justifyContent = "center";
-    modal.style.background = "transparent";
+    modal.style.background = "rgba(2,6,23,0.18)";
+    modal.style.backdropFilter = "blur(1.5px)";
 
     const modalInner = ensureEl("lego_modal_inner", "div", modal);
-    modalInner.style.width = "min(760px, calc(100vw - 40px))";
+    modalInner.style.width = "min(360px, calc(100vw - 28px))";
     modalInner.style.padding = "0";
+    modalInner.style.pointerEvents = "auto";
     modalInner.style.textAlign = "center";
     modalInner.style.font = "1100 18px system-ui";
     modalInner.style.color = "rgba(10,14,24,0.92)";
@@ -205,11 +207,11 @@
     modalInner.style.webkitUserSelect = "none";
 
     const modalTitle = ensureEl("lego_modal_title", "div", modalInner);
-    modalTitle.style.font = "1200 24px system-ui";
+    modalTitle.style.font = "1200 22px system-ui";
     modalTitle.style.marginBottom = "10px";
 
     const modalBody = ensureEl("lego_modal_body", "div", modalInner);
-    modalBody.style.font = "1100 20px system-ui";
+    modalBody.style.font = "1000 16px system-ui";
     modalBody.style.opacity = "0.94";
     modalBody.style.marginBottom = "10px";
     modalBody.style.lineHeight = "1.35";
@@ -217,6 +219,32 @@
     const modalHint = ensureEl("lego_modal_hint", "div", modalInner);
     modalHint.style.font = "900 13px system-ui";
     modalHint.style.opacity = "0.72";
+
+    const shopModal = ensureEl("blacksmith_modal", "div");
+    shopModal.style.position = "fixed";
+    shopModal.style.inset = "0";
+    shopModal.style.zIndex = "10003";
+    shopModal.style.display = "none";
+    shopModal.style.alignItems = "center";
+    shopModal.style.justifyContent = "center";
+    shopModal.style.background = "rgba(2,6,23,0.38)";
+    shopModal.style.backdropFilter = "blur(3px)";
+    shopModal.style.padding = "24px";
+
+    const shopCard = ensureEl("blacksmith_card", "div", shopModal);
+    shopCard.style.width = "min(980px, calc(100vw - 28px))";
+    shopCard.style.maxHeight = "min(84vh, 980px)";
+    shopCard.style.overflow = "auto";
+    shopCard.style.padding = "18px";
+    shopCard.style.borderRadius = "24px";
+    shopCard.style.border = "1px solid rgba(148,163,184,0.22)";
+    shopCard.style.background = "linear-gradient(180deg, rgba(2,6,23,0.97), rgba(15,23,42,0.94))";
+    shopCard.style.boxShadow = "0 30px 90px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08)";
+    shopCard.style.color = "#f8fafc";
+
+    const shopTitle = ensureEl("blacksmith_title", "div", shopCard);
+    const shopBody = ensureEl("blacksmith_body", "div", shopCard);
+    const shopHint = ensureEl("blacksmith_hint", "div", shopCard);
 
     const panelWrap = ensureEl("hud_panels", "div");
     panelWrap.style.position = "fixed";
@@ -341,6 +369,45 @@
       .panel-title b { font:1000 16px system-ui; color:#0a0e18; }
       .panel-title span { font:800 11px system-ui; color:rgba(10,14,24,0.58); }
       .empty-text { font:800 12px system-ui; color:rgba(10,14,24,0.56); padding:6px 2px; }
+      .shop-head {
+        display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+        margin-bottom:14px; padding:14px 16px; border-radius:20px;
+        background:linear-gradient(180deg, rgba(15,23,42,0.94), rgba(30,41,59,0.92));
+        border:1px solid rgba(148,163,184,0.20);
+        box-shadow:inset 0 1px 0 rgba(255,255,255,0.07);
+      }
+      .shop-grid {
+        display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+        gap:12px; margin-top:14px;
+      }
+      .shop-item {
+        position:relative; overflow:hidden; border-radius:20px; padding:14px;
+        border:1px solid rgba(148,163,184,0.18);
+        background:linear-gradient(180deg, rgba(15,23,42,0.96), rgba(30,41,59,0.90));
+        box-shadow:0 18px 38px rgba(2,6,23,0.32), inset 0 1px 0 rgba(255,255,255,0.06);
+        display:flex; gap:12px; align-items:center;
+      }
+      .shop-item::before {
+        content:""; position:absolute; inset:0; pointer-events:none;
+        background:linear-gradient(135deg, rgba(255,255,255,0.10), transparent 34%, transparent 100%);
+      }
+      .shop-item .meta { display:flex; flex-direction:column; gap:4px; flex:1; min-width:0; }
+      .shop-item .meta b { font:1000 14px system-ui; color:#f8fafc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .shop-item .meta span { font:800 11px system-ui; color:rgba(226,232,240,0.74); }
+      .shop-item .price { font:1000 16px system-ui; color:#fcd34d; letter-spacing:0.02em; }
+      .shop-item button {
+        border:none; border-radius:14px; padding:10px 14px; cursor:pointer;
+        background:linear-gradient(180deg,#f59e0b,#ea580c); color:#fff; font:1000 12px system-ui;
+        box-shadow:0 12px 24px rgba(234,88,12,0.28);
+      }
+      .shop-item button[disabled] {
+        background:linear-gradient(180deg,#475569,#334155); box-shadow:none; opacity:0.85;
+      }
+      .rarity-chip {
+        display:inline-flex; align-items:center; gap:6px; width:max-content;
+        font:900 10px system-ui; letter-spacing:0.08em; text-transform:uppercase;
+        padding:5px 8px; border-radius:999px; border:1px solid rgba(255,255,255,0.14);
+      }
     `;
 
     const joy = ensureEl("joystick", "div");
@@ -450,6 +517,7 @@
 
     return {
       canvas, toast, coord, fps, fade, modal, modalTitle, modalBody, modalHint,
+      shopModal, shopCard, shopTitle, shopBody, shopHint,
       inventoryPanel, equipmentPanel, invBtn, eqBtn, atkBtn, joyState
     };
   }
@@ -530,7 +598,7 @@
 
     const SHOP_IMAGE_FILES = {
       avoid: "%EB%B9%84%ED%96%89%EA%B8%B0%EA%B2%8C%EC%9E%84%EC%A1%B4.png",
-      archery: "%EC%96%91%EA%B6%81%EA%B2%8C%EC%9E%84%EC%A1%B4.png",
+      shooting: "%EC%96%91%EA%B6%81%EA%B2%8C%EC%9E%84%EC%A1%B4.png",
       janggi: "%EC%9E%A5%EA%B8%B0%EC%A1%B4.png",
       omok: "%EC%98%A4%EB%AA%A9%EC%A1%B4.png",
       twitter: "%ED%8A%B8%EC%9C%84%ED%84%B0%EC%A1%B4.png",
@@ -572,14 +640,14 @@
 
     const portals = [
       { key: "avoid", label: "AIRPLANE", status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "archery", label: "SHOOTING", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", message: "", type: "tower", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "blacksmith", label: "BLACKSMITH", status: "shop", url: "", message: "", type: "forge", size: "M", x: 0, y: 0, w: 0, h: 0 },
+      { key: "shooting", label: "SHOOTING", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", message: "슈팅게임에 입장하시겠습니까?", type: "tower", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "janggi", label: "JANGGI", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "omok", label: "OMOK", status: "soon", url: "", message: "게임 준비중입니다.", type: "cafe", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "twitter", label: "TWITTER", status: "open", url: "https://x.com/FAGLOBAL_", type: "social", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "telegram", label: "TELEGRAM", status: "open", url: "https://t.me/faglobalgp", type: "social", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "wallet", label: "WALLET", status: "open", url: "https://faglobal.site/", type: "wallet", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "market", label: "MARKET", status: "open", url: "https://famarket.store/", type: "market", size: "L", x: 0, y: 0, w: 0, h: 0 }
+      { key: "market", label: "MARKET", status: "open", url: "https://famarket.store/", type: "market", size: "L", x: 0, y: 0, w: 0, h: 0 },
+      { key: "blacksmith", label: "BLACKSMITH", status: "shop", url: "", message: "상점에 입장하시겠습니까?", type: "building", size: "L", x: 0, y: 0, w: 0, h: 0 }
     ];
 
           const portalsByKey = (k) => portals.find((p) => p.key === k);
@@ -618,7 +686,6 @@
       attackT: 0,
       slashFx: [],
       slimes: [],
-      robots: [],
       stars: 0,
       canAttack: true
     };
@@ -628,12 +695,10 @@
       inventoryOpen: false,
       equipmentOpen: false,
       items: [
-        { id: "hat_royal", slot: "hat", name: "Royal Helm", desc: "모자 슬롯", color: "#dc2626", owned: true, icon: "helm" },
-        { id: "armor_shadow", slot: "armor", name: "Shadow Armor", desc: "갑옷 슬롯", color: "#111827", owned: true, icon: "armor" },
-        { id: "weapon_blade", slot: "weapon", name: "Crimson Blade", desc: "무기 슬롯", color: "#ef4444", owned: true, icon: "sword" },
-        { id: "shield_guard", slot: "shield", name: "Aegis Guard", desc: "방패 슬롯", color: "#94a3b8", owned: true, icon: "shield" },
-        { id: "weapon_obsidian", slot: "weapon", name: "Obsidian Saber", desc: "대장장이 무기", color: "#991b1b", owned: false, icon: "sword", price: 0 },
-        { id: "shield_void", slot: "shield", name: "Void Bulwark", desc: "대장장이 방패", color: "#475569", owned: false, icon: "shield", price: 0 },
+        { id: "hat_royal", slot: "hat", name: "Royal Helm", desc: "기본 투구", color: "#dc2626", owned: true, icon: "helm", price: 0, tier: "starter" },
+        { id: "armor_shadow", slot: "armor", name: "Shadow Armor", desc: "기본 갑옷", color: "#111827", owned: true, icon: "armor", price: 0, tier: "starter" },
+        { id: "weapon_blade", slot: "weapon", name: "Crimson Blade", desc: "기본 검", color: "#ef4444", owned: true, icon: "sword", price: 0, tier: "starter" },
+        { id: "shield_guard", slot: "shield", name: "Aegis Guard", desc: "기본 방패", color: "#94a3b8", owned: true, icon: "shield", price: 0, tier: "starter" },
       ],
       equipped: {
         hat: "hat_royal",
@@ -643,59 +708,161 @@
       }
     };
 
+    function rarityStyle(price = 0) {
+      if (price >= 850) return { tier: "mythic", label: "MYTHIC", glow: "#fb7185", color: "#f43f5e" };
+      if (price >= 600) return { tier: "legend", label: "LEGEND", glow: "#f59e0b", color: "#fbbf24" };
+      if (price >= 360) return { tier: "epic", label: "EPIC", glow: "#a78bfa", color: "#8b5cf6" };
+      if (price >= 180) return { tier: "rare", label: "RARE", glow: "#38bdf8", color: "#0ea5e9" };
+      return { tier: "common", label: "COMMON", glow: "#94a3b8", color: "#64748b" };
+    }
+
+    function buildBlacksmithCatalog() {
+      const defs = {
+        weapon: {
+          icon: "sword",
+          names: ["Iron Saber","Blaze Edge","Moon Fang","Storm Carver","Obsidian Saber","Celestial Reaver","Nova Longblade","Rune Splitter","Void Cleaver","Meteor Fang","Astra Fang","Frost Shard","Inferno Blade"],
+          desc: "공격력을 높이는 검"
+        },
+        shield: {
+          icon: "shield",
+          names: ["Tower Ward","Aegis Crest","Void Bulwark","Moon Bastion","Titan Guard","Solar Guard","Echo Barrier","Rune Shelter","Azure Ward","Crimson Bastion","Mythril Wall","Onyx Guard"],
+          desc: "생존력을 높이는 방패"
+        },
+        hat: {
+          icon: "helm",
+          names: ["Pilot Helm","Knight Visor","Gundam Crest","Shadow Crown","Nova Helm","Dread Visor","Aether Mask","Steel Horn","Black Flame Helm","Arc Reactor Helm","Nebula Crown","Dragon Crest"],
+          desc: "투구 슬롯 장비"
+        },
+        armor: {
+          icon: "armor",
+          names: ["Field Armor","Titan Plate","Nebula Armor","Gundam Frame","Nightguard Suit","Astra Plate","Infernal Mail","Void Shell","Phantom Armor","Guardian Frame","Royal Plate","Mythic Suit","Steel Jacket"],
+          desc: "갑옷 슬롯 장비"
+        }
+      };
+      const prices = [30,45,60,75,90,110,130,150,180,210,240,270,300,340,380,420,460,500,560,620,700,780,860,940,1000];
+      const used = new Set(inventoryState.items.map((it) => it.id));
+      let seed = 0;
+      const order = ["weapon","shield","hat","armor"];
+      for (const slot of order) {
+        const names = defs[slot].names;
+        for (let i = 0; i < 13; i++) {
+          const base = names[i % names.length];
+          const price = prices[(seed * 7 + i * 3) % prices.length];
+          const rare = rarityStyle(price);
+          const id = `${slot}_${base.toLowerCase().replace(/[^a-z0-9]+/g, "_")}_${i}`;
+          if (used.has(id)) continue;
+          inventoryState.items.push({
+            id,
+            slot,
+            name: base,
+            desc: defs[slot].desc,
+            color: rare.color,
+            glow: rare.glow,
+            owned: false,
+            icon: defs[slot].icon,
+            price,
+            tier: rare.tier,
+            rarityLabel: rare.label
+          });
+          used.add(id);
+        }
+        seed++;
+      }
+    }
+    buildBlacksmithCatalog();
+
     function getItemById(id) {
       return inventoryState.items.find((it) => it.id === id) || null;
     }
 
-    const shopState = {
-      items: [
-        { id: "weapon_obsidian", label: "Obsidian Saber", price: 0 },
-        { id: "shield_void", label: "Void Bulwark", price: 0 }
-      ]
-    };
+    const shopState = { open: false, filter: "all" };
 
-    function rerollShopPrices() {
-      for (const it of shopState.items) {
-        const v = 30 + Math.floor(Math.random() * 971);
-        it.price = Math.min(1000, v);
-        const ref = getItemById(it.id);
-        if (ref) ref.price = it.price;
-      }
+    function closeShop() {
+      shopState.open = false;
+      UI.shopModal.style.display = "none";
+      UI.shopTitle.innerHTML = "";
+      UI.shopBody.innerHTML = "";
+      UI.shopHint.innerHTML = "";
     }
 
-    function buyShopItem(id) {
-      const shopItem = shopState.items.find((it) => it.id === id);
-      const invItem = getItemById(id);
-      if (!shopItem || !invItem) return;
-      if (invItem.owned) return;
-      if (combatState.stars < shopItem.price) {
+    function ownedCountBySlot(slot) {
+      return inventoryState.items.filter((it) => it.slot === slot && it.owned).length;
+    }
+
+    function purchaseItem(itemId) {
+      const item = getItemById(itemId);
+      if (!item || item.owned) return;
+      if (combatState.stars < item.price) {
         UI.toast.hidden = false;
-        UI.toast.innerHTML = blockSpan(`⭐ 스타가 부족합니다.<br/><b>${shopItem.price} STAR</b> 필요`, { bg: "rgba(255,255,255,0.94)" });
-        setTimeout(() => { if (!modalState.open) UI.toast.hidden = true; }, 1400);
+        UI.toast.innerHTML = blockSpan(`⭐ 스타가 부족합니다.<br/><b>${item.price}</b> STAR 필요`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
+        setTimeout(() => { if (!modalState.open && !shopState.open) UI.toast.hidden = true; }, 1200);
         return;
       }
-      combatState.stars -= shopItem.price;
-      invItem.owned = true;
-      inventoryState.equipped[invItem.slot] = invItem.id;
+      combatState.stars -= item.price;
+      item.owned = true;
+      inventoryState.equipped[item.slot] = item.id;
       player.gearFlashT = 0.8;
       renderPanels();
-      openBlacksmithShop();
+      renderShop();
     }
 
-    function openBlacksmithShop() {
-      modalState.open = true;
-      modalState.portal = portalsByKey("blacksmith");
-      UI.modal.style.display = "flex";
-      UI.modalTitle.innerHTML = blockSpan(`⚒️ <b>BLACKSMITH</b>`, { bg: "rgba(255,255,255,0.96)", pad: "10px 16px", radius: "16px", shadow: "0 8px 18px rgba(0,0,0,0.10)" });
-      const lines = shopState.items.map((it) => {
-        const owned = !!getItemById(it.id)?.owned;
-        return `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;margin:8px 0;border-radius:14px;background:rgba(255,255,255,0.95);border:1px solid rgba(15,23,42,0.08)"><div><div style="font:900 13px system-ui;color:#111827">${it.label}</div><div style="font:700 11px system-ui;color:#64748b">${owned ? "구매 완료" : `${it.price} STAR`}</div></div><button ${owned ? "disabled" : ""} data-shop-buy="${it.id}" style="cursor:pointer;border:none;border-radius:12px;padding:10px 14px;background:${owned ? "#94a3b8" : "linear-gradient(180deg,#f59e0b,#ea580c)"};color:#fff;font:900 11px system-ui">${owned ? "보유중" : "구매"}</button></div>`;
-      }).join("");
-      UI.modalBody.innerHTML = `<div style="width:min(420px,calc(100vw - 36px));margin:0 auto">${lines}<div style="margin-top:8px;font:900 12px system-ui;color:#334155;background:rgba(255,255,255,0.9);border-radius:12px;padding:10px 12px">보유 STAR : ★ ${combatState.stars}</div></div>`;
-      UI.modalHint.innerHTML = blockSpan(`닫기: 바깥 터치 / ESC`, { bg: "rgba(255,255,255,0.78)", pad: "8px 10px", radius: "12px", shadow: "0 6px 14px rgba(0,0,0,0.08)" });
+    function renderShop(filter = shopState.filter || "all") {
+      shopState.filter = filter;
+      shopState.open = true;
+      UI.shopModal.style.display = "flex";
+      const filters = [
+        { key: "all", label: "전체" },
+        { key: "weapon", label: "무기" },
+        { key: "shield", label: "방패" },
+        { key: "hat", label: "투구" },
+        { key: "armor", label: "갑옷" }
+      ];
+      const items = inventoryState.items.filter((it) => !it.owned && (filter === "all" || it.slot === filter)).sort((a,b) => a.price - b.price);
+      UI.shopTitle.innerHTML = `
+        <div class="shop-head">
+          <div>
+            <div style="font:1000 22px system-ui;color:#f8fafc">⚒ BLACKSMITH</div>
+            <div style="font:800 12px system-ui;color:rgba(226,232,240,0.70);margin-top:4px">입장하시겠습니까? → 상점이 열렸습니다. 무기 / 방패 / 투구 / 갑옷을 구매하세요.</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <div style="padding:10px 12px;border-radius:999px;background:linear-gradient(180deg,rgba(245,158,11,0.22),rgba(251,191,36,0.10));border:1px solid rgba(251,191,36,0.25);font:1000 14px system-ui;color:#fde68a">★ ${combatState.stars} STAR</div>
+            <button id="shop_close_btn" style="border:none;border-radius:12px;padding:10px 12px;background:linear-gradient(180deg,#334155,#0f172a);color:#fff;font:900 12px system-ui;cursor:pointer">닫기</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">${filters.map((f) => `<button class="shop_filter_btn" data-filter="${f.key}" style="border:none;border-radius:999px;padding:9px 12px;cursor:pointer;background:${filter===f.key ? "linear-gradient(180deg,#38bdf8,#2563eb)" : "linear-gradient(180deg,#1e293b,#0f172a)"};color:#fff;font:900 11px system-ui">${f.label}</button>`).join("")}</div>
+      `;
+      if (!items.length) {
+        UI.shopBody.innerHTML = `<div style="margin-top:18px;padding:24px;border-radius:20px;background:linear-gradient(180deg,rgba(15,23,42,0.96),rgba(30,41,59,0.92));border:1px solid rgba(148,163,184,0.18);font:900 14px system-ui;color:rgba(226,232,240,0.82)">모든 상품을 구매했습니다.</div>`;
+      } else {
+        UI.shopBody.innerHTML = `<div class="shop-grid">${items.map((item) => {
+          const disabled = combatState.stars < item.price ? "disabled" : "";
+          const rare = rarityStyle(item.price);
+          return `
+            <div class="shop-item" style="box-shadow:0 18px 38px rgba(2,6,23,0.32), 0 0 24px ${rare.glow}30, inset 0 1px 0 rgba(255,255,255,0.06)">
+              ${iconMarkup(item)}
+              <div class="meta">
+                <span class="rarity-chip" style="color:${rare.color};background:${rare.glow}18;box-shadow:0 0 18px ${rare.glow}22">${rare.label}</span>
+                <b>${item.name}</b>
+                <span>${item.desc}</span>
+                <div class="price">★ ${item.price}</div>
+              </div>
+              <button data-buy="${item.id}" ${disabled}>구매</button>
+            </div>
+          `;
+        }).join("")}</div>`;
+      }
+      UI.shopHint.innerHTML = `<div style="margin-top:14px;font:800 12px system-ui;color:rgba(226,232,240,0.64)">닫기: 바깥 터치 / ESC</div>`;
+
+      const closeBtn = document.getElementById("shop_close_btn");
+      if (closeBtn) closeBtn.onclick = () => closeShop();
+      document.querySelectorAll(".shop_filter_btn").forEach((btn) => {
+        btn.onclick = () => renderShop(btn.dataset.filter || "all");
+      });
+      document.querySelectorAll("[data-buy]").forEach((btn) => {
+        btn.onclick = () => purchaseItem(btn.getAttribute("data-buy"));
+      });
     }
 
-    rerollShopPrices();
 
     function toggleInventory(force) {
       inventoryState.inventoryOpen = typeof force === "boolean" ? force : !inventoryState.inventoryOpen;
@@ -734,7 +901,8 @@
         bg = "radial-gradient(circle at 50% 26%, #cbd5e1, #1e293b 74%)";
         shape = '<div style="position:absolute;left:13px;right:13px;top:10px;bottom:11px;background:linear-gradient(180deg,#94a3b8,#334155);clip-path:polygon(50% 0%, 90% 18%, 86% 72%, 50% 100%, 14% 72%, 10% 18%);border:1px solid rgba(255,255,255,0.14)"></div><div style="position:absolute;left:24px;top:15px;width:4px;height:22px;border-radius:4px;background:#f8fafc"></div><div style="position:absolute;left:17px;top:24px;width:18px;height:4px;border-radius:4px;background:#ef4444"></div>';
       }
-      return `<div class="item-icon${equipped ? " active" : ""}" style="background:${bg}">${shape}</div>`;
+      const glow = item?.glow || item?.color || "rgba(148,163,184,0.45)";
+      return `<div class="item-icon${equipped ? " active" : ""}" style="background:${bg};box-shadow:inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 1px rgba(255,255,255,0.06), 0 0 18px ${glow}55, 0 10px 20px rgba(2,6,23,0.28)">${shape}</div>`;
     }
 
     function renderPanels() {
@@ -842,7 +1010,7 @@
 
     function triggerAttack() {
       if (combatState.attackT <= 0) {
-        combatState.attackT = 0.34;
+        combatState.attackT = 0.28;
         player.gearFlashT = 0.25;
       }
     }
@@ -870,6 +1038,7 @@
       }
       if (k === "escape") {
         closeModal();
+        closeShop();
         toggleInventory(false);
         toggleEquipment(false);
       }
@@ -1046,7 +1215,7 @@
     function blockSpan(html, opts = {}) {
       const bg = opts.bg || "rgba(255,255,255,0.88)";
       const fg = opts.fg || "#0a0e18";
-      const bd = opts.bd || "rgba(0,0,0,0.08)";
+      const bd = opts.bd || opts.border || "rgba(0,0,0,0.08)";
       const pad = opts.pad || "12px 16px";
       const radius = opts.radius || "16px";
       const shadow = opts.shadow || "0 16px 40px rgba(0,0,0,0.14)";
@@ -1189,16 +1358,16 @@
       }
 
       const desired = {
-        archery: { x: ZONES.game.x + ZONES.game.w * 0.18, y: ZONES.game.y + ZONES.game.h * 0.20 },
-        janggi:  { x: ZONES.game.x + ZONES.game.w * 0.78, y: ZONES.game.y + ZONES.game.h * 0.26 },
-        avoid:   { x: ZONES.game.x + ZONES.game.w * 0.22, y: ZONES.game.y + ZONES.game.h * 0.72 },
-        omok:    { x: ZONES.game.x + ZONES.game.w * 0.78, y: ZONES.game.y + ZONES.game.h * 0.76 },
+        shooting: { x: ZONES.game.x + ZONES.game.w * 0.20, y: ZONES.game.y + ZONES.game.h * 0.22 },
+        janggi:  { x: ZONES.game.x + ZONES.game.w * 0.74, y: ZONES.game.y + ZONES.game.h * 0.28 },
+        avoid:   { x: ZONES.game.x + ZONES.game.w * 0.26, y: ZONES.game.y + ZONES.game.h * 0.72 },
+        omok:    { x: ZONES.game.x + ZONES.game.w * 0.76, y: ZONES.game.y + ZONES.game.h * 0.78 },
 
         twitter:  { x: ZONES.community.x + ZONES.community.w * 0.24, y: ZONES.community.y + ZONES.community.h * 0.24 },
-        wallet:   { x: ZONES.community.x + ZONES.community.w * 0.76, y: ZONES.community.y + ZONES.community.h * 0.28 },
+        wallet:   { x: ZONES.community.x + ZONES.community.w * 0.76, y: ZONES.community.y + ZONES.community.h * 0.30 },
         telegram: { x: ZONES.community.x + ZONES.community.w * 0.22, y: ZONES.community.y + ZONES.community.h * 0.76 },
-        market:   { x: ZONES.community.x + ZONES.community.w * 0.78, y: ZONES.community.y + ZONES.community.h * 0.74 },
-        blacksmith: { x: ZONES.ads.x + ZONES.ads.w * 0.84, y: ZONES.ads.y + ZONES.ads.h * 0.72 }
+        market:   { x: ZONES.community.x + ZONES.community.w * 0.76, y: ZONES.community.y + ZONES.community.h * 0.78 },
+        blacksmith: { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.70 }
       };
 
       function clampIntoZone(p, z, d) {
@@ -1210,8 +1379,8 @@
 
       for (const p of portals) {
         const d = desired[p.key] || { x: WORLD.w * 0.5, y: WORLD.h * 0.5 };
-        if (["avoid", "archery", "janggi", "omok"].includes(p.key)) clampIntoZone(p, ZONES.game, d);
-        else if (p.key === "blacksmith") clampIntoZone(p, ZONES.ads, d);
+        if (["avoid", "shooting", "janggi", "omok"].includes(p.key)) clampIntoZone(p, ZONES.game, d);
+        else if (["blacksmith"].includes(p.key)) clampIntoZone(p, ZONES.ads, d);
         else clampIntoZone(p, ZONES.community, d);
       }
     }
@@ -1525,22 +1694,37 @@
     function confirmEnter(p) {
       if (!p) return;
       closeModal();
+      if (p.key === "blacksmith") {
+        renderShop("all");
+        return;
+      }
       if (p.status === "open" && p.url) {
         entering = true;
         fadeTo(() => { window.location.href = p.url; }, 220);
       } else {
         UI.toast.hidden = false;
-        UI.toast.innerHTML = blockSpan(`🧱 <b>${p.label}</b><br/>${p.message || "게임 준비중입니다."}`);
+        UI.toast.innerHTML = blockSpan(`🧱 <b>${p.label}</b><br/>${p.message || "게임 준비중입니다."}`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
         setTimeout(() => {
-          if (!modalState.open) UI.toast.hidden = true;
+          if (!modalState.open && !shopState.open) UI.toast.hidden = true;
         }, 1500);
       }
     }
 
     function openPortalUI(p) {
       if (!p) return;
-      if (p.key === "blacksmith" || p.status === "shop") {
-        openBlacksmithShop();
+      if (p.key === "blacksmith") {
+        modalState.open = true;
+        modalState.portal = p;
+        UI.modal.style.display = "flex";
+        UI.modalTitle.innerHTML = blockSpan(`⚒ <b>${p.label}</b>`, {
+          bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#f8fafc", pad: "12px 18px", radius: "18px", border: "1px solid rgba(148,163,184,0.18)"
+        });
+        UI.modalBody.innerHTML = blockSpan(`상점에 입장하시겠습니까?<br/><b>Enter</b> 또는 화면을 한 번 더 터치`, {
+          bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#e2e8f0", pad: "14px 18px", radius: "18px", border: "1px solid rgba(148,163,184,0.18)"
+        });
+        UI.modalHint.innerHTML = blockSpan(`닫기: <b>ESC</b> / 바깥 터치`, {
+          bg: "rgba(15,23,42,0.88)", fg: "#cbd5e1", pad: "8px 12px", radius: "14px", border: "1px solid rgba(148,163,184,0.14)"
+        });
         return;
       }
       modalState.open = true;
@@ -1548,31 +1732,26 @@
       UI.modal.style.display = "flex";
       const isOpen = p.status === "open" && (!!p.url || !!p.message);
       UI.modalTitle.innerHTML = blockSpan(`🧱 <b>${p.label}</b>`, {
-        bg: "rgba(255,255,255,0.96)", pad: "10px 14px", radius: "15px", shadow: "0 8px 18px rgba(0,0,0,0.10)"
+        bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#f8fafc", pad: "12px 18px", radius: "18px", border: "1px solid rgba(148,163,184,0.18)"
       });
       UI.modalBody.innerHTML = isOpen
-        ? blockSpan(`입장하려면 <b>E</b> 또는 <b>Enter</b><br/>모바일은 한 번 더 터치`, {
-            bg: "rgba(255,255,255,0.93)", pad: "10px 14px", radius: "15px", shadow: "0 8px 18px rgba(0,0,0,0.08)"
+        ? blockSpan(`입장하시겠습니까?<br/><b>Enter</b> 또는 화면을 한 번 더 터치`, {
+            bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#e2e8f0", pad: "14px 18px", radius: "18px", border: "1px solid rgba(148,163,184,0.18)"
           })
         : blockSpan(`게임 준비중입니다.`, {
-            bg: "rgba(255,255,255,0.93)", pad: "10px 14px", radius: "15px", shadow: "0 8px 18px rgba(0,0,0,0.08)"
+            bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#e2e8f0", pad: "14px 18px", radius: "18px", border: "1px solid rgba(148,163,184,0.18)"
           });
-      UI.modalHint.innerHTML = blockSpan(`닫기: 바깥 터치 / ESC`, {
-        bg: "rgba(255,255,255,0.78)", pad: "7px 10px", radius: "12px", shadow: "0 6px 14px rgba(0,0,0,0.08)"
+      UI.modalHint.innerHTML = blockSpan(`닫기: <b>ESC</b> / 바깥 터치`, {
+        bg: "rgba(15,23,42,0.88)", fg: "#cbd5e1", pad: "8px 12px", radius: "14px", border: "1px solid rgba(148,163,184,0.14)"
       });
     }
 
     UI.modal.addEventListener("click", (e) => {
-      const buyId = e.target && e.target.getAttribute ? e.target.getAttribute("data-shop-buy") : "";
-      if (buyId) {
-        e.stopPropagation();
-        buyShopItem(buyId);
-        return;
-      }
       if (!modalState.open) return;
-      if (e.target !== UI.modal) return;
-      if (isTouchDevice() && modalState.portal && modalState.portal.status === "open") confirmEnter(modalState.portal);
-      else closeModal();
+      if (e.target === UI.modal) closeModal();
+    });
+    UI.shopModal.addEventListener("click", (e) => {
+      if (e.target === UI.shopModal) closeShop();
     });
 
     /* ----------------------- Recalc / resize ----------------------- */
@@ -1581,8 +1760,8 @@
       VIEW.w = W / VIEW.zoom;
       VIEW.h = H / VIEW.zoom;
 
-      WORLD.w = Math.max(5200, Math.floor(W * 4.6));
-      WORLD.h = Math.max(3200, Math.floor(H * 3.5));
+      WORLD.w = Math.max(4200, Math.floor(W * 3.9));
+      WORLD.h = Math.max(2700, Math.floor(H * 3.05));
 
       syncArtBounds();
       layoutZonesFromArt();
@@ -1785,27 +1964,23 @@
       const g = z.entrance;
       const pulse = 0.5 + 0.5 * Math.sin(t * 3.2);
       ctx.save();
-      for (let i = 0; i < 3; i++) {
-        ctx.globalAlpha = 0.08 - i * 0.02 + pulse * 0.02;
-        ctx.strokeStyle = z.color;
-        ctx.lineWidth = 8 - i * 2;
-        roundRect(g.x - 12 - i * 8, g.y - 12 - i * 6, g.w + 24 + i * 16, g.h + 24 + i * 12, 26 + i * 4);
-        ctx.stroke();
-      }
       groundAO(g.x - 8, g.y + g.h - 10, g.w + 16, 30, 0.20);
+      ctx.fillStyle = "rgba(255,255,255,0.16)";
+      roundRect(g.x - 12, g.y - 10, g.w + 24, g.h + 18, 20);
+      ctx.fill();
       const grad = ctx.createLinearGradient(g.x, g.y, g.x, g.y + g.h);
-      grad.addColorStop(0, "rgba(255,255,255,0.96)");
-      grad.addColorStop(1, "rgba(235,244,255,0.90)");
+      grad.addColorStop(0, "rgba(255,255,255,0.92)");
+      grad.addColorStop(1, "rgba(235,244,255,0.88)");
       ctx.fillStyle = grad;
       roundRect(g.x, g.y, g.w, g.h, 18);
       ctx.fill();
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 3;
       ctx.strokeStyle = z.color;
       roundRect(g.x, g.y, g.w, g.h, 18);
       ctx.stroke();
-      ctx.globalAlpha = 0.10 + pulse * 0.12;
+      ctx.globalAlpha = 0.15 + pulse * 0.10;
       ctx.fillStyle = z.color;
-      roundRect(g.x + 8, g.y + 8, g.w - 16, g.h - 16, 14);
+      roundRect(g.x + 6, g.y + 6, g.w - 12, g.h - 12, 14);
       ctx.fill();
       ctx.globalAlpha = 1;
       ctx.fillStyle = "rgba(10,14,24,0.88)";
@@ -1844,7 +2019,6 @@
         igloo:   { wall: "#dfe8ef", frame: "#567",    knob: "#ffffff", grass: "#8be4a7", sign: "#06b6d4", glassA: "#d3f3ff", glassB: "#f5fdff", accent: "#93c5fd" },
         gym:     { wall: "#d8c5aa", frame: "#5b4634", knob: "#fff2d6", grass: "#68d67e", sign: "#22c55e", glassA: "#afe5ff", glassB: "#eefaff", accent: "#34d399" },
         social:  { wall: "#d9c9ad", frame: "#5e4a35", knob: "#fff",    grass: "#67d67f", sign: "#0ea5e9", glassA: "#bcecff", glassB: "#eefcff", accent: "#38bdf8" },
-        forge:   { wall: "#c8b08f", frame: "#3f2e21", knob: "#fff3d4", grass: "#67d67f", sign: "#f97316", glassA: "#ffd8a8", glassB: "#fff2d6", accent: "#ef4444" },
         wallet:  { wall: "#d8c4a5", frame: "#5d4632", knob: "#fff5dc", grass: "#64d679", sign: "#10b981", glassA: "#b9edff", glassB: "#effdff", accent: "#6ee7b7" },
         market:  { wall: "#dbc9a7", frame: "#60452f", knob: "#fff2d0", grass: "#66d77b", sign: "#f59e0b", glassA: "#baeaff", glassB: "#effcff", accent: "#fbbf24" },
         support: { wall: "#d8c4aa", frame: "#5b4635", knob: "#fff6df", grass: "#67d67d", sign: "#8b5cf6", glassA: "#c8eaff", glassB: "#f3fbff", accent: "#a78bfa" },
@@ -2135,17 +2309,6 @@
       ctx.restore();
 
       const ez = portalEnterZone(p);
-      if (p.key === "blacksmith") {
-        ctx.save();
-        ctx.globalAlpha = 0.8;
-        ctx.fillStyle = "#f97316";
-        for (let i = 0; i < 4; i++) {
-          ctx.beginPath();
-          ctx.arc(x + w * (0.28 + i * 0.12), y + h * 0.38 + Math.sin(t * 3 + i) * 4, 3, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        ctx.restore();
-      }
       const hover = activePortal && activePortal.key === p.key;
       if (hover) {
         ctx.save();
@@ -2435,13 +2598,11 @@
         ctx.fill();
       }
       for (const p of portals) {
-        ctx.fillStyle = p.key === "blacksmith" ? "#f97316" : "rgba(255,255,255,0.95)";
+        ctx.fillStyle = "rgba(255,255,255,0.95)";
         ctx.beginPath();
-        ctx.arc(x + pad + (p.x + p.w * 0.5) * sx, y + pad + (p.y + p.h * 0.6) * sy, p.key === "blacksmith" ? 3.6 : 2.8, 0, Math.PI * 2);
+        ctx.arc(x + pad + (p.x + p.w * 0.5) * sx, y + pad + (p.y + p.h * 0.6) * sy, 2.8, 0, Math.PI * 2);
         ctx.fill();
       }
-      for (const m of combatState.slimes) if (!m.dead) { ctx.fillStyle = "#22c55e"; ctx.fillRect(x + pad + m.x * sx - 1, y + pad + m.y * sy - 1, 3, 3); }
-      for (const m of combatState.robots) if (!m.dead) { ctx.fillStyle = "#ef4444"; ctx.fillRect(x + pad + m.x * sx - 1.5, y + pad + m.y * sy - 1.5, 4, 4); }
       ctx.fillStyle = "#111827";
       ctx.beginPath();
       ctx.arc(x + pad + player.x * sx, y + pad + player.y * sy, 3.6, 0, Math.PI * 2);
@@ -2486,8 +2647,7 @@
         hatColor: hat ? hat.color : null,
         armorColor: armor ? armor.color : null,
         weaponColor: weapon ? weapon.color : null,
-        shieldColor: shield ? shield.color : null,
-        hasHat: !!hat, hasArmor: !!armor, hasWeapon: !!weapon, hasShield: !!shield
+        shieldColor: shield ? shield.color : null
       };
     }
 
@@ -2522,7 +2682,7 @@
       const bob = moving ? Math.sin(walkPhase) * 1.5 : 0;
       const armSwing = moving ? Math.sin(walkPhase) * 0.45 : 0;
       const legSwing = moving ? Math.sin(walkPhase + Math.PI) * 0.42 : 0;
-      const atk = isHero ? Math.min(1, combatState.attackT / 0.34) : 0;
+      const atk = isHero ? combatState.attackT / 0.28 : 0;
       const attackPose = isHero && combatState.attackT > 0;
 
       ctx.save();
@@ -2536,7 +2696,7 @@
       ctx.fill();
       ctx.globalAlpha = 1;
 
-      const armorBase = gear && gear.hasArmor && gear.armorColor ? gear.armorColor : '#2563eb';
+      const armorBase = gear && gear.armorColor ? gear.armorColor : '#111827';
       const blueGlow = '#60a5fa';
 
       ctx.save();
@@ -2631,7 +2791,7 @@
       }
       ctx.restore();
 
-      if (isHero && gear && gear.hasShield && gear.shieldColor) {
+      if (isHero && gear && gear.shieldColor) {
         ctx.save();
         ctx.translate(-22, -1);
         ctx.rotate(-0.20);
@@ -2656,8 +2816,8 @@
       roundRect(-12, -34, 24, 18, 8);
       ctx.fill();
 
-      if (isHero && gear && gear.hatColor) {
-        const helmColor = gear.hatColor || "#05070c";
+      if (isHero) {
+        const helmColor = "#05070c";
         const helmGrad = ctx.createLinearGradient(0, -58, 0, -18);
         helmGrad.addColorStop(0, "#4b5563");
         helmGrad.addColorStop(0.32, helmColor);
@@ -2734,20 +2894,6 @@
       }
     }
 
-    function seedRobots(rng) {
-      combatState.robots.length = 0;
-      const spots = [
-        { x: ZONES.ads.x + ZONES.ads.w * 0.24, y: ZONES.ads.y + ZONES.ads.h * 0.80 },
-        { x: ZONES.ads.x + ZONES.ads.w * 0.60, y: ZONES.ads.y + ZONES.ads.h * 0.80 }
-      ];
-      for (const s of spots) {
-        combatState.robots.push({
-          x: s.x, y: s.y, hp: 5, dead: false, wobble: rng() * 10, respawn: 0,
-          vx: (rng() < 0.5 ? -1 : 1) * (18 + rng() * 16), vy: 0, turnT: 1.5 + rng() * 2.0
-        });
-      }
-    }
-
     function drawSlime(m, t) {
       if (m.dead) return;
       const squish = 1 + Math.sin(t * 5 + m.wobble) * 0.06;
@@ -2776,31 +2922,6 @@
       ctx.restore();
     }
 
-    function drawRobot(m, t) {
-      if (m.dead) return;
-      ctx.save();
-      ctx.translate(m.x, m.y);
-      ctx.globalAlpha = 0.22;
-      ctx.fillStyle = "rgba(10,14,24,0.7)";
-      ctx.beginPath(); ctx.ellipse(0, 34, 34, 10, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.globalAlpha = 1;
-      const bob = Math.sin(t * 2 + m.wobble) * 2;
-      ctx.translate(0, bob);
-      ctx.fillStyle = "#475569";
-      roundRect(-26, -18, 52, 48, 12); ctx.fill();
-      ctx.fillStyle = "#111827";
-      roundRect(-16, -38, 32, 24, 10); ctx.fill();
-      ctx.fillStyle = "#ef4444"; ctx.fillRect(-10, -28, 20, 4);
-      ctx.fillStyle = "#93c5fd"; ctx.fillRect(-16, -8, 32, 10);
-      ctx.fillStyle = "#94a3b8";
-      roundRect(-36, -12, 12, 34, 6); ctx.fill();
-      roundRect(24, -12, 12, 34, 6); ctx.fill();
-      roundRect(-18, 24, 12, 18, 6); ctx.fill();
-      roundRect(6, 24, 12, 18, 6); ctx.fill();
-      ctx.fillStyle = "#60a5fa"; ctx.fillRect(-6, 6, 12, 12);
-      ctx.restore();
-    }
-
     function getFootY(entity) {
       if (entity.kind === "building") return entity.y + entity.h;
       if (entity.kind === "car") return entity.axis === "h" ? entity.y + entity.h / 2 : entity.y + entity.h / 2;
@@ -2814,7 +2935,6 @@
       if (entity.kind === "roamer") return entity.y + 30;
       if (entity.kind === "player") return entity.y + 28;
       if (entity.kind === "slime") return entity.y + 18;
-      if (entity.kind === "robot") return entity.y + 34;
       return entity.y;
     }
 
@@ -2945,22 +3065,6 @@
         if (m.x < minX || m.x > maxX) { m.vx *= -1; m.x = clamp(m.x, minX, maxX); }
         if (m.y < minY || m.y > maxY) { m.vy *= -1; m.y = clamp(m.y, minY, maxY); }
       }
-      for (const m of combatState.robots) {
-        if (m.dead) {
-          m.respawn -= dt;
-          if (m.respawn <= 0) { m.dead = false; m.hp = 5; }
-          continue;
-        }
-        m.wobble += dt * 2;
-        m.turnT -= dt;
-        if (m.turnT <= 0) {
-          m.turnT = 1.2 + rng() * 2.0;
-          m.vx = (rng() < 0.5 ? -1 : 1) * (18 + rng() * 16);
-        }
-        m.x += m.vx * dt;
-        const minX = ZONES.ads.x + 120, maxX = ZONES.ads.x + ZONES.ads.w - 120;
-        if (m.x < minX || m.x > maxX) { m.vx *= -1; m.x = clamp(m.x, minX, maxX); }
-      }
       if (combatState.attackT > 0.14 && combatState.canAttack) {
         combatState.canAttack = false;
         const range = 92;
@@ -2969,7 +3073,7 @@
         else if (player.dir === 'right') fxX += 36;
         else if (player.dir === 'up') fxY -= 32;
         else fxY += 18;
-        combatState.slashFx.push({ x: fxX, y: fxY, dir: player.dir, life: 0.22 });
+        combatState.slashFx.push({ x: fxX, y: fxY, dir: player.dir, life: 0.16 });
         for (const m of combatState.slimes) {
           if (m.dead) continue;
           const inFront = Math.hypot(m.x - fxX, m.y - fxY) < range;
@@ -2979,19 +3083,6 @@
               m.dead = true;
               m.respawn = 7;
               combatState.stars += 1;
-              renderPanels();
-            }
-          }
-        }
-        for (const m of combatState.robots) {
-          if (m.dead) continue;
-          const inFront = Math.hypot(m.x - fxX, m.y - fxY) < range + 22;
-          if (inFront) {
-            m.hp -= 1;
-            if (m.hp <= 0) {
-              m.dead = true;
-              m.respawn = 12;
-              combatState.stars += 5;
               renderPanels();
             }
           }
@@ -3014,8 +3105,10 @@
       if (!modalState.open && activePortal) {
         UI.toast.hidden = false;
         UI.toast.innerHTML = blockSpan(
-          activePortal.status === "open"
-            ? `🧱 <b>${activePortal.label}</b><br/>입장하려면 <b>E</b> 또는 <b>Enter</b>`
+          activePortal.key === "blacksmith"
+            ? `⚒ <b>${activePortal.label}</b><br/>상점을 열려면 <b>E</b> 또는 <b>Enter</b>`
+            : activePortal.status === "open"
+            ? `🧱 <b>${activePortal.label}</b><br/>입장하시겠습니까? <b>E</b> 또는 <b>Enter</b>`
             : `🧱 <b>${activePortal.label}</b><br/>게임 준비중입니다.`,
           { bg: "rgba(255,255,255,0.88)" }
         );
@@ -3077,7 +3170,6 @@
       for (const c of cars) renderables.push({ kind: "car", ref: c });
       for (const r of roamers) renderables.push({ kind: "roamer", ref: r });
       for (const m of combatState.slimes) if (!m.dead) renderables.push({ kind: "slime", ref: m });
-      for (const m of combatState.robots) if (!m.dead) renderables.push({ kind: "robot", ref: m });
       renderables.push({ kind: "player", ref: player });
 
       renderables.sort((a, b) => getFootY({ ...a.ref, kind: a.kind }) - getFootY({ ...b.ref, kind: b.kind }));
@@ -3097,7 +3189,6 @@
           case "npc": drawNPC(r.key, r.x, r.y); break;
           case "roamer": drawRoamer(r, roamerPalette); break;
           case "slime": drawSlime(r, t); break;
-          case "robot": drawRobot(r, t); break;
           case "player":
             if (!drawSpriteCharacter(player.x, player.y)) {
               drawMinifig(player.x, player.y, { isHero: true, moving: player.moving, walkPhase: player.walkPhase });
@@ -3107,7 +3198,7 @@
       }
       for (const fx of combatState.slashFx) {
         ctx.save();
-        const a = Math.max(0, fx.life / 0.22);
+        const a = Math.max(0, fx.life / 0.16);
         ctx.globalAlpha = a;
         ctx.translate(fx.x, fx.y);
         const rot = fx.dir === 'left' ? Math.PI : fx.dir === 'up' ? -Math.PI/2 : fx.dir === 'down' ? Math.PI/2 : 0;
@@ -3115,17 +3206,17 @@
         ctx.strokeStyle = 'rgba(255,255,255,0.98)';
         ctx.lineWidth = 7;
         ctx.beginPath();
-        ctx.arc(0, 0, 42, -1.45, 0.72);
+        ctx.arc(0, 0, 36, -1.15, 0.48);
         ctx.stroke();
         ctx.strokeStyle = 'rgba(147,197,253,0.92)';
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.arc(0, 0, 52, -1.50, 0.58);
+        ctx.arc(0, 0, 44, -1.22, 0.40);
         ctx.stroke();
         ctx.strokeStyle = 'rgba(255,255,255,0.45)';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(0, 0, 62, -1.55, 0.44);
+        ctx.arc(0, 0, 52, -1.28, 0.30);
         ctx.stroke();
         ctx.restore();
       }
@@ -3148,7 +3239,7 @@
     canvas.addEventListener("pointerdown", () => {
       if (!isTouchDevice()) return;
       const now = performance.now();
-      if (modalState.open && modalState.portal && modalState.portal.status === "open") {
+      if (modalState.open && modalState.portal) {
         if (now - touchTapAt < 340) confirmEnter(modalState.portal);
         touchTapAt = now;
       } else if (activePortal) {
