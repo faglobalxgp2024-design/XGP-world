@@ -1895,6 +1895,9 @@
       if (knob) knob.style.transform = "translate(-50%, -50%)";
       const enterBtn = UI.enterBtn;
       if (enterBtn) enterBtn.style.display = "none";
+      if (isTouchDevice()) {
+        entering = false;
+      }
     }
 
     function showPortalToast(html, actions = []) {
@@ -1920,6 +1923,67 @@
       }
     }
 
+    let enterFallbackTimer = 0;
+
+    function resetMobileInputLock() {
+      entering = false;
+      UI.joyState.active = false;
+      UI.joyState.id = -1;
+      UI.joyState.ax = 0;
+      UI.joyState.ay = 0;
+      const knob = document.getElementById("joystick_knob");
+      if (knob) knob.style.transform = "translate(-50%, -50%)";
+      if (UI.enterBtn) UI.enterBtn.style.display = "none";
+      if (UI.toast) {
+        UI.toast.hidden = true;
+        UI.toast.style.pointerEvents = "none";
+      }
+    }
+
+    function goToPortalUrl(url) {
+      if (!url) {
+        entering = false;
+        return;
+      }
+      entering = true;
+      clearTimeout(enterFallbackTimer);
+      enterFallbackTimer = setTimeout(() => {
+        if (document.visibilityState === "visible") {
+          resetMobileInputLock();
+        }
+      }, isTouchDevice() ? 1400 : 900);
+      fadeTo(() => {
+        try {
+          const a = document.createElement("a");
+          a.href = url;
+          a.target = "_self";
+          a.rel = "noopener";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => {
+            if (document.visibilityState === "visible") {
+              window.location.assign(url);
+            }
+          }, 60);
+        } catch (err) {
+          try {
+            window.location.assign(url);
+          } catch (err2) {
+            resetMobileInputLock();
+          }
+        }
+      }, 220);
+    }
+
+    window.addEventListener("pageshow", () => { resetMobileInputLock(); });
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        clearTimeout(enterFallbackTimer);
+        entering = false;
+      }
+    });
+
     function confirmEnter(p) {
       if (!p) return;
       closeModal();
@@ -1928,8 +1992,7 @@
         return;
       }
       if (p.status === "open" && p.url) {
-        entering = true;
-        fadeTo(() => { window.location.href = p.url; }, 220);
+        goToPortalUrl(p.url);
       } else {
         showPortalToast(`🧱 <b>${p.label}</b><br/>${p.message || "게임 준비중입니다."}`, [
           { label: "나가기", onClick: () => {
@@ -1938,18 +2001,10 @@
               if (isTouchDevice()) {
                 mobilePortalSuppressKey = p.key;
                 mobilePortalSuppressUntil = performance.now() + 1200;
-                UI.joyState.active = false;
-                UI.joyState.id = -1;
-                UI.joyState.ax = 0;
-                UI.joyState.ay = 0;
-                const knob = document.getElementById("joystick_knob");
-                if (knob) knob.style.transform = "translate(-50%, -50%)";
               }
+              resetMobileInputLock();
             } }
         ]);
-        setTimeout(() => {
-          if (!modalState.open && !shopState.open) { UI.toast.hidden = true; UI.toast.style.pointerEvents = "none"; }
-        }, 1800);
       }
     }
 
