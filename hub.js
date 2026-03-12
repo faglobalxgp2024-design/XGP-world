@@ -455,12 +455,12 @@
     `;
 
     const joy = ensureEl("joystick", "div");
-    const JOY_SIZE = 136;
-    const JOY_KNOB = 58;
-    const JOY_RING = 104;
+    const JOY_SIZE = 112;
+    const JOY_KNOB = 48;
+    const JOY_RING = 84;
     joy.style.position = "fixed";
-    joy.style.right = "18px";
-    joy.style.left = "auto";
+    joy.style.left = "18px";
+    joy.style.right = "auto";
     joy.style.bottom = "18px";
     joy.style.zIndex = "10001";
     joy.style.width = `${JOY_SIZE}px`;
@@ -482,8 +482,8 @@
 
     const joyRing = ensureEl("joystick_ring", "div", joy);
     joyRing.style.position = "absolute";
-    joyRing.style.left = "16px";
-    joyRing.style.top = "16px";
+    joyRing.style.left = "14px";
+    joyRing.style.top = "14px";
     joyRing.style.width = `${JOY_RING}px`;
     joyRing.style.height = `${JOY_RING}px`;
     joyRing.style.borderRadius = "999px";
@@ -512,7 +512,7 @@
     function setJoy(ax, ay) {
       joyState.ax = ax;
       joyState.ay = ay;
-      const max = 52;
+      const max = 42;
       const px = ax * max;
       const py = ay * max;
       joyKnob.style.transform = `translate(calc(-50% + ${px}px), calc(-50% + ${py}px))`;
@@ -532,7 +532,7 @@
       const cy = r.top + r.height / 2;
       const dx = e.clientX - cx;
       const dy = e.clientY - cy;
-      const max = 62;
+      const max = 48;
       const len = Math.hypot(dx, dy) || 1;
       const k = Math.min(1, len / max);
       const ax = (dx / len) * k;
@@ -1467,9 +1467,10 @@
     }
 
     function portalSizeScale(size) {
-      if (size === "L") return 1.48;
-      if (size === "M") return 1.36;
-      return 1.24;
+      const touch = isTouchDevice();
+      if (size === "L") return touch ? 1.18 : 1.48;
+      if (size === "M") return touch ? 1.08 : 1.36;
+      return touch ? 1.00 : 1.24;
     }
 
     function layoutPortals() {
@@ -1494,16 +1495,23 @@
       for (const p of portals) {
         if (["avoid", "shooting", "archery", "janggi", "omok"].includes(p.key)) {
           const z = ZONES.game;
-          const gameLayout = {
-            archery: { x: z.x + 52, y: z.y + 12 },
-            janggi: { x: z.x + z.w * 0.24 - p.w * 0.5, y: z.y + z.h * 0.50 - p.h * 0.5 },
-            omok: { x: z.x + z.w * 0.50 - p.w * 0.5, y: z.y + z.h * 0.40 - p.h * 0.5 },
-            avoid: { x: z.x + z.w * 0.73 - p.w * 0.5, y: z.y + z.h * 0.60 - p.h * 0.5 },
-            shooting: { x: z.x + z.w - p.w - 60, y: z.y + 18 }
+          const touch = isTouchDevice();
+          const gameLayout = touch ? {
+            archery:  { x: z.x + 34,               y: z.y + 22 },
+            janggi:   { x: z.x + z.w * 0.24 - p.w * 0.5, y: z.y + z.h * 0.56 - p.h * 0.5 },
+            omok:     { x: z.x + z.w * 0.50 - p.w * 0.5, y: z.y + z.h * 0.46 - p.h * 0.5 },
+            avoid:    { x: z.x + z.w * 0.74 - p.w * 0.5, y: z.y + z.h * 0.64 - p.h * 0.5 },
+            shooting: { x: z.x + z.w * 0.88 - p.w * 0.5, y: z.y + 26 }
+          } : {
+            archery:  { x: z.x + 42,               y: z.y + 12 },
+            janggi:   { x: z.x + z.w * 0.24 - p.w * 0.5, y: z.y + z.h * 0.54 - p.h * 0.5 },
+            omok:     { x: z.x + z.w * 0.50 - p.w * 0.5, y: z.y + z.h * 0.43 - p.h * 0.5 },
+            avoid:    { x: z.x + z.w * 0.74 - p.w * 0.5, y: z.y + z.h * 0.62 - p.h * 0.5 },
+            shooting: { x: z.x + z.w * 0.90 - p.w * 0.5, y: z.y + 20 }
           };
           placeByRect(p, z, gameLayout[p.key].x, gameLayout[p.key].y);
         } else if (p.key === "blacksmith") {
-          placeByRect(p, ZONES.ads, ZONES.ads.x + ZONES.ads.w * 0.76, ZONES.ads.y - 22);
+          placeByRect(p, ZONES.ads, ZONES.ads.x + ZONES.ads.w * 0.76, ZONES.ads.y - 72);
         } else {
           const z = ZONES.community;
           const leftX = z.x + 72;
@@ -3023,46 +3031,46 @@
 
       if (isHero && gear && gear.weaponColor) {
         ctx.save();
-        ctx.translate(13, 10);
-        ctx.rotate(0.10 + (attackPose ? -1.18 * atk : -0.04));
+        ctx.translate(11, 9);
+        ctx.rotate(0.12 + (attackPose ? -1.04 * atk : -0.03));
         const weaponGlow = gear.weaponTier ? gear.weaponTier.glow : gear.weaponColor;
-        const bladeGrad = ctx.createLinearGradient(0, -40, 0, 14);
+        const bladeGrad = ctx.createLinearGradient(0, -32, 0, 12);
         bladeGrad.addColorStop(0, "#ffffff");
         bladeGrad.addColorStop(0.22, weaponGlow);
         bladeGrad.addColorStop(0.60, gear.weaponColor);
         bladeGrad.addColorStop(1, shade(gear.weaponColor, -35));
         ctx.shadowColor = weaponGlow;
-        ctx.shadowBlur = 18 + ((gear.weaponTier && gear.weaponTier.label==="MYTHIC") ? 12 : (gear.weaponTier && gear.weaponTier.label==="LEGEND") ? 7 : 0);
+        ctx.shadowBlur = 14 + ((gear.weaponTier && gear.weaponTier.label==="MYTHIC") ? 10 : (gear.weaponTier && gear.weaponTier.label==="LEGEND") ? 6 : 0);
         ctx.fillStyle = bladeGrad;
         ctx.beginPath();
-        ctx.moveTo(-3.2, 12);
-        ctx.lineTo(-5.4, -2);
-        ctx.lineTo(-3.4, -30);
-        ctx.lineTo(0, -40);
-        ctx.lineTo(3.4, -30);
-        ctx.lineTo(5.4, -2);
-        ctx.lineTo(3.2, 12);
+        ctx.moveTo(-2.6, 10);
+        ctx.lineTo(-4.2, -1);
+        ctx.lineTo(-2.8, -24);
+        ctx.lineTo(0, -32);
+        ctx.lineTo(2.8, -24);
+        ctx.lineTo(4.2, -1);
+        ctx.lineTo(2.6, 10);
         ctx.closePath();
         ctx.fill();
-        ctx.lineWidth = 1.2;
-        ctx.strokeStyle = "rgba(255,255,255,0.95)";
+        ctx.lineWidth = 1.1;
+        ctx.strokeStyle = "rgba(255,255,255,0.92)";
         ctx.beginPath();
-        ctx.moveTo(0, -35); ctx.lineTo(0, 6);
+        ctx.moveTo(0, -27); ctx.lineTo(0, 5);
         ctx.stroke();
-        const guardGrad = ctx.createLinearGradient(-9, 0, 9, 0);
+        const guardGrad = ctx.createLinearGradient(-7, 0, 7, 0);
         guardGrad.addColorStop(0, shade(gear.weaponColor, -28));
         guardGrad.addColorStop(0.5, weaponGlow);
         guardGrad.addColorStop(1, shade(gear.weaponColor, -28));
         ctx.shadowBlur = 8;
         ctx.fillStyle = guardGrad;
-        roundRect(-10, 8, 20, 4.5, 2.4); ctx.fill();
+        roundRect(-8, 6.8, 16, 4, 2.2); ctx.fill();
         ctx.fillStyle = shade(gear.weaponColor, -18);
-        roundRect(-3.2, 11, 6.4, 12, 3.2); ctx.fill();
+        roundRect(-2.4, 9, 4.8, 10, 2.4); ctx.fill();
         const spark = 0.35 + 0.45 * Math.sin(performance.now()/170);
         ctx.fillStyle = "rgba(255,255,255,0.98)";
-        ctx.beginPath(); ctx.arc(0, -31, 1.8 + spark, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(3.2, -18, 1.0 + spark*0.5, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(-2.6, -9, 0.9 + spark*0.35, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, -25, 1.4 + spark*0.8, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(2.4, -15, 0.9 + spark*0.4, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-2.0, -8, 0.75 + spark*0.3, 0, Math.PI*2); ctx.fill();
         ctx.restore();
       }
       ctx.restore();
