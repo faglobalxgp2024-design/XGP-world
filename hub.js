@@ -1150,7 +1150,10 @@
         return;
       }
       closeModal();
-      if (UI.enterBtn) UI.enterBtn.style.display = "none";
+      if (UI.enterBtn) {
+        UI.enterBtn.style.display = "none";
+        UI.enterBtn.disabled = true;
+      }
       mobileToastUntil = performance.now() + 1850;
       UI.toast.hidden = false;
       UI.toast.style.display = "block";
@@ -1234,6 +1237,25 @@
     window.addEventListener("keyup", (e) => {
       keys.delete(e.key.toLowerCase());
     });
+    function resetPortalResumeState() {
+      entering = false;
+      closeModal();
+      if (!shopState.open) {
+        UI.toast.hidden = true;
+        UI.toast.style.display = "none";
+        UI.toast.innerHTML = "";
+      }
+      keys.clear();
+      player.moving = false;
+      portalSuppressUntil = performance.now() + 900;
+    }
+
+    window.addEventListener("pageshow", resetPortalResumeState);
+    window.addEventListener("focus", resetPortalResumeState);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) resetPortalResumeState();
+    });
+
 
     canvas.addEventListener("pointerdown", (e) => {
       if (isTouchDevice()) return;
@@ -1575,7 +1597,7 @@
           const z = ZONES.game;
           const gameLayout = touchLayout ? {
             archery: { x: z.x + 18, y: z.y + 10 },
-            janggi: { x: z.x + z.w * 0.70 - p.w * 0.5, y: z.y + z.h - p.h - 10 },
+            janggi: { x: z.x + z.w * 0.55 - p.w * 0.5, y: z.y + z.h - p.h - 10 },
             omok: { x: z.x + z.w * 0.10, y: z.y + z.h * 0.47 - p.h * 0.5 },
             avoid: { x: z.x + z.w - p.w - 8, y: z.y + z.h * 0.70 - p.h * 0.5 },
             shooting: { x: z.x + z.w - p.w - 94, y: z.y - 6 }
@@ -1937,7 +1959,13 @@
       UI.modalBody.innerHTML = "";
       UI.modalHint.innerHTML = "";
       if (!shopState.open) { UI.toast.hidden = true; UI.toast.style.display = "none"; UI.toast.innerHTML = ""; }
-      if (UI.enterBtn) UI.enterBtn.style.display = "none";
+      if (UI.enterBtn) {
+        UI.enterBtn.style.display = "none";
+        UI.enterBtn.disabled = false;
+        UI.enterBtn.textContent = "입장";
+        UI.enterBtn.style.opacity = "1";
+        UI.enterBtn.style.filter = "none";
+      }
     }
 
     function confirmEnter(p) {
@@ -3478,6 +3506,7 @@
     let acc = 0, framesCount = 0;
     let lastMobileZoneKey = "";
     let touchTapAt = 0;
+    let portalSuppressUntil = 0;
 
     function update(dt, t, rng) {
       let ax = 0, ay = 0;
@@ -3702,8 +3731,23 @@
           UI.toast.hidden = true;
           UI.toast.style.display = "none";
           UI.toast.innerHTML = "";
-          if (UI.enterBtn) UI.enterBtn.style.display = "block";
-        } else {
+          if (UI.enterBtn) {
+            UI.enterBtn.style.display = "block";
+            if (activePortal.key === "blacksmith") {
+              UI.enterBtn.textContent = "상점";
+              UI.enterBtn.disabled = false;
+              UI.enterBtn.style.opacity = "1";
+            } else if (activePortal.status === "open" && activePortal.url) {
+              UI.enterBtn.textContent = "입장";
+              UI.enterBtn.disabled = false;
+              UI.enterBtn.style.opacity = "1";
+            } else {
+              UI.enterBtn.textContent = "준비중";
+              UI.enterBtn.disabled = true;
+              UI.enterBtn.style.opacity = "0.72";
+            }
+          }
+        } else if (performance.now() >= portalSuppressUntil) {
           UI.toast.hidden = false;
           UI.toast.style.display = "block";
           UI.toast.innerHTML = blockSpan(
@@ -3717,7 +3761,12 @@
         }
       } else if (!modalState.open) {
         if (performance.now() >= mobileToastUntil) { UI.toast.hidden = true; UI.toast.style.display = "none"; UI.toast.innerHTML = ""; }
-        if (UI.enterBtn) UI.enterBtn.style.display = "none";
+        if (UI.enterBtn) {
+          UI.enterBtn.style.display = "none";
+          UI.enterBtn.disabled = false;
+          UI.enterBtn.textContent = "입장";
+          UI.enterBtn.style.opacity = "1";
+        }
       }
 
       if (isTouchDevice()) {
