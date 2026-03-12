@@ -187,18 +187,19 @@
     fade.style.background = "radial-gradient(circle at 50% 50%, rgba(15,23,42,0.18), rgba(2,6,23,0.82))";
 
     const modal = ensureEl("lego_modal", "div");
+    modal.innerHTML = "";
     modal.style.position = "fixed";
     modal.style.inset = "0";
     modal.style.zIndex = "10000";
     modal.style.display = "none";
     modal.style.alignItems = "flex-start";
     modal.style.justifyContent = "center";
-    modal.style.paddingTop = "88px";
+    modal.style.paddingTop = "72px";
     modal.style.background = "transparent";
     modal.style.backdropFilter = "none";
 
     const modalInner = ensureEl("lego_modal_inner", "div", modal);
-    modalInner.style.width = "min(420px, calc(100vw - 28px))";
+    modalInner.style.width = "min(360px, calc(100vw - 24px))";
     modalInner.style.padding = "0";
     modalInner.style.pointerEvents = "auto";
     modalInner.style.textAlign = "center";
@@ -214,12 +215,12 @@
 
     const modalTitle = ensureEl("lego_modal_title", "div", modalInner);
     modalTitle.style.font = "1200 22px system-ui";
-    modalTitle.style.marginBottom = "10px";
+    modalTitle.style.marginBottom = "8px";
 
     const modalBody = ensureEl("lego_modal_body", "div", modalInner);
     modalBody.style.font = "1000 16px system-ui";
     modalBody.style.opacity = "0.94";
-    modalBody.style.marginBottom = "10px";
+    modalBody.style.marginBottom = "8px";
     modalBody.style.lineHeight = "1.35";
 
     const modalHint = ensureEl("lego_modal_hint", "div", modalInner);
@@ -227,14 +228,15 @@
     modalHint.style.opacity = "0.72";
 
     const shopModal = ensureEl("blacksmith_modal", "div");
+    shopModal.innerHTML = "";
     shopModal.style.position = "fixed";
     shopModal.style.inset = "0";
     shopModal.style.zIndex = "10003";
     shopModal.style.display = "none";
     shopModal.style.alignItems = "center";
     shopModal.style.justifyContent = "center";
-    shopModal.style.background = "rgba(2,6,23,0.38)";
-    shopModal.style.backdropFilter = "blur(3px)";
+    shopModal.style.background = "rgba(2,6,23,0.22)";
+    shopModal.style.backdropFilter = "none";
     shopModal.style.padding = "24px";
 
     const shopCard = ensureEl("blacksmith_card", "div", shopModal);
@@ -1772,7 +1774,7 @@
       if (p.key === "blacksmith") {
         modalState.open = true;
         modalState.portal = p;
-        UI.modal.style.display = "flex"; UI.modal.style.pointerEvents = "auto";
+        UI.modal.style.display = "flex"; UI.modal.style.pointerEvents = "auto"; UI.modal.style.background = "transparent";
         UI.modalTitle.innerHTML = blockSpan(`⚒ <b>${p.label}</b>`, {
           bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#f8fafc", pad: "12px 18px", radius: "18px", border: "1px solid rgba(148,163,184,0.18)"
         });
@@ -1786,7 +1788,7 @@
       }
       modalState.open = true;
       modalState.portal = p;
-      UI.modal.style.display = "flex"; UI.modal.style.pointerEvents = "auto";
+      UI.modal.style.display = "flex"; UI.modal.style.pointerEvents = "auto"; UI.modal.style.background = "transparent";
       const isOpen = p.status === "open" && (!!p.url || !!p.message);
       UI.modalTitle.innerHTML = blockSpan(`🧱 <b>${p.label}</b>`, {
         bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#f8fafc", pad: "12px 18px", radius: "18px", border: "1px solid rgba(148,163,184,0.18)"
@@ -2395,14 +2397,10 @@
       const hover = activePortal && activePortal.key === p.key;
       if (hover) {
         ctx.save();
-        ctx.globalAlpha = 0.06 + 0.04 * Math.sin(t * 6);
-        ctx.fillStyle = c.sign;
-        roundRect(ez.x, ez.y, ez.w, ez.h, 12);
-        ctx.fill();
-        ctx.globalAlpha = 0.80;
-        ctx.strokeStyle = c.sign;
-        ctx.lineWidth = 3;
-        roundRect(ez.x, ez.y, ez.w, ez.h, 12);
+        ctx.globalAlpha = 0.10 + 0.04 * Math.sin(t * 6);
+        ctx.strokeStyle = "rgba(255,255,255,0.18)";
+        ctx.lineWidth = 2;
+        roundRect(ez.x + 8, ez.y + 8, ez.w - 16, ez.h - 16, 10);
         ctx.stroke();
         ctx.restore();
       }
@@ -3208,7 +3206,7 @@
             : activePortal.status === "open"
             ? `🧱 <b>${activePortal.label}</b><br/>입장하시겠습니까? <b>E</b> 또는 <b>Enter</b>`
             : `🧱 <b>${activePortal.label}</b><br/>게임 준비중입니다.`,
-          { bg: "rgba(255,255,255,0.88)" }
+          { bg: "linear-gradient(180deg, rgba(10,14,24,0.96), rgba(18,25,40,0.94))", fg:"#f8fafc", bd:"rgba(148,163,184,0.16)", shadow:"0 14px 36px rgba(0,0,0,0.24)" }
         );
       } else if (!modalState.open) {
         UI.toast.hidden = true;
