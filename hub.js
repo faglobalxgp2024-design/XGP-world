@@ -317,19 +317,22 @@
 
     const mobileBtns = ensureEl("mobile_hud_buttons", "div");
     mobileBtns.style.position = "fixed";
-    mobileBtns.style.right = "18px";
-    mobileBtns.style.bottom = "126px";
+    mobileBtns.style.left = "14px";
+    mobileBtns.style.top = "54px";
+    mobileBtns.style.bottom = "auto";
+    mobileBtns.style.right = "auto";
     mobileBtns.style.zIndex = "10002";
     mobileBtns.style.display = isTouchDevice() ? "flex" : "none";
     mobileBtns.style.flexDirection = "column";
-    mobileBtns.style.gap = "10px";
+    mobileBtns.style.alignItems = "flex-start";
+    mobileBtns.style.gap = "8px";
 
     const invBtn = ensureEl("btn_inventory", "button", mobileBtns);
     const eqBtn = ensureEl("btn_equipment", "button", mobileBtns);
     const enterBtn = ensureEl("btn_enter", "button", mobileBtns);
     const atkBtn = ensureEl("btn_attack", "button", mobileBtns);
-    invBtn.textContent = "I / 인벤";
-    eqBtn.textContent = "TAB / 장착";
+    invBtn.textContent = "인벤";
+    eqBtn.textContent = "장착";
     enterBtn.textContent = "입장";
     atkBtn.textContent = "ATTACK";
     [invBtn, eqBtn, enterBtn, atkBtn].forEach((b) => {
@@ -352,6 +355,20 @@
     atkBtn.style.color = "#fff";
     atkBtn.style.fontWeight = "1000";
     atkBtn.style.minWidth = "110px";
+    if (isTouchDevice()) {
+      atkBtn.style.position = "fixed";
+      atkBtn.style.right = "18px";
+      atkBtn.style.bottom = "32px";
+      atkBtn.style.left = "auto";
+      atkBtn.style.top = "auto";
+      atkBtn.style.zIndex = "10003";
+      enterBtn.style.position = "fixed";
+      enterBtn.style.right = "18px";
+      enterBtn.style.bottom = "96px";
+      enterBtn.style.left = "auto";
+      enterBtn.style.top = "auto";
+      enterBtn.style.zIndex = "10003";
+    }
 
     const style = ensureEl("lego_style_injected", "style", document.head);
     style.textContent = `
@@ -1514,12 +1531,12 @@
         p.w = base * 1.02 * m;
         p.h = base * 0.74 * m;
         if (touchLayout && p.key !== "blacksmith") {
-          p.w *= 0.90;
-          p.h *= 0.90;
+          p.w *= 0.82;
+          p.h *= 0.82;
         }
         if (p.key === "market") {
-          p.w *= 1.10;
-          p.h *= 1.08;
+          p.w *= 1.18;
+          p.h *= 1.14;
         }
         if (p.key === "blacksmith") {
           p.w *= 0.58;
@@ -1538,11 +1555,11 @@
         if (["avoid", "shooting", "archery", "janggi", "omok"].includes(p.key)) {
           const z = ZONES.game;
           const gameLayout = touchLayout ? {
-            archery: { x: z.x + 46, y: z.y + 18 },
-            janggi: { x: z.x + 60, y: z.y + z.h - p.h - 72 },
-            omok: { x: z.x + z.w * 0.44 - p.w * 0.5, y: z.y + z.h * 0.34 - p.h * 0.5 },
-            avoid: { x: z.x + z.w * 0.70 - p.w * 0.5, y: z.y + z.h * 0.68 - p.h * 0.5 },
-            shooting: { x: z.x + z.w - p.w - 48, y: z.y + 24 }
+            archery: { x: z.x + 34, y: z.y + 20 },
+            janggi: { x: z.x + z.w * 0.58 - p.w * 0.5, y: z.y + z.h - p.h - 18 },
+            omok: { x: z.x + z.w * 0.18, y: z.y + z.h * 0.48 - p.h * 0.5 },
+            avoid: { x: z.x + z.w * 0.70 - p.w * 0.5, y: z.y + z.h * 0.60 - p.h * 0.5 },
+            shooting: { x: z.x + z.w - p.w - 26, y: z.y + 18 }
           } : {
             archery: { x: z.x + 52, y: z.y + 12 },
             janggi: { x: z.x + z.w * 0.30 - p.w * 0.5, y: z.y + z.h * 0.58 - p.h * 0.5 },
@@ -1560,16 +1577,15 @@
           const topY = z.y + 38;
           const bottomY = z.y + z.h - p.h - 56;
           if (touchLayout) {
-            const rowGap = 96;
             if (p.key === "twitter") placeByRect(p, z, leftX, topY);
-            else if (p.key === "wallet") placeByRect(p, z, rightX, topY);
-            else if (p.key === "telegram") placeByRect(p, z, leftX + 36, bottomY - rowGap);
-            else if (p.key === "market") placeByRect(p, z, rightX - 34, bottomY);
+            else if (p.key === "wallet") placeByRect(p, z, rightX, topY + 6);
+            else if (p.key === "telegram") placeByRect(p, z, rightX - 8, bottomY - 8);
+            else if (p.key === "market") placeByRect(p, z, leftX + 24, bottomY - 22);
           } else {
             if (p.key === "twitter") placeByRect(p, z, leftX, topY);
             else if (p.key === "wallet") placeByRect(p, z, rightX, topY);
-            else if (p.key === "telegram") placeByRect(p, z, leftX + 120, bottomY);
-            else if (p.key === "market") placeByRect(p, z, rightX - p.w - 150, topY + 18);
+            else if (p.key === "telegram") placeByRect(p, z, leftX + 176, bottomY + 4);
+            else if (p.key === "market") placeByRect(p, z, rightX - p.w - 190, topY + 20);
           }
         }
       }
@@ -1932,10 +1948,10 @@
       UI.modalBody.innerHTML = "";
       UI.modalHint.innerHTML = "";
       const message = p.key === "blacksmith"
-        ? `⚒ <b>${p.label}</b><br/>상점에 입장하시겠습니까?<br/><span style="font-size:12px;opacity:.85">Enter / 한 번 더 터치</span>`
+        ? `⚒ <b>${p.label}</b><br/>상점에 입장하시겠습니까?`
         : (p.status === "open" && (!!p.url || !!p.message)
-            ? `🧱 <b>${p.label}</b><br/>입장하시겠습니까?<br/><span style="font-size:12px;opacity:.85">Enter / 한 번 더 터치</span>`
-            : `🧱 <b>${p.label}</b><br/>게임 준비중입니다.`);
+            ? `🧱 <b>${p.label}</b><br/>입장하시겠습니까?`
+            : `🧱 <b>${p.label}</b><br/>${p.message || "게임 준비중입니다."}`);
       UI.toast.hidden = false;
       UI.toast.innerHTML = blockSpan(message, {
         bg: "linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.95))",
@@ -3618,15 +3634,7 @@
 
       if (!modalState.open && activePortal) {
         if (isTouchDevice()) {
-          UI.toast.hidden = false;
-          UI.toast.innerHTML = blockSpan(
-            activePortal.key === "blacksmith"
-              ? `⚒ <b>${activePortal.label}</b><br/>오른쪽 <b>입장</b> 버튼으로 상점을 열 수 있습니다.`
-              : activePortal.status === "open"
-              ? `🧱 <b>${activePortal.label}</b><br/>오른쪽 <b>입장</b> 버튼으로 이동합니다.`
-              : `🧱 <b>${activePortal.label}</b><br/>오른쪽 <b>입장</b> 버튼으로 안내를 볼 수 있습니다.`,
-            { bg: "linear-gradient(180deg, rgba(10,14,24,0.96), rgba(18,25,40,0.94))", fg:"#f8fafc", bd:"rgba(148,163,184,0.16)", shadow:"0 14px 36px rgba(0,0,0,0.24)" }
-          );
+          UI.toast.hidden = true;
           UI.enterBtn.style.display = "block";
         } else {
           UI.toast.hidden = false;
