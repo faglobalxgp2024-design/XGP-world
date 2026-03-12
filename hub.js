@@ -12,14 +12,14 @@
 (() => {
   "use strict";
 
-  const __legacyUiIds = ["world","toast","coord","fps","fade","lego_modal","lego_modal_inner","lego_modal_title","lego_modal_body","lego_modal_hint","blacksmith_modal","blacksmith_card","blacksmith_title","blacksmith_body","blacksmith_hint","mobile_hud_buttons","btn_inventory","btn_equipment","btn_attack","joystick","inventory_panel","equipment_panel","hud_panels","lego_style_injected"];
+  const __legacyUiIds = ["world","toast","coord","fps","fade","lego_modal","lego_modal_inner","lego_modal_title","lego_modal_body","lego_modal_hint","blacksmith_modal","blacksmith_card","blacksmith_title","blacksmith_body","blacksmith_hint","mobile_hud_buttons","btn_inventory","btn_equipment","btn_attack","btn_enter","joystick","inventory_panel","equipment_panel","hud_panels","lego_style_injected"];
   for (const __id of __legacyUiIds) {
     const __el = document.getElementById(__id);
     if (__el) __el.remove();
   }
 
   try {
-    const keepIds = new Set(["world","toast","coord","fps","fade","lego_modal","lego_modal_inner","lego_modal_title","lego_modal_body","lego_modal_hint","blacksmith_modal","blacksmith_card","blacksmith_title","blacksmith_body","blacksmith_hint","mobile_hud_buttons","btn_inventory","btn_equipment","btn_attack","joystick","inventory_panel","equipment_panel","hud_panels","lego_style_injected"]);
+    const keepIds = new Set(["world","toast","coord","fps","fade","lego_modal","lego_modal_inner","lego_modal_title","lego_modal_body","lego_modal_hint","blacksmith_modal","blacksmith_card","blacksmith_title","blacksmith_body","blacksmith_hint","mobile_hud_buttons","btn_inventory","btn_equipment","btn_attack","btn_enter","joystick","inventory_panel","equipment_panel","hud_panels","lego_style_injected"]);
     document.querySelectorAll("body > div, body > section, body > aside").forEach((el) => {
       if (!el || keepIds.has(el.id)) return;
       const cs = getComputedStyle(el);
@@ -289,9 +289,8 @@
 
     const panelWrap = ensureEl("hud_panels", "div");
     panelWrap.style.position = "fixed";
-    panelWrap.style.right = isTouchDevice() ? "auto" : "18px";
-    panelWrap.style.left = isTouchDevice() ? "18px" : "auto";
-    panelWrap.style.top = isTouchDevice() ? "160px" : "18px";
+    panelWrap.style.right = "18px";
+    panelWrap.style.top = "18px";
     panelWrap.style.zIndex = "10002";
     panelWrap.style.display = "flex";
     panelWrap.style.flexDirection = "column";
@@ -318,23 +317,22 @@
 
     const mobileBtns = ensureEl("mobile_hud_buttons", "div");
     mobileBtns.style.position = "fixed";
-    mobileBtns.style.left = "18px";
-    mobileBtns.style.top = "58px";
-    mobileBtns.style.right = "auto";
-    mobileBtns.style.bottom = "auto";
+    mobileBtns.style.right = "18px";
+    mobileBtns.style.bottom = "126px";
     mobileBtns.style.zIndex = "10002";
-    mobileBtns.style.display = isTouchDevice() ? "block" : "none";
-    mobileBtns.style.pointerEvents = "none";
+    mobileBtns.style.display = isTouchDevice() ? "flex" : "none";
+    mobileBtns.style.flexDirection = "column";
+    mobileBtns.style.gap = "10px";
 
     const invBtn = ensureEl("btn_inventory", "button", mobileBtns);
     const eqBtn = ensureEl("btn_equipment", "button", mobileBtns);
+    const enterBtn = ensureEl("btn_enter", "button", mobileBtns);
     const atkBtn = ensureEl("btn_attack", "button", mobileBtns);
-    const enterBtn = ensureEl("btn_enter_portal", "button", mobileBtns);
     invBtn.textContent = "I / 인벤";
     eqBtn.textContent = "TAB / 장착";
-    atkBtn.textContent = "ATTACK";
     enterBtn.textContent = "입장";
-    [invBtn, eqBtn, atkBtn, enterBtn].forEach((b) => {
+    atkBtn.textContent = "ATTACK";
+    [invBtn, eqBtn, enterBtn, atkBtn].forEach((b) => {
       b.style.minWidth = "96px";
       b.style.cursor = "pointer";
       b.style.border = "1px solid rgba(0,0,0,0.10)";
@@ -344,30 +342,16 @@
       b.style.padding = "12px 14px";
       b.style.borderRadius = "14px";
       b.style.boxShadow = "0 12px 28px rgba(0,0,0,0.12)";
-      b.style.pointerEvents = "auto";
-      b.style.position = "fixed";
     });
-    invBtn.style.left = "18px";
-    invBtn.style.top = "58px";
-    invBtn.style.right = "auto";
-    eqBtn.style.left = "18px";
-    eqBtn.style.top = "108px";
-    eqBtn.style.right = "auto";
-    atkBtn.style.background = "linear-gradient(180deg,#ff6b6b,#dc2626)";
-    atkBtn.style.color = "#fff";
-    atkBtn.style.fontWeight = "1000";
-    atkBtn.style.minWidth = "110px";
-    atkBtn.style.left = "auto";
-    atkBtn.style.right = "22px";
-    atkBtn.style.bottom = "26px";
     enterBtn.style.background = "linear-gradient(180deg,#22c55e,#15803d)";
     enterBtn.style.color = "#fff";
     enterBtn.style.fontWeight = "1000";
     enterBtn.style.minWidth = "110px";
-    enterBtn.style.left = "auto";
-    enterBtn.style.right = "22px";
-    enterBtn.style.bottom = "88px";
     enterBtn.style.display = "none";
+    atkBtn.style.background = "linear-gradient(180deg,#ff6b6b,#dc2626)";
+    atkBtn.style.color = "#fff";
+    atkBtn.style.fontWeight = "1000";
+    atkBtn.style.minWidth = "110px";
 
     const style = ensureEl("lego_style_injected", "style", document.head);
     style.textContent = `
@@ -478,9 +462,9 @@
     `;
 
     const joy = ensureEl("joystick", "div");
-    const JOY_SIZE = 110;
+    const JOY_SIZE = 112;
     const JOY_KNOB = 48;
-    const JOY_RING = 82;
+    const JOY_RING = 84;
     joy.style.position = "fixed";
     joy.style.left = "18px";
     joy.style.right = "auto";
@@ -505,8 +489,8 @@
 
     const joyRing = ensureEl("joystick_ring", "div", joy);
     joyRing.style.position = "absolute";
-    joyRing.style.left = "14px";
-    joyRing.style.top = "14px";
+    joyRing.style.left = "16px";
+    joyRing.style.top = "16px";
     joyRing.style.width = `${JOY_RING}px`;
     joyRing.style.height = `${JOY_RING}px`;
     joyRing.style.borderRadius = "999px";
@@ -535,7 +519,7 @@
     function setJoy(ax, ay) {
       joyState.ax = ax;
       joyState.ay = ay;
-      const max = 40;
+      const max = 52;
       const px = ax * max;
       const py = ay * max;
       joyKnob.style.transform = `translate(calc(-50% + ${px}px), calc(-50% + ${py}px))`;
@@ -555,7 +539,7 @@
       const cy = r.top + r.height / 2;
       const dx = e.clientX - cx;
       const dy = e.clientY - cy;
-      const max = 46;
+      const max = 62;
       const len = Math.hypot(dx, dy) || 1;
       const k = Math.min(1, len / max);
       const ax = (dx / len) * k;
@@ -581,15 +565,11 @@
       e.preventDefault();
       window.__metaWorldAttackTap = performance.now();
     }, { passive: false });
-    enterBtn.addEventListener("pointerdown", (e) => {
-      e.preventDefault();
-      window.__metaWorldPortalTap = performance.now();
-    }, { passive: false });
 
     return {
       canvas, toast, coord, fps, fade, modal, modalTitle, modalBody, modalHint,
       shopModal, shopCard, shopTitle, shopBody, shopHint,
-      inventoryPanel, equipmentPanel, invBtn, eqBtn, atkBtn, enterBtn, joyState
+      inventoryPanel, equipmentPanel, invBtn, eqBtn, enterBtn, atkBtn, joyState
     };
   }
 
@@ -761,12 +741,8 @@
       slimes: [],
       titans: [],
       damageTexts: [],
-      hitSparks: [],
-      bossShots: [],
       stars: 10000,
-      canAttack: true,
-      combo: 0,
-      comboTimer: 0
+      canAttack: true
     };
 
     /* ----------------------- Inventory / Equipment ----------------------- */
@@ -872,22 +848,6 @@
 
     function spawnDamageText(x, y, text, color = "#ffffff", scale = 1) {
       combatState.damageTexts.push({ x, y, text, color, life: 0.9, vy: -24, scale });
-    }
-
-    function spawnHitSparks(x, y, color = "#ffffff", count = 10, spread = 1) {
-      for (let i = 0; i < count; i++) {
-        const a = (Math.PI * 2 * i) / count + Math.random() * 0.6;
-        const sp = (48 + Math.random() * 110) * spread;
-        combatState.hitSparks.push({
-          x, y,
-          vx: Math.cos(a) * sp,
-          vy: Math.sin(a) * sp - 22,
-          life: 0.38 + Math.random() * 0.18,
-          maxLife: 0.56,
-          color,
-          size: 1.4 + Math.random() * 3.0
-        });
-      }
     }
 
     const shopState = { open: false, filter: "all" };
@@ -1150,6 +1110,33 @@
     }
     UI.invBtn.addEventListener("click", () => toggleInventory());
     UI.eqBtn.addEventListener("click", () => toggleEquipment());
+    function onMobilePortalAction() {
+      if (!activePortal) return;
+      if (activePortal.key === "blacksmith") {
+        renderShop("all");
+        return;
+      }
+      if (activePortal.status === "open" && activePortal.url) {
+        closeModal();
+        UI.toast.hidden = true;
+        entering = false;
+        try {
+          window.location.assign(activePortal.url);
+        } catch (_) {
+          window.location.href = activePortal.url;
+        }
+        return;
+      }
+      UI.toast.hidden = false;
+      UI.toast.innerHTML = blockSpan(
+        `🧱 <b>${activePortal.label}</b><br/>${activePortal.message || "게임 준비중입니다."}`,
+        { bg: "linear-gradient(180deg, rgba(10,14,24,0.96), rgba(18,25,40,0.94))", fg:"#f8fafc", bd:"rgba(148,163,184,0.16)", shadow:"0 14px 36px rgba(0,0,0,0.24)" }
+      );
+      setTimeout(() => {
+        if (!shopState.open) UI.toast.hidden = true;
+      }, 1400);
+    }
+    UI.enterBtn.addEventListener("click", onMobilePortalAction);
     renderPanels();
 
     /* ----------------------- Input ----------------------- */
@@ -1520,11 +1507,20 @@
     }
 
     function layoutPortals() {
+      const touchLayout = isTouchDevice();
       const base = 430;
       for (const p of portals) {
         const m = portalSizeScale(p.size);
         p.w = base * 1.02 * m;
         p.h = base * 0.74 * m;
+        if (touchLayout && p.key !== "blacksmith") {
+          p.w *= 0.90;
+          p.h *= 0.90;
+        }
+        if (p.key === "market") {
+          p.w *= 1.10;
+          p.h *= 1.08;
+        }
         if (p.key === "blacksmith") {
           p.w *= 0.58;
           p.h *= 0.58;
@@ -1541,32 +1537,40 @@
       for (const p of portals) {
         if (["avoid", "shooting", "archery", "janggi", "omok"].includes(p.key)) {
           const z = ZONES.game;
-          const gameLayout = isTouchDevice() ? {
-            archery: { x: z.x + 34, y: z.y + 22 },
-            janggi: { x: z.x + z.w * 0.54 - p.w * 0.5, y: z.y + z.h * 0.76 - p.h * 0.5 },
-            omok: { x: z.x + z.w * 0.46 - p.w * 0.5, y: z.y + z.h * 0.40 - p.h * 0.5 },
-            avoid: { x: z.x + z.w * 0.23 - p.w * 0.5, y: z.y + z.h * 0.74 - p.h * 0.5 },
-            shooting: { x: z.x + z.w * 0.78 - p.w * 0.5, y: z.y + z.h * 0.54 - p.h * 0.5 }
+          const gameLayout = touchLayout ? {
+            archery: { x: z.x + 46, y: z.y + 18 },
+            janggi: { x: z.x + 60, y: z.y + z.h - p.h - 72 },
+            omok: { x: z.x + z.w * 0.44 - p.w * 0.5, y: z.y + z.h * 0.34 - p.h * 0.5 },
+            avoid: { x: z.x + z.w * 0.70 - p.w * 0.5, y: z.y + z.h * 0.68 - p.h * 0.5 },
+            shooting: { x: z.x + z.w - p.w - 48, y: z.y + 24 }
           } : {
             archery: { x: z.x + 52, y: z.y + 12 },
-            janggi: { x: z.x + z.w * 0.38 - p.w * 0.5, y: z.y + z.h * 0.62 - p.h * 0.5 },
+            janggi: { x: z.x + z.w * 0.30 - p.w * 0.5, y: z.y + z.h * 0.58 - p.h * 0.5 },
             omok: { x: z.x + z.w * 0.50 - p.w * 0.5, y: z.y + z.h * 0.40 - p.h * 0.5 },
             avoid: { x: z.x + z.w * 0.73 - p.w * 0.5, y: z.y + z.h * 0.60 - p.h * 0.5 },
             shooting: { x: z.x + z.w - p.w - 60, y: z.y + 18 }
           };
           placeByRect(p, z, gameLayout[p.key].x, gameLayout[p.key].y);
         } else if (p.key === "blacksmith") {
-          placeByRect(p, ZONES.ads, ZONES.ads.x + ZONES.ads.w * 0.72, ZONES.ads.y - 6);
+          placeByRect(p, ZONES.ads, ZONES.ads.x + ZONES.ads.w * 0.76, ZONES.ads.y - 22);
         } else {
           const z = ZONES.community;
           const leftX = z.x + 72;
           const rightX = z.x + z.w - p.w - 72;
           const topY = z.y + 38;
           const bottomY = z.y + z.h - p.h - 56;
-          if (p.key === "twitter") placeByRect(p, z, leftX, topY);
-          else if (p.key === "wallet") placeByRect(p, z, rightX, topY);
-          else if (p.key === "telegram") placeByRect(p, z, leftX, bottomY);
-          else if (p.key === "market") placeByRect(p, z, rightX, bottomY);
+          if (touchLayout) {
+            const rowGap = 96;
+            if (p.key === "twitter") placeByRect(p, z, leftX, topY);
+            else if (p.key === "wallet") placeByRect(p, z, rightX, topY);
+            else if (p.key === "telegram") placeByRect(p, z, leftX + 36, bottomY - rowGap);
+            else if (p.key === "market") placeByRect(p, z, rightX - 34, bottomY);
+          } else {
+            if (p.key === "twitter") placeByRect(p, z, leftX, topY);
+            else if (p.key === "wallet") placeByRect(p, z, rightX, topY);
+            else if (p.key === "telegram") placeByRect(p, z, leftX + 120, bottomY);
+            else if (p.key === "market") placeByRect(p, z, rightX - p.w - 150, topY + 18);
+          }
         }
       }
     }
@@ -1869,7 +1873,6 @@
     }
 
     function closeModal() {
-      const portalKey = modalState.portal ? modalState.portal.key : "";
       modalState.open = false;
       modalState.portal = null;
       UI.modal.style.display = "none";
@@ -1881,108 +1884,9 @@
       UI.modalTitle.innerHTML = "";
       UI.modalBody.innerHTML = "";
       UI.modalHint.innerHTML = "";
-      UI.toast.style.pointerEvents = "none";
       if (!shopState.open) UI.toast.hidden = true;
-      if (isTouchDevice() && portalKey) {
-        mobilePortalSuppressKey = portalKey;
-        mobilePortalSuppressUntil = performance.now() + 900;
-      }
-      UI.joyState.active = false;
-      UI.joyState.id = -1;
-      UI.joyState.ax = 0;
-      UI.joyState.ay = 0;
-      const knob = document.getElementById("joystick_knob");
-      if (knob) knob.style.transform = "translate(-50%, -50%)";
-      const enterBtn = UI.enterBtn;
-      if (enterBtn) enterBtn.style.display = "none";
-      if (isTouchDevice()) {
-        entering = false;
-      }
-    }
-
-    function showPortalToast(html, actions = []) {
-      UI.toast.hidden = false;
-      UI.toast.style.pointerEvents = actions.length ? "auto" : "none";
-      UI.toast.innerHTML = `<div style="display:inline-flex;flex-direction:column;gap:10px;align-items:center;padding:12px 16px;border-radius:18px;background:linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.95));color:#f8fafc;border:1px solid rgba(148,163,184,0.16);box-shadow:0 14px 30px rgba(2,6,23,0.22);min-width:min(320px, calc(100vw - 28px));">${html}<div id="portal_toast_actions" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"></div></div>`;
-      const wrap = document.getElementById("portal_toast_actions");
-      if (wrap) {
-        actions.forEach((a) => {
-          const b = document.createElement("button");
-          b.type = "button";
-          b.textContent = a.label;
-          b.style.border = "none";
-          b.style.borderRadius = "12px";
-          b.style.padding = "10px 14px";
-          b.style.cursor = "pointer";
-          b.style.font = "900 12px system-ui";
-          b.style.background = a.primary ? "linear-gradient(180deg,#38bdf8,#2563eb)" : "linear-gradient(180deg,#334155,#0f172a)";
-          b.style.color = "#fff";
-          b.onclick = a.onClick;
-          wrap.appendChild(b);
-        });
-      }
-    }
-
-    let enterFallbackTimer = 0;
-
-    function resetMobileInputLock() {
-      entering = false;
-      UI.joyState.active = false;
-      UI.joyState.id = -1;
-      UI.joyState.ax = 0;
-      UI.joyState.ay = 0;
-      const knob = document.getElementById("joystick_knob");
-      if (knob) knob.style.transform = "translate(-50%, -50%)";
       if (UI.enterBtn) UI.enterBtn.style.display = "none";
-      if (UI.toast) {
-        UI.toast.hidden = true;
-        UI.toast.style.pointerEvents = "none";
-      }
     }
-
-    function goToPortalUrl(url) {
-      if (!url) {
-        entering = false;
-        return;
-      }
-      entering = true;
-      clearTimeout(enterFallbackTimer);
-      enterFallbackTimer = setTimeout(() => {
-        if (document.visibilityState === "visible") {
-          resetMobileInputLock();
-        }
-      }, isTouchDevice() ? 1400 : 900);
-      fadeTo(() => {
-        try {
-          const a = document.createElement("a");
-          a.href = url;
-          a.target = "_self";
-          a.rel = "noopener";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          setTimeout(() => {
-            if (document.visibilityState === "visible") {
-              window.location.assign(url);
-            }
-          }, 60);
-        } catch (err) {
-          try {
-            window.location.assign(url);
-          } catch (err2) {
-            resetMobileInputLock();
-          }
-        }
-      }, 220);
-    }
-
-    window.addEventListener("pageshow", () => { resetMobileInputLock(); });
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") {
-        clearTimeout(enterFallbackTimer);
-        entering = false;
-      }
-    });
 
     function confirmEnter(p) {
       if (!p) return;
@@ -1992,19 +1896,23 @@
         return;
       }
       if (p.status === "open" && p.url) {
-        goToPortalUrl(p.url);
+        if (isTouchDevice()) {
+          entering = false;
+          try {
+            window.location.assign(p.url);
+          } catch (_) {
+            window.location.href = p.url;
+          }
+        } else {
+          entering = true;
+          fadeTo(() => { window.location.href = p.url; }, 220);
+        }
       } else {
-        showPortalToast(`🧱 <b>${p.label}</b><br/>${p.message || "게임 준비중입니다."}`, [
-          { label: "나가기", onClick: () => {
-              UI.toast.hidden = true;
-              UI.toast.style.pointerEvents = "none";
-              if (isTouchDevice()) {
-                mobilePortalSuppressKey = p.key;
-                mobilePortalSuppressUntil = performance.now() + 1200;
-              }
-              resetMobileInputLock();
-            } }
-        ]);
+        UI.toast.hidden = false;
+        UI.toast.innerHTML = blockSpan(`🧱 <b>${p.label}</b><br/>${p.message || "게임 준비중입니다."}`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
+        setTimeout(() => {
+          if (!modalState.open && !shopState.open) UI.toast.hidden = true;
+        }, 1500);
       }
     }
 
@@ -2023,21 +1931,20 @@
       UI.modalTitle.innerHTML = "";
       UI.modalBody.innerHTML = "";
       UI.modalHint.innerHTML = "";
-      const mobileHint = isTouchDevice() ? "모바일 버튼으로 진행" : "터치 / Enter";
-      const body = p.key === "blacksmith"
-        ? `⚒ <b>${p.label}</b><br/>상점에 입장하시겠습니까?<br/><span style="font-size:12px;opacity:.85">${mobileHint}</span>`
-        : (p.status === "open"
-            ? `🧱 <b>${p.label}</b><br/>입장하시겠습니까?<br/><span style="font-size:12px;opacity:.85">${mobileHint}</span>`
-            : `🧱 <b>${p.label}</b><br/>게임 준비중입니다.<br/><span style="font-size:12px;opacity:.85">나가기 버튼으로 종료</span>`);
-      const actions = p.status === "open" || p.key === "blacksmith"
-        ? [
-            { label: p.key === "blacksmith" ? "상점 열기" : "입장", primary: true, onClick: () => confirmEnter(p) },
-            { label: "나가기", onClick: () => closeModal() }
-          ]
-        : [
-            { label: "나가기", onClick: () => closeModal() }
-          ];
-      showPortalToast(body, actions);
+      const message = p.key === "blacksmith"
+        ? `⚒ <b>${p.label}</b><br/>상점에 입장하시겠습니까?<br/><span style="font-size:12px;opacity:.85">Enter / 한 번 더 터치</span>`
+        : (p.status === "open" && (!!p.url || !!p.message)
+            ? `🧱 <b>${p.label}</b><br/>입장하시겠습니까?<br/><span style="font-size:12px;opacity:.85">Enter / 한 번 더 터치</span>`
+            : `🧱 <b>${p.label}</b><br/>게임 준비중입니다.`);
+      UI.toast.hidden = false;
+      UI.toast.innerHTML = blockSpan(message, {
+        bg: "linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.95))",
+        fg: "#f8fafc",
+        pad: "12px 18px",
+        radius: "18px",
+        border: "1px solid rgba(148,163,184,0.16)",
+        shadow: "0 14px 30px rgba(2,6,23,0.22)"
+      });
     }
 
     UI.modal.addEventListener("click", (e) => {
@@ -3183,8 +3090,8 @@
 
       if (isHero && gear && gear.weaponColor) {
         ctx.save();
-        ctx.translate(10.5, 9.5);
-        ctx.rotate(0.08 + (attackPose ? -1.02 * atk : -0.03));
+        ctx.translate(13, 10);
+        ctx.rotate(0.10 + (attackPose ? -1.18 * atk : -0.04));
         const weaponGlow = gear.weaponTier ? gear.weaponTier.glow : gear.weaponColor;
         const bladeGrad = ctx.createLinearGradient(0, -40, 0, 14);
         bladeGrad.addColorStop(0, "#ffffff");
@@ -3195,19 +3102,19 @@
         ctx.shadowBlur = 18 + ((gear.weaponTier && gear.weaponTier.label==="MYTHIC") ? 12 : (gear.weaponTier && gear.weaponTier.label==="LEGEND") ? 7 : 0);
         ctx.fillStyle = bladeGrad;
         ctx.beginPath();
-        ctx.moveTo(-2.6, 10);
-        ctx.lineTo(-4.2, -2);
-        ctx.lineTo(-2.8, -24);
-        ctx.lineTo(0, -32);
-        ctx.lineTo(2.8, -24);
-        ctx.lineTo(4.2, -2);
-        ctx.lineTo(2.6, 10);
+        ctx.moveTo(-3.2, 12);
+        ctx.lineTo(-5.4, -2);
+        ctx.lineTo(-3.4, -30);
+        ctx.lineTo(0, -40);
+        ctx.lineTo(3.4, -30);
+        ctx.lineTo(5.4, -2);
+        ctx.lineTo(3.2, 12);
         ctx.closePath();
         ctx.fill();
         ctx.lineWidth = 1.2;
         ctx.strokeStyle = "rgba(255,255,255,0.95)";
         ctx.beginPath();
-        ctx.moveTo(0, -28); ctx.lineTo(0, 5);
+        ctx.moveTo(0, -35); ctx.lineTo(0, 6);
         ctx.stroke();
         const guardGrad = ctx.createLinearGradient(-9, 0, 9, 0);
         guardGrad.addColorStop(0, shade(gear.weaponColor, -28));
@@ -3215,9 +3122,9 @@
         guardGrad.addColorStop(1, shade(gear.weaponColor, -28));
         ctx.shadowBlur = 8;
         ctx.fillStyle = guardGrad;
-        roundRect(-8, 7, 16, 4, 2.2); ctx.fill();
+        roundRect(-10, 8, 20, 4.5, 2.4); ctx.fill();
         ctx.fillStyle = shade(gear.weaponColor, -18);
-        roundRect(-2.6, 9.5, 5.2, 10, 2.8); ctx.fill();
+        roundRect(-3.2, 11, 6.4, 12, 3.2); ctx.fill();
         const spark = 0.35 + 0.45 * Math.sin(performance.now()/170);
         ctx.fillStyle = "rgba(255,255,255,0.98)";
         ctx.beginPath(); ctx.arc(0, -31, 1.8 + spark, 0, Math.PI*2); ctx.fill();
@@ -3370,9 +3277,7 @@
           vx: (rng() < 0.5 ? -1 : 1) * d.speed,
           vy: (rng() < 0.5 ? -1 : 1) * d.speed * 0.45,
           turnT: 2.6 + rng() * 2.8,
-          hitFlash: 0,
-          shotT: 1.6 + rng() * 1.8,
-          rage: 0
+          hitFlash: 0
         });
       }
     }
@@ -3498,8 +3403,6 @@
     let acc = 0, framesCount = 0;
     let lastMobileZoneKey = "";
     let touchTapAt = 0;
-    let mobilePortalSuppressKey = "";
-    let mobilePortalSuppressUntil = 0;
 
     function update(dt, t, rng) {
       let ax = 0, ay = 0;
@@ -3546,10 +3449,6 @@
       if (player.gearFlashT > 0) player.gearFlashT = Math.max(0, player.gearFlashT - dt);
       if (combatState.attackT > 0) {
         combatState.attackT = Math.max(0, combatState.attackT - dt);
-      }
-      if (combatState.comboTimer > 0) {
-        combatState.comboTimer = Math.max(0, combatState.comboTimer - dt);
-        if (combatState.comboTimer <= 0) combatState.combo = 0;
       }
 
       addFootprint(dt, rng);
@@ -3627,61 +3526,31 @@
             m.hp = m.maxHp;
             m.hitFlash = 0;
             m.turnT = 2.2 + rng() * 2.4;
-            m.shotT = 1.2 + rng() * 1.4;
-            m.rage = 0;
           }
           continue;
         }
         m.wobble += dt * 1.2;
         if (m.hitFlash > 0) m.hitFlash = Math.max(0, m.hitFlash - dt * 2.4);
         m.turnT -= dt;
-        m.shotT -= dt;
-        m.rage = m.hp < m.maxHp * 0.4 ? 1 : 0;
         if (m.turnT <= 0) {
           m.turnT = 2.0 + rng() * 3.0;
-          const rageMul = m.rage ? 1.35 : 1;
-          m.vx = (rng() < 0.5 ? -1 : 1) * m.speed * rageMul;
-          m.vy = (rng() < 0.5 ? -1 : 1) * m.speed * 0.45 * rageMul;
+          m.vx = (rng() < 0.5 ? -1 : 1) * m.speed;
+          m.vy = (rng() < 0.5 ? -1 : 1) * m.speed * 0.45;
         }
         const dx = player.x - m.x, dy = player.y - m.y;
         const dist = Math.hypot(dx, dy) || 1;
-        if (dist < 420) {
-          const pull = m.key === "colossus" ? 11 : 15;
-          m.vx += (dx / dist) * dt * pull;
-          m.vy += (dy / dist) * dt * (pull * 0.74);
-        }
-        if (dist < 520 && m.shotT <= 0) {
-          const speed = m.key === "colossus" ? 180 : 230;
-          const size = m.key === "colossus" ? 18 : 12;
-          combatState.bossShots.push({ x: m.x, y: m.y - m.scale * 0.9, vx: dx / dist * speed, vy: dy / dist * speed, life: 3.6, size, color: m.key === "colossus" ? "rgba(168,85,247,0.95)" : "rgba(59,130,246,0.95)" });
-          m.shotT = (m.key === "colossus" ? 1.9 : 1.3) - (m.rage ? 0.35 : 0) + rng() * 0.5;
+        if (dist < 340) {
+          m.vx += (dx / dist) * dt * (m.key === "colossus" ? 10 : 14);
+          m.vy += (dy / dist) * dt * (m.key === "colossus" ? 8 : 10);
         }
         const sp = Math.hypot(m.vx, m.vy) || 1;
-        const maxSp = m.speed * (m.rage ? 1.28 : 1);
+        const maxSp = m.speed;
         if (sp > maxSp) { m.vx = m.vx / sp * maxSp; m.vy = m.vy / sp * maxSp; }
         m.x += m.vx * dt;
         m.y += m.vy * dt;
         const minX = 150, maxX = WORLD.w - 150, minY = ART_BOUNDS.village.y + ART_BOUNDS.village.h * 0.36, maxY = WORLD.h - 140;
         if (m.x < minX || m.x > maxX) { m.vx *= -1; m.x = clamp(m.x, minX, maxX); }
         if (m.y < minY || m.y > maxY) { m.vy *= -1; m.y = clamp(m.y, minY, maxY); }
-      }
-      for (let i = combatState.bossShots.length - 1; i >= 0; i--) {
-        const b = combatState.bossShots[i];
-        b.x += b.vx * dt;
-        b.y += b.vy * dt;
-        b.life -= dt;
-        if (b.life <= 0 || b.x < -80 || b.x > WORLD.w + 80 || b.y < -80 || b.y > WORLD.h + 80) {
-          combatState.bossShots.splice(i, 1);
-        }
-      }
-      for (let i = combatState.hitSparks.length - 1; i >= 0; i--) {
-        const sp = combatState.hitSparks[i];
-        sp.x += sp.vx * dt;
-        sp.y += sp.vy * dt;
-        sp.vx *= 0.96;
-        sp.vy = sp.vy * 0.96 + 32 * dt;
-        sp.life -= dt;
-        if (sp.life <= 0) combatState.hitSparks.splice(i, 1);
       }
       if (combatState.attackT > 0.14 && combatState.canAttack) {
         combatState.canAttack = false;
@@ -3693,13 +3562,10 @@
         else fxY += 18;
         const damage = playerAttackPower();
         combatState.slashFx.push({ x: fxX, y: fxY, dir: player.dir, life: 0.20 });
-        let landedHits = 0;
         for (const m of combatState.slimes) {
           if (m.dead) continue;
           if (Math.hypot(m.x - fxX, m.y - fxY) < range) {
-            landedHits++;
             m.hp -= damage;
-            spawnHitSparks(m.x, m.y - 2, "rgba(255,255,255,0.95)", 8, 1);
             spawnDamageText(m.x, m.y - 18, `-${damage}`, "#fca5a5", 0.9);
             if (m.hp <= 0) {
               m.dead = true;
@@ -3714,13 +3580,11 @@
           if (m.dead) continue;
           const hitR = m.scale * 1.2;
           if (Math.hypot(m.x - fxX, m.y - fxY) < range + hitR) {
-            landedHits++;
             const bossDamage = Math.max(2, Math.round(damage * 0.85));
             m.hp -= bossDamage;
             m.hitFlash = 0.8;
             m.vx += (m.x - player.x) * 0.08;
             m.vy += (m.y - player.y) * 0.05;
-            spawnHitSparks(m.x, m.y - m.scale * 0.6, m.key === "colossus" ? "rgba(168,85,247,0.95)" : "rgba(96,165,250,0.95)", 16, 1.4);
             spawnDamageText(m.x, m.y - m.scale * 1.9, `-${bossDamage}`, "#fda4af", 1.15);
             if (m.hp <= 0) {
               m.dead = true;
@@ -3730,11 +3594,6 @@
               renderPanels();
             }
           }
-        }
-        if (landedHits > 0) {
-          combatState.combo += landedHits;
-          combatState.comboTimer = 1.8;
-          if (combatState.combo >= 3) spawnDamageText(player.x, player.y - 54, `${combatState.combo} COMBO`, "#93c5fd", 1.0);
         }
       }
       if (combatState.attackT <= 0) combatState.canAttack = true;
@@ -3757,27 +3616,19 @@
         }
       }
 
-      if (isTouchDevice()) {
-        const suppressing = activePortal && activePortal.key === mobilePortalSuppressKey && performance.now() < mobilePortalSuppressUntil;
-        if (!modalState.open && !shopState.open && activePortal && !suppressing) {
+      if (!modalState.open && activePortal) {
+        if (isTouchDevice()) {
+          UI.toast.hidden = false;
+          UI.toast.innerHTML = blockSpan(
+            activePortal.key === "blacksmith"
+              ? `⚒ <b>${activePortal.label}</b><br/>오른쪽 <b>입장</b> 버튼으로 상점을 열 수 있습니다.`
+              : activePortal.status === "open"
+              ? `🧱 <b>${activePortal.label}</b><br/>오른쪽 <b>입장</b> 버튼으로 이동합니다.`
+              : `🧱 <b>${activePortal.label}</b><br/>오른쪽 <b>입장</b> 버튼으로 안내를 볼 수 있습니다.`,
+            { bg: "linear-gradient(180deg, rgba(10,14,24,0.96), rgba(18,25,40,0.94))", fg:"#f8fafc", bd:"rgba(148,163,184,0.16)", shadow:"0 14px 36px rgba(0,0,0,0.24)" }
+          );
           UI.enterBtn.style.display = "block";
-          UI.enterBtn.textContent = activePortal.key === "blacksmith"
-            ? "상점 입장"
-            : (activePortal.status === "open" ? "입장" : "안내 보기");
         } else {
-          UI.enterBtn.style.display = "none";
-        }
-        if (!modalState.open && !shopState.open) {
-          UI.toast.hidden = true;
-          UI.toast.style.pointerEvents = "none";
-        }
-        if (!activePortal) {
-          lastMobileZoneKey = "";
-          mobilePortalSuppressKey = "";
-          mobilePortalSuppressUntil = 0;
-        }
-      } else {
-        if (!modalState.open && activePortal) {
           UI.toast.hidden = false;
           UI.toast.innerHTML = blockSpan(
             activePortal.key === "blacksmith"
@@ -3787,9 +3638,14 @@
               : `🧱 <b>${activePortal.label}</b><br/>게임 준비중입니다.`,
             { bg: "linear-gradient(180deg, rgba(10,14,24,0.96), rgba(18,25,40,0.94))", fg:"#f8fafc", bd:"rgba(148,163,184,0.16)", shadow:"0 14px 36px rgba(0,0,0,0.24)" }
           );
-        } else if (!modalState.open) {
-          UI.toast.hidden = true;
         }
+      } else if (!modalState.open) {
+        UI.toast.hidden = true;
+        if (UI.enterBtn) UI.enterBtn.style.display = "none";
+      }
+
+      if (isTouchDevice()) {
+        if (!activePortal) lastMobileZoneKey = "";
       }
 
       updateCamera(dt);
@@ -3890,34 +3746,6 @@
         ctx.stroke();
         ctx.restore();
       }
-      for (const p of combatState.hitSparks) {
-        ctx.save();
-        const a = Math.max(0, p.life / (p.maxLife || 0.56));
-        ctx.globalAlpha = a;
-        ctx.fillStyle = p.color;
-        ctx.shadowColor = p.color;
-        ctx.shadowBlur = 10;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * a + 0.4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-      for (const b of combatState.bossShots) {
-        ctx.save();
-        ctx.translate(b.x, b.y);
-        ctx.fillStyle = b.color;
-        ctx.shadowColor = b.color;
-        ctx.shadowBlur = 18;
-        ctx.beginPath();
-        ctx.arc(0, 0, b.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "rgba(255,255,255,0.95)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(0, 0, b.size * 1.45, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-      }
       for (const d of combatState.damageTexts) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, d.life / 0.9);
@@ -3934,18 +3762,6 @@
       }
 
       ctx.restore();
-      if (combatState.combo > 1 && combatState.comboTimer > 0) {
-        ctx.save();
-        ctx.globalAlpha = Math.min(1, combatState.comboTimer / 1.8 + 0.2);
-        ctx.fillStyle = "#f8fafc";
-        ctx.strokeStyle = "rgba(2,6,23,0.85)";
-        ctx.lineWidth = 4;
-        ctx.font = "1000 22px system-ui";
-        ctx.textAlign = "center";
-        ctx.strokeText(`${combatState.combo} COMBO`, W * 0.5, 74);
-        ctx.fillText(`${combatState.combo} COMBO`, W * 0.5, 74);
-        ctx.restore();
-      }
       drawWorldTitle();
       drawMiniMap();
     }
@@ -3960,23 +3776,12 @@
       requestAnimationFrame(loop);
     }
 
-    canvas.addEventListener("pointerdown", (e) => {
+    canvas.addEventListener("pointerdown", () => {
       if (!isTouchDevice()) return;
-      if (shopState.open) return;
-      if (modalState.open || !UI.toast.hidden) return;
-      if (activePortal && performance.now() >= mobilePortalSuppressUntil) {
-        openPortalUI(activePortal);
-      }
+      // 모바일 포털 진입은 전용 입장 버튼으로만 처리해서 입력 멈춤을 방지한다.
+      touchTapAt = performance.now();
     }, { passive: true });
 
-
-    if (UI.enterBtn) {
-      UI.enterBtn.addEventListener("pointerdown", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (activePortal) openPortalUI(activePortal);
-      }, { passive: false });
-    }
     resize();
     for (const b of birds) {
       b.x = Math.random() * WORLD.w;
