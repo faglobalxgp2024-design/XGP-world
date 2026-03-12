@@ -1392,8 +1392,8 @@
         }
       };
       function setEntrance(z) {
-        const gateW = 340;
-        const gateH = 96;
+        const gateW = 380;
+        const gateH = 108;
         z.entrance = {
           x: z.x + z.w * 0.5 - gateW * 0.5,
           y: z.y + z.h - gateH * 0.35,
@@ -1467,25 +1467,29 @@
         const m = portalSizeScale(p.size);
         p.w = base * 1.02 * m;
         p.h = base * 0.74 * m;
+        if (p.key === "blacksmith") {
+          p.w *= 0.74;
+          p.h *= 0.74;
+        }
       }
 
       const desired = {
-        archery: { x: ZONES.game.x + ZONES.game.w * 0.18, y: ZONES.game.y + ZONES.game.h * 0.15 },
-        shooting: { x: ZONES.game.x + ZONES.game.w * 0.78, y: ZONES.game.y + ZONES.game.h * 0.15 },
-        janggi:  { x: ZONES.game.x + ZONES.game.w * 0.18, y: ZONES.game.y + ZONES.game.h * 0.86 },
-        avoid:   { x: ZONES.game.x + ZONES.game.w * 0.80, y: ZONES.game.y + ZONES.game.h * 0.86 },
-        omok:    { x: ZONES.game.x + ZONES.game.w * 0.50, y: ZONES.game.y + ZONES.game.h * 0.51 },
+        archery: { x: ZONES.game.x + ZONES.game.w * 0.14, y: ZONES.game.y + ZONES.game.h * 0.06 },
+        shooting: { x: ZONES.game.x + ZONES.game.w * 0.86, y: ZONES.game.y + ZONES.game.h * 0.06 },
+        janggi:  { x: ZONES.game.x + ZONES.game.w * 0.18, y: ZONES.game.y + ZONES.game.h * 0.94 },
+        avoid:   { x: ZONES.game.x + ZONES.game.w * 0.84, y: ZONES.game.y + ZONES.game.h * 0.94 },
+        omok:    { x: ZONES.game.x + ZONES.game.w * 0.50, y: ZONES.game.y + ZONES.game.h * 0.52 },
 
-        twitter:  { x: ZONES.community.x + ZONES.community.w * 0.22, y: ZONES.community.y + ZONES.community.h * 0.16 },
-        wallet:   { x: ZONES.community.x + ZONES.community.w * 0.78, y: ZONES.community.y + ZONES.community.h * 0.16 },
-        telegram: { x: ZONES.community.x + ZONES.community.w * 0.22, y: ZONES.community.y + ZONES.community.h * 0.86 },
-        market:   { x: ZONES.community.x + ZONES.community.w * 0.78, y: ZONES.community.y + ZONES.community.h * 0.86 },
-        blacksmith: { x: ZONES.ads.x + ZONES.ads.w * 0.82, y: ZONES.ads.y + ZONES.ads.h * 0.34 }
+        twitter:  { x: ZONES.community.x + ZONES.community.w * 0.20, y: ZONES.community.y + ZONES.community.h * 0.10 },
+        wallet:   { x: ZONES.community.x + ZONES.community.w * 0.80, y: ZONES.community.y + ZONES.community.h * 0.10 },
+        telegram: { x: ZONES.community.x + ZONES.community.w * 0.20, y: ZONES.community.y + ZONES.community.h * 0.92 },
+        market:   { x: ZONES.community.x + ZONES.community.w * 0.80, y: ZONES.community.y + ZONES.community.h * 0.92 },
+        blacksmith: { x: ZONES.ads.x + ZONES.ads.w * 0.82, y: ZONES.ads.y + ZONES.ads.h * 0.18 }
       };
 
       function clampIntoZone(p, z, d) {
-        const padX = 140;
-        const padY = 140;
+        const padX = p.key === "blacksmith" ? 110 : 140;
+        const padY = p.key === "blacksmith" ? 80 : 140;
         p.x = clamp(d.x - p.w / 2, z.x + padX, z.x + z.w - padX - p.w);
         p.y = clamp(d.y - p.h / 2, z.y + padY, z.y + z.h - padY - p.h - 40);
       }
@@ -1800,9 +1804,14 @@
       modalState.portal = null;
       UI.modal.style.display = "none";
       UI.modal.style.pointerEvents = "none";
+      UI.modal.style.background = "transparent";
+      UI.modal.style.backdropFilter = "none";
+      UI.modal.style.webkitBackdropFilter = "none";
+      UI.modal.style.filter = "none";
       UI.modalTitle.innerHTML = "";
       UI.modalBody.innerHTML = "";
       UI.modalHint.innerHTML = "";
+      if (!shopState.open) UI.toast.hidden = true;
     }
 
     function confirmEnter(p) {
@@ -1826,37 +1835,32 @@
 
     function openPortalUI(p) {
       if (!p) return;
-      if (p.key === "blacksmith") {
-        modalState.open = true;
-        modalState.portal = p;
-        UI.modal.style.display = "flex"; UI.modal.style.pointerEvents = "auto"; UI.modal.style.background = "transparent"; UI.modal.style.backdropFilter = "none"; UI.modal.style.webkitBackdropFilter = "none"; UI.modalInner.style.background = "transparent"; UI.modalInner.style.boxShadow = "none"; UI.modal.style.backdropFilter = "none"; UI.modal.style.webkitBackdropFilter = "none"; UI.modalInner.style.background = "transparent"; UI.modalInner.style.boxShadow = "none";
-        UI.modalTitle.innerHTML = blockSpan(`⚒ <b>${p.label}</b>`, {
-          bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#f8fafc", pad: "10px 14px", radius: "16px", border: "1px solid rgba(148,163,184,0.16)", shadow:"0 8px 18px rgba(2,6,23,0.12)"
-        });
-        UI.modalBody.innerHTML = blockSpan(`상점에 입장하시겠습니까?<br/><b>Enter</b> 또는 화면을 한 번 더 터치`, {
-          bg: "linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.96))", fg: "#e2e8f0", pad: "10px 14px", radius: "14px", border: "1px solid rgba(148,163,184,0.16)", shadow:"0 8px 18px rgba(2,6,23,0.12)"
-        });
-        UI.modalHint.innerHTML = blockSpan(`닫기: <b>ESC</b> / 바깥 터치`, {
-          bg: "rgba(2,6,23,0.86)", fg: "#cbd5e1", pad: "7px 11px", radius: "13px", border: "1px solid rgba(148,163,184,0.14)", shadow:"0 10px 24px rgba(2,6,23,0.18)"
-        });
-        return;
-      }
       modalState.open = true;
       modalState.portal = p;
-      UI.modal.style.display = "flex"; UI.modal.style.pointerEvents = "auto"; UI.modal.style.background = "transparent"; UI.modal.style.backdropFilter = "none"; UI.modal.style.webkitBackdropFilter = "none"; UI.modalInner.style.background = "transparent"; UI.modalInner.style.boxShadow = "none";
-      const isOpen = p.status === "open" && (!!p.url || !!p.message);
-      UI.modalTitle.innerHTML = blockSpan(`🧱 <b>${p.label}</b>`, {
-        bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#f8fafc", pad: "10px 14px", radius: "16px", border: "1px solid rgba(148,163,184,0.16)", shadow:"0 8px 18px rgba(2,6,23,0.12)"
-      });
-      UI.modalBody.innerHTML = isOpen
-        ? blockSpan(`입장하시겠습니까?<br/><b>Enter</b> 또는 화면을 한 번 더 터치`, {
-            bg: "linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.96))", fg: "#e2e8f0", pad: "10px 14px", radius: "14px", border: "1px solid rgba(56,189,248,0.16)", shadow:"0 8px 18px rgba(2,6,23,0.12)"
-          })
-        : blockSpan(`게임 준비중입니다.`, {
-            bg: "linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.96))", fg: "#e2e8f0", pad: "10px 14px", radius: "14px", border: "1px solid rgba(148,163,184,0.16)", shadow:"0 8px 18px rgba(2,6,23,0.12)"
-          });
-      UI.modalHint.innerHTML = blockSpan(`닫기: <b>ESC</b> / 바깥 터치`, {
-        bg: "rgba(15,23,42,0.88)", fg: "#cbd5e1", pad: "8px 12px", radius: "14px", border: "1px solid rgba(148,163,184,0.14)"
+      UI.modal.style.display = "none";
+      UI.modal.style.pointerEvents = "none";
+      UI.modal.style.background = "transparent";
+      UI.modal.style.backdropFilter = "none";
+      UI.modal.style.webkitBackdropFilter = "none";
+      UI.modal.style.filter = "none";
+      UI.modalInner.style.background = "transparent";
+      UI.modalInner.style.boxShadow = "none";
+      UI.modalTitle.innerHTML = "";
+      UI.modalBody.innerHTML = "";
+      UI.modalHint.innerHTML = "";
+      const message = p.key === "blacksmith"
+        ? `⚒ <b>${p.label}</b><br/>상점에 입장하시겠습니까?<br/><span style="font-size:12px;opacity:.85">Enter / 한 번 더 터치</span>`
+        : (p.status === "open" && (!!p.url || !!p.message)
+            ? `🧱 <b>${p.label}</b><br/>입장하시겠습니까?<br/><span style="font-size:12px;opacity:.85">Enter / 한 번 더 터치</span>`
+            : `🧱 <b>${p.label}</b><br/>게임 준비중입니다.`);
+      UI.toast.hidden = false;
+      UI.toast.innerHTML = blockSpan(message, {
+        bg: "linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.95))",
+        fg: "#f8fafc",
+        pad: "12px 18px",
+        radius: "18px",
+        border: "1px solid rgba(148,163,184,0.16)",
+        shadow: "0 14px 30px rgba(2,6,23,0.22)"
       });
     }
 
@@ -2074,12 +2078,59 @@
       }
     }
 
+    function drawZoneFence(z, t) {
+      const postGap = 86;
+      const railColor = "rgba(245,222,179,0.96)";
+      const shadow = "rgba(90,58,28,0.24)";
+      const gateGapX0 = z.entrance ? z.entrance.x - 18 : z.x + z.w * 0.42;
+      const gateGapX1 = z.entrance ? z.entrance.x + z.entrance.w + 18 : z.x + z.w * 0.58;
+      ctx.save();
+      ctx.fillStyle = railColor;
+      ctx.strokeStyle = shadow;
+      ctx.lineWidth = 1.2;
+      const segments = [
+        [z.x + 14, z.y + 14, z.x + z.w - 14, z.y + 14],
+        [z.x + 14, z.y + z.h - 14, gateGapX0, z.y + z.h - 14],
+        [gateGapX1, z.y + z.h - 14, z.x + z.w - 14, z.y + z.h - 14],
+        [z.x + 14, z.y + 14, z.x + 14, z.y + z.h - 14],
+        [z.x + z.w - 14, z.y + 14, z.x + z.w - 14, z.y + z.h - 14]
+      ];
+      for (const [x0,y0,x1,y1] of segments) {
+        const dx = x1 - x0, dy = y1 - y0;
+        const len = Math.hypot(dx, dy);
+        const cnt = Math.max(2, Math.floor(len / postGap));
+        for (let i = 0; i <= cnt; i++) {
+          const tt = i / cnt;
+          const px = x0 + dx * tt;
+          const py = y0 + dy * tt;
+          roundRect(px - 5, py - 16, 10, 32, 4);
+          ctx.fill();
+        }
+        ctx.beginPath();
+        ctx.moveTo(x0, y0 - 8); ctx.lineTo(x1, y1 - 8);
+        ctx.moveTo(x0, y0 + 8); ctx.lineTo(x1, y1 + 8);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     function drawZoneGate(z, t) {
       if (!z.entrance) return;
       const g = z.entrance;
       const pulse = 0.5 + 0.5 * Math.sin(t * 3.2);
       ctx.save();
       groundAO(g.x, g.y + g.h - 6, g.w, 16, 0.10);
+      const pillarW = 18;
+      const pillarH = g.h + 24;
+      ctx.fillStyle = "rgba(15,23,42,0.96)";
+      roundRect(g.x - pillarW - 6, g.y - 12, pillarW, pillarH, 8); ctx.fill();
+      roundRect(g.x + g.w + 6, g.y - 12, pillarW, pillarH, 8); ctx.fill();
+      ctx.fillStyle = z.color;
+      ctx.shadowColor = z.color;
+      ctx.shadowBlur = 18;
+      ctx.beginPath(); ctx.arc(g.x - 15, g.y + 18, 5 + pulse * 2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(g.x + g.w + 15, g.y + 18, 5 + pulse * 2, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0;
       const grad = ctx.createLinearGradient(g.x, g.y, g.x, g.y + g.h);
       grad.addColorStop(0, "rgba(15,23,42,0.96)");
       grad.addColorStop(1, "rgba(30,41,59,0.94)");
@@ -2109,6 +2160,7 @@
       const zones = [ZONES.game, ZONES.community, ZONES.ads];
       for (const z of zones) {
         ctx.save();
+        drawZoneFence(z, t);
         drawZoneGate(z, t);
         ctx.restore();
       }
@@ -2958,13 +3010,17 @@
         ctx.shadowBlur = 22 + ((gear.weaponTier && gear.weaponTier.label==="MYTHIC") ? 16 : (gear.weaponTier && gear.weaponTier.label==="LEGEND") ? 10 : 0);
         roundRect(-5, 4, 10, 15, 3); ctx.fill();
         const weaponPulse = 0.6 + 0.4 * Math.sin(performance.now()/110);
-        for (let i = 0; i < 4 + (gear.weaponTier?.horn || 0); i++) {
-          const fx = -10 + i * 7;
-          const fy = -8 - i * 8;
-          ctx.fillStyle = (gear.weaponTier?.flame || gear.weaponColor) + 'cc';
+        for (let i = 0; i < 2 + Math.min(2, (gear.weaponTier?.horn || 0)); i++) {
+          const fx = -4 + i * 5;
+          const fy = -6 - i * 9;
+          ctx.fillStyle = (gear.weaponTier?.flame || gear.weaponColor) + 'bb';
           ctx.beginPath();
-          ctx.moveTo(fx, fy + 10); ctx.quadraticCurveTo(fx + 4, fy - 10 - i * 1.5, fx + 8, fy + 10); ctx.closePath(); ctx.fill();
+          ctx.arc(fx, fy, 2.4 + i * 0.7 + weaponPulse * 0.3, 0, Math.PI * 2);
+          ctx.fill();
         }
+        ctx.strokeStyle = (gear.weaponTier?.glow || gear.weaponColor);
+        ctx.lineWidth = 2.1;
+        ctx.beginPath(); ctx.moveTo(0, -34); ctx.lineTo(8, -18); ctx.stroke();
         ctx.fillStyle = "rgba(255,255,255,0.98)";
         ctx.beginPath(); ctx.arc(10, -30, 2.8 + weaponPulse*1.1, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(3, -38, 1.8 + weaponPulse*0.5, 0, Math.PI*2); ctx.fill();
@@ -3562,17 +3618,17 @@
         ctx.strokeStyle = 'rgba(255,255,255,0.98)';
         ctx.lineWidth = 7;
         ctx.beginPath();
-        ctx.arc(0, 0, 42, -1.32, 0.62);
+        ctx.arc(0, 0, 34, -1.16, 0.48);
         ctx.stroke();
         ctx.strokeStyle = 'rgba(147,197,253,0.92)';
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.arc(0, 0, 54, -1.34, 0.50);
+        ctx.arc(0, 0, 42, -1.18, 0.42);
         ctx.stroke();
         ctx.strokeStyle = 'rgba(255,255,255,0.45)';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(0, 0, 52, -1.28, 0.30);
+        ctx.arc(0, 0, 40, -1.10, 0.22);
         ctx.stroke();
         ctx.restore();
       }
