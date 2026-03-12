@@ -13,13 +13,12 @@
   "use strict";
 
   /* ----------------------- CONFIG ----------------------- */
-  const SPRITE_SRC =
-    "https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EC%BA%90%EB%A6%AD%ED%84%B0%20%EC%9D%B4%EB%AF%B8%EC%A7%80.png";
+  const SPRITE_SRC = "";
   const WORLD_ART_BASE_SRC =
     "https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EB%A7%B5-%EB%B0%94%ED%83%95.png";
   const WORLD_ART_SRC =
     "https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EB%A9%94%ED%83%80%EC%9B%94%EB%93%9C.png";
-  const USE_CUSTOM_WORLD_ART = true;
+  const USE_CUSTOM_WORLD_ART = false;
   const USE_SPRITE_IF_LOADED = true;
   const SHOP_IMAGE_ROOT =
     "https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EC%82%AC%EC%9D%B4%EC%A6%88%EB%A7%9E%EC%B6%98%EC%98%A4%EB%B8%8C%EC%A0%9C/";
@@ -519,11 +518,10 @@
     }
 
     const SHOP_IMAGE_FILES = {
-      jump: "%EB%B9%84%ED%96%89%EA%B8%B0%EA%B2%8C%EC%9E%84%EC%A1%B4.png",
+      avoid: "%EB%B9%84%ED%96%89%EA%B8%B0%EA%B2%8C%EC%9E%84%EC%A1%B4.png",
       archery: "%EC%96%91%EA%B6%81%EA%B2%8C%EC%9E%84%EC%A1%B4.png",
       janggi: "%EC%9E%A5%EA%B8%B0%EC%A1%B4.png",
       omok: "%EC%98%A4%EB%AA%A9%EC%A1%B4.png",
-      snow: "%EC%8A%88%ED%8C%85%EA%B2%8C%EC%9E%84%EC%A1%B4.png",
       twitter: "%ED%8A%B8%EC%9C%84%ED%84%B0%EC%A1%B4.png",
       telegram: "%ED%85%94%EB%A0%88%EA%B7%B8%EB%9E%A8%EC%A1%B4.png",
       wallet: "%EC%9B%94%EB%A0%9B%EC%A1%B4.png",
@@ -561,21 +559,14 @@
     let groundPatches = [];
 
     const portals = [
-      { key: "avoid", label: "DODGE", status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "archery", label: "ARCHERY", status: "open", url: "https://faglobalxgp2024-design.github.io/-/", type: "tower", size: "M", x: 0, y: 0, w: 0, h: 0 },
+      { key: "avoid", label: "AIRPLANE", status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", x: 0, y: 0, w: 0, h: 0 },
+      { key: "archery", label: "ARCHERY", status: "soon", url: "", message: "게임 준비중입니다.", type: "tower", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "janggi", label: "JANGGI", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "omok", label: "OMOK", status: "soon", url: "", type: "cafe", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "snow", label: "SNOWBALL", status: "soon", url: "", type: "igloo", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "jump", label: "JUMP", status: "soon", url: "", type: "gym", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "twitter", label: "TWITTER", status: "open", url: "https://x.com/FAGLOBAL_", type: "social", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "telegram", label: "TELEGRAM", status: "open", url: "https://t.me/faglobalgp", type: "social", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "wallet", label: "WALLET", status: "open", url: "https://faglobal.site/", type: "wallet", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "market", label: "MARKET", status: "open", url: "https://famarket.store/", type: "market", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "support", label: "SUPPORT", status: "open", url: "", message: "문의: faglobal.xgp2024@gmail.com", type: "support", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "mcd", label: "McDonald's", status: "soon", url: "", type: "mcd", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "bbq", label: "BBQ", status: "open", url: "https://youtu.be/CP28c0QvRig", type: "bbq", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "baskin", label: "BASKIN", status: "soon", url: "", type: "baskin", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "paris", label: "PARIS", status: "soon", url: "", type: "paris", size: "M", x: 0, y: 0, w: 0, h: 0 },
+      { key: "omok", label: "OMOK", status: "soon", url: "", message: "게임 준비중입니다.", type: "cafe", size: "L", x: 0, y: 0, w: 0, h: 0 },
+      { key: "twitter", label: "TWITTER", status: "open", url: "https://x.com/FAGLOBAL_", type: "social", size: "L", x: 0, y: 0, w: 0, h: 0 },
+      { key: "telegram", label: "TELEGRAM", status: "open", url: "https://t.me/faglobalgp", type: "social", size: "L", x: 0, y: 0, w: 0, h: 0 },
+      { key: "wallet", label: "WALLET", status: "open", url: "https://faglobal.site/", type: "wallet", size: "L", x: 0, y: 0, w: 0, h: 0 },
+      { key: "market", label: "MARKET", status: "open", url: "https://famarket.store/", type: "market", size: "L", x: 0, y: 0, w: 0, h: 0 }
     ];
 
           const portalsByKey = (k) => portals.find((p) => p.key === k);
@@ -1095,42 +1086,34 @@
     }
 
     function layoutPortals() {
-      const base = 150;
+      const base = 230;
       for (const p of portals) {
         const m = portalSizeScale(p.size);
-        p.w = base * 1.14 * m;
-        p.h = base * 0.88 * m;
+        p.w = base * 1.08 * m;
+        p.h = base * 0.78 * m;
       }
 
       const desired = {
-        jump: { x: ZONES.game.x + ZONES.game.w * 0.20, y: ZONES.game.y + ZONES.game.h * 0.28 },
-        archery: { x: ZONES.game.x + ZONES.game.w * 0.50, y: ZONES.game.y + ZONES.game.h * 0.28 },
-        omok: { x: ZONES.game.x + ZONES.game.w * 0.80, y: ZONES.game.y + ZONES.game.h * 0.28 },
-        avoid: { x: ZONES.game.x + ZONES.game.w * 0.20, y: ZONES.game.y + ZONES.game.h * 0.75 },
-                janggi: { x: ZONES.game.x + ZONES.game.w * 0.50, y: ZONES.game.y + ZONES.game.h * 0.75 },
-        snow: { x: ZONES.game.x + ZONES.game.w * 0.80, y: ZONES.game.y + ZONES.game.h * 0.75 },
-        twitter: { x: ZONES.community.x + ZONES.community.w * 0.25, y: ZONES.community.y + ZONES.community.h * 0.34 },
-        telegram: { x: ZONES.community.x + ZONES.community.w * 0.74, y: ZONES.community.y + ZONES.community.h * 0.34 },
-        wallet: { x: ZONES.community.x + ZONES.community.w * 0.25, y: ZONES.community.y + ZONES.community.h * 0.78 },
-        market: { x: ZONES.community.x + ZONES.community.w * 0.74, y: ZONES.community.y + ZONES.community.h * 0.78 },
-        support: { x: ZONES.community.x + ZONES.community.w * 0.50, y: ZONES.community.y + ZONES.community.h * 0.56 },
-        mcd: { x: ZONES.ads.x + ZONES.ads.w * 0.24, y: ZONES.ads.y + ZONES.ads.h * 0.42 },
-        bbq: { x: ZONES.ads.x + ZONES.ads.w * 0.76, y: ZONES.ads.y + ZONES.ads.h * 0.42 },
-        baskin: { x: ZONES.ads.x + ZONES.ads.w * 0.24, y: ZONES.ads.y + ZONES.ads.h * 0.82 },
-        paris: { x: ZONES.ads.x + ZONES.ads.w * 0.76, y: ZONES.ads.y + ZONES.ads.h * 0.82 }
+        archery: { x: ZONES.game.x + ZONES.game.w * 0.28, y: ZONES.game.y + ZONES.game.h * 0.34 },
+        omok: { x: ZONES.game.x + ZONES.game.w * 0.72, y: ZONES.game.y + ZONES.game.h * 0.34 },
+        avoid: { x: ZONES.game.x + ZONES.game.w * 0.28, y: ZONES.game.y + ZONES.game.h * 0.76 },
+        janggi: { x: ZONES.game.x + ZONES.game.w * 0.72, y: ZONES.game.y + ZONES.game.h * 0.76 },
+        twitter: { x: ZONES.community.x + ZONES.community.w * 0.28, y: ZONES.community.y + ZONES.community.h * 0.34 },
+        telegram: { x: ZONES.community.x + ZONES.community.w * 0.72, y: ZONES.community.y + ZONES.community.h * 0.34 },
+        wallet: { x: ZONES.community.x + ZONES.community.w * 0.28, y: ZONES.community.y + ZONES.community.h * 0.76 },
+        market: { x: ZONES.community.x + ZONES.community.w * 0.72, y: ZONES.community.y + ZONES.community.h * 0.76 }
       };
 
       function clampIntoZone(p, z, d) {
-        const pad = 16;
+        const pad = 20;
         p.x = clamp(d.x - p.w / 2, z.x + pad, z.x + z.w - pad - p.w);
         p.y = clamp(d.y - p.h / 2, z.y + pad, z.y + z.h - pad - p.h);
       }
 
       for (const p of portals) {
         const d = desired[p.key] || { x: WORLD.w * 0.5, y: WORLD.h * 0.5 };
-        if (["avoid", "archery", "janggi", "omok", "snow", "jump"].includes(p.key)) clampIntoZone(p, ZONES.game, d);
-        else if (["twitter", "telegram", "wallet", "market", "support"].includes(p.key)) clampIntoZone(p, ZONES.community, d);
-        else clampIntoZone(p, ZONES.ads, d);
+        if (["avoid", "archery", "janggi", "omok"].includes(p.key)) clampIntoZone(p, ZONES.game, d);
+        else clampIntoZone(p, ZONES.community, d);
       }
     }
 
@@ -1276,14 +1259,6 @@
         props.push({ kind: "flower", x: p.x + p.w * 0.80, y: p.y + p.h + 14, s: 0.92 });
       }
 
-      for (const p of portals) {
-        const ex = p.x + p.w * 0.5;
-        const ey = p.y + p.h * 0.92;
-        if (["archery", "janggi", "omok"].includes(p.key)) {
-          portalNPCs.push({ kind: "npc", key: p.key, x: p.x + p.w + 40, y: p.y + p.h * 0.76 });
-        }
-        portalEmblems.push({ kind: "emblem", key: p.key, x: ex + 32, y: ey + 16 });
-      }
 
       seedLampsAlongRoads();
     }
@@ -1438,7 +1413,7 @@
         fadeTo(() => { window.location.href = p.url; }, 220);
       } else {
         UI.toast.hidden = false;
-        UI.toast.innerHTML = blockSpan(`🧱 <b>${p.label}</b><br/>${p.message || "오픈 준비중입니다."}`);
+        UI.toast.innerHTML = blockSpan(`🧱 <b>${p.label}</b><br/>${p.message || "게임 준비중입니다."}`);
         setTimeout(() => {
           if (!modalState.open) UI.toast.hidden = true;
         }, 1500);
@@ -1458,7 +1433,7 @@
         ? blockSpan(`입장하시겠습니까?<br/><b>Enter</b> 또는 화면을 한 번 더 터치`, {
             bg: "rgba(255,255,255,0.90)", pad: "14px 18px", radius: "18px"
           })
-        : blockSpan(`오픈 준비중입니다.`, {
+        : blockSpan(`게임 준비중입니다.`, {
             bg: "rgba(255,255,255,0.90)", pad: "14px 18px", radius: "18px"
           });
       UI.modalHint.innerHTML = blockSpan(`닫기: <b>ESC</b>`, {
@@ -1474,12 +1449,12 @@
 
     /* ----------------------- Recalc / resize ----------------------- */
     function recalcWorld() {
-      VIEW.zoom = Math.min(0.98, Math.max(0.70, Math.min(W / 1340, H / 900) * 0.88));
+      VIEW.zoom = Math.min(0.92, Math.max(0.66, Math.min(W / 1360, H / 920) * 0.82));
       VIEW.w = W / VIEW.zoom;
       VIEW.h = H / VIEW.zoom;
 
-      WORLD.w = Math.max(3800, Math.floor(W * 3.7));
-      WORLD.h = Math.max(2680, Math.floor(H * 3.1));
+      WORLD.w = Math.max(3400, Math.floor(W * 3.25));
+      WORLD.h = Math.max(2440, Math.floor(H * 2.85));
 
       syncArtBounds();
       layoutZonesFromArt();
@@ -1868,32 +1843,27 @@
 
       if (hasShopArt(p.key)) {
         const art = shopArt[p.key].img;
-        const pad = 4;
-        const drawW = w - pad * 2;
-        const drawH = h - pad * 2;
+        const pad = 10;
+        const boxW = w - pad * 2;
+        const boxH = h - pad * 2;
+        const ratio = Math.min(boxW / Math.max(1, art.naturalWidth || art.width), boxH / Math.max(1, art.naturalHeight || art.height));
+        const drawW = Math.max(24, (art.naturalWidth || art.width) * ratio);
+        const drawH = Math.max(24, (art.naturalHeight || art.height) * ratio);
+        const dx = x + (w - drawW) * 0.5;
+        const dy = y + (h - drawH) * 0.5;
         ctx.save();
+        ctx.fillStyle = "rgba(255,255,255,0.18)";
+        roundRect(x, y, w, h, 22);
+        ctx.fill();
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
-        roundRect(x, y, w, h, 20);
-        ctx.clip();
-        ctx.drawImage(art, x + pad, y + pad, drawW, drawH);
-        ctx.restore();
-
-        ctx.save();
-        ctx.globalAlpha = 0.12;
-        const gloss = ctx.createLinearGradient(x, y, x, y + h);
-        gloss.addColorStop(0, "rgba(255,255,255,0.34)");
-        gloss.addColorStop(0.38, "rgba(255,255,255,0.08)");
-        gloss.addColorStop(1, "rgba(255,255,255,0)");
-        ctx.fillStyle = gloss;
-        roundRect(x, y, w, h * 0.46, 20);
-        ctx.fill();
+        ctx.drawImage(art, dx, dy, drawW, drawH);
         ctx.restore();
 
         ctx.save();
         ctx.lineWidth = 2;
-        ctx.strokeStyle = "rgba(255,255,255,0.30)";
-        roundRect(x, y, w, h, 20);
+        ctx.strokeStyle = "rgba(255,255,255,0.26)";
+        roundRect(x, y, w, h, 22);
         ctx.stroke();
         ctx.restore();
       } else {
@@ -2248,7 +2218,7 @@
       ctx.restore();
 
       ctx.save();
-      ctx.translate(x, y + bob);
+      ctx.translate(x, y + bob + 4);
       if (player.dir === "left") ctx.scale(-1, 1);
       ctx.scale(stretch, 1);
       ctx.imageSmoothingEnabled = false;
@@ -2289,9 +2259,9 @@
     function drawMinifig(x, y, opts = {}) {
       const isHero = !!opts.isHero;
       const pal = opts.palette || {
-        torso: isHero ? "#0f172a" : "#0a84ff",
-        pants: isHero ? "#374151" : "#374151",
-        hat: isHero ? "#dc2626" : "#ffcc00",
+        torso: isHero ? "#2563eb" : "#0a84ff",
+        pants: isHero ? "#334155" : "#374151",
+        hat: isHero ? "#ef4444" : "#ffcc00",
         skin: "#ffd7b5",
         hair: "#1f2937"
       };
@@ -2304,14 +2274,14 @@
       const legSwing = moving ? Math.sin(walkPhase + Math.PI) * 0.48 : 0;
 
       ctx.save();
-      ctx.translate(x, y + bob);
+      ctx.translate(x, y + bob + 4);
 
       if (dir === "left") ctx.scale(-1, 1);
 
       ctx.globalAlpha = 0.24;
       ctx.fillStyle = "rgba(10,14,24,0.42)";
       ctx.beginPath();
-      ctx.ellipse(0, 24, 18, 6.5, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 28, 18, 7.5, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalAlpha = 1;
 
@@ -2604,7 +2574,7 @@
         UI.toast.innerHTML = blockSpan(
           activePortal.status === "open"
             ? `🧱 <b>${activePortal.label}</b><br/>입장하려면 <b>E</b> 또는 <b>Enter</b>`
-            : `🧱 <b>${activePortal.label}</b><br/>오픈 준비중입니다.`,
+            : `🧱 <b>${activePortal.label}</b><br/>게임 준비중입니다.`,
           { bg: "rgba(255,255,255,0.88)" }
         );
       } else if (!modalState.open) {
