@@ -1854,6 +1854,34 @@
       setTimeout(() => { UI.fade.classList.remove("on"); }, ms + 50);
     }
 
+    function resetMobilePortalState() {
+      UI.joyState.active = false;
+      UI.joyState.id = -1;
+      UI.joyState.ax = 0;
+      UI.joyState.ay = 0;
+      try {
+        const knob = document.getElementById("joystick_knob");
+        const base = document.getElementById("joystick_base");
+        if (knob) knob.style.transform = "translate(-50%, -50%)";
+        if (base) base.style.background = "rgba(255,255,255,0.72)";
+      } catch (_) {}
+      if (document.activeElement && typeof document.activeElement.blur === "function") {
+        try { document.activeElement.blur(); } catch (_) {}
+      }
+      setTimeout(() => {
+        UI.joyState.active = false;
+        UI.joyState.id = -1;
+        UI.joyState.ax = 0;
+        UI.joyState.ay = 0;
+      }, 0);
+      setTimeout(() => {
+        UI.joyState.active = false;
+        UI.joyState.id = -1;
+        UI.joyState.ax = 0;
+        UI.joyState.ay = 0;
+      }, 80);
+    }
+
     function closeModal() {
       modalState.open = false;
       modalState.portal = null;
@@ -1868,12 +1896,13 @@
       UI.modalHint.innerHTML = "";
       UI.toast.style.pointerEvents = "none";
       if (!shopState.open) UI.toast.hidden = true;
+      resetMobilePortalState();
     }
 
     function showPortalToast(html, actions = []) {
       UI.toast.hidden = false;
       UI.toast.style.pointerEvents = actions.length ? "auto" : "none";
-      UI.toast.innerHTML = `<div style="display:inline-flex;flex-direction:column;gap:10px;align-items:center;padding:12px 16px;border-radius:18px;background:linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.95));color:#f8fafc;border:1px solid rgba(148,163,184,0.16);box-shadow:0 14px 30px rgba(2,6,23,0.22);min-width:min(320px, calc(100vw - 28px));">${html}<div id="portal_toast_actions" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"></div></div>`;
+      UI.toast.innerHTML = `<div id="portal_toast_card" style="display:inline-flex;flex-direction:column;gap:10px;align-items:center;padding:12px 16px;border-radius:18px;background:linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.95));color:#f8fafc;border:1px solid rgba(148,163,184,0.16);box-shadow:0 14px 30px rgba(2,6,23,0.22);min-width:min(320px, calc(100vw - 28px));">${html}<div id="portal_toast_actions" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"></div></div>`;
       const wrap = document.getElementById("portal_toast_actions");
       if (wrap) {
         actions.forEach((a) => {
@@ -1887,10 +1916,25 @@
           b.style.font = "900 12px system-ui";
           b.style.background = a.primary ? "linear-gradient(180deg,#38bdf8,#2563eb)" : "linear-gradient(180deg,#334155,#0f172a)";
           b.style.color = "#fff";
-          b.onclick = a.onClick;
+          b.onclick = (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            a.onClick && a.onClick();
+            resetMobilePortalState();
+          };
           wrap.appendChild(b);
         });
       }
+    }
+
+    function dismissPortalToast() {
+      UI.toast.hidden = true;
+      UI.toast.style.pointerEvents = "none";
+      if (!shopState.open) {
+        modalState.open = false;
+        modalState.portal = null;
+      }
+      resetMobilePortalState();
     }
 
     function confirmEnter(p) {
@@ -1905,10 +1949,10 @@
         fadeTo(() => { window.location.href = p.url; }, 220);
       } else {
         showPortalToast(`🧱 <b>${p.label}</b><br/>${p.message || "게임 준비중입니다."}`, [
-          { label: "나가기", onClick: () => { UI.toast.hidden = true; UI.toast.style.pointerEvents = "none"; } }
+          { label: "나가기", onClick: () => dismissPortalToast() }
         ]);
         setTimeout(() => {
-          if (!modalState.open && !shopState.open) { UI.toast.hidden = true; UI.toast.style.pointerEvents = "none"; }
+          if (!modalState.open && !shopState.open) { dismissPortalToast(); }
         }, 1800);
       }
     }
@@ -1950,6 +1994,11 @@
     });
     UI.shopModal.addEventListener("click", (e) => {
       if (e.target === UI.shopModal) closeShop();
+    });
+    UI.toast.addEventListener("pointerdown", (e) => {
+      if (UI.toast.hidden) return;
+      const card = document.getElementById("portal_toast_card");
+      if (card && !card.contains(e.target) && !shopState.open) dismissPortalToast();
     });
 
     /* ----------------------- Recalc / resize ----------------------- */
