@@ -327,24 +327,28 @@
     const invBtn = ensureEl("btn_inventory", "button", mobileBtns);
     const eqBtn = ensureEl("btn_equipment", "button", mobileBtns);
     const atkBtn = ensureEl("btn_attack", "button", mobileBtns);
-    invBtn.textContent = "I / 인벤";
-    eqBtn.textContent = "TAB / 장착";
+    invBtn.textContent = "인벤";
+    eqBtn.textContent = "장착";
     atkBtn.textContent = "ATTACK";
-    [invBtn, eqBtn, atkBtn].forEach((b) => {
-      b.style.minWidth = "96px";
+    exitBtn.textContent = "나가기";
+    [invBtn, eqBtn, atkBtn, exitBtn].forEach((b) => {
+      b.style.minWidth = "104px";
       b.style.cursor = "pointer";
-      b.style.border = "1px solid rgba(0,0,0,0.10)";
-      b.style.background = "rgba(255,255,255,0.92)";
+      b.style.border = "1px solid rgba(15,23,42,0.16)";
+      b.style.background = "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(226,232,240,0.92))";
       b.style.color = "#0a0e18";
-      b.style.font = "900 12px system-ui";
-      b.style.padding = "12px 14px";
-      b.style.borderRadius = "14px";
-      b.style.boxShadow = "0 12px 28px rgba(0,0,0,0.12)";
+      b.style.font = "1000 12px system-ui";
+      b.style.padding = "13px 14px";
+      b.style.borderRadius = "16px";
+      b.style.boxShadow = "0 14px 32px rgba(0,0,0,0.14)";
+      b.style.backdropFilter = "blur(8px)";
     });
-    atkBtn.style.background = "linear-gradient(180deg,#ff6b6b,#dc2626)";
+    atkBtn.style.background = "linear-gradient(180deg,#fb7185,#dc2626)";
     atkBtn.style.color = "#fff";
     atkBtn.style.fontWeight = "1000";
-    atkBtn.style.minWidth = "110px";
+    atkBtn.style.minWidth = "118px";
+    exitBtn.style.background = "linear-gradient(180deg,#334155,#0f172a)";
+    exitBtn.style.color = "#fff";
 
     const style = ensureEl("lego_style_injected", "style", document.head);
     style.textContent = `
@@ -558,11 +562,15 @@
       e.preventDefault();
       window.__metaWorldAttackTap = performance.now();
     }, { passive: false });
+    exitBtn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      window.__metaWorldExitTap = performance.now();
+    }, { passive: false });
 
     return {
       canvas, toast, coord, fps, fade, modal, modalTitle, modalBody, modalHint,
       shopModal, shopCard, shopTitle, shopBody, shopHint,
-      inventoryPanel, equipmentPanel, invBtn, eqBtn, atkBtn, joyState
+      inventoryPanel, equipmentPanel, invBtn, eqBtn, atkBtn, exitBtn, joyState
     };
   }
 
@@ -920,7 +928,7 @@
           `;
         }).join("")}</div>`;
       }
-      UI.shopHint.innerHTML = `<div style="margin-top:14px;font:800 12px system-ui;color:rgba(226,232,240,0.64)">닫기: 바깥 터치 / ESC</div>`;
+      UI.shopHint.innerHTML = `<div style="margin-top:14px;font:800 12px system-ui;color:rgba(226,232,240,0.64)">닫기: 바깥 터치 / 나가기 버튼 / ESC</div>`;
 
       const closeBtn = document.getElementById("shop_close_btn");
       if (closeBtn) closeBtn.onclick = () => closeShop();
@@ -1876,7 +1884,7 @@
         ? `⚒ <b>${p.label}</b><br/>상점에 입장하시겠습니까?<br/><span style="font-size:12px;opacity:.85">Enter / 한 번 더 터치</span>`
         : (p.status === "open" && (!!p.url || !!p.message)
             ? `🧱 <b>${p.label}</b><br/>입장하시겠습니까?<br/><span style="font-size:12px;opacity:.85">Enter / 한 번 더 터치</span>`
-            : `🧱 <b>${p.label}</b><br/>게임 준비중입니다.`);
+            : `🧱 <b>${p.label}</b><br/>게임 준비중입니다.<br/><span style="font-size:12px;opacity:.85">바깥 터치 / 나가기 버튼</span>`);
       UI.toast.hidden = false;
       UI.toast.innerHTML = blockSpan(message, {
         bg: "linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.95))",
@@ -2940,8 +2948,9 @@
       const bob = moving ? Math.sin(walkPhase) * 1.5 : 0;
       const armSwing = moving ? Math.sin(walkPhase) * 0.45 : 0;
       const legSwing = moving ? Math.sin(walkPhase + Math.PI) * 0.42 : 0;
-      const atk = isHero ? combatState.attackT / 0.28 : 0;
+      const atk = isHero ? Math.min(1, combatState.attackT / 0.28) : 0;
       const attackPose = isHero && combatState.attackT > 0;
+      const attackEase = attackPose ? Math.sin(atk * Math.PI) : 0;
 
       ctx.save();
       ctx.translate(x, y + bob + 4);
@@ -3021,7 +3030,7 @@
 
       ctx.save();
       ctx.translate(19, -4);
-      ctx.rotate(0.32 - armSwing * 0.45 + (isHero && combatState.attackT>0 ? 0.9 * atk : 0));
+      ctx.rotate(0.24 - armSwing * 0.32 + (attackPose ? 1.12 * attackEase : 0));
       ctx.fillStyle = armorBase;
       roundRect(-5, 0, 10, 22, 5);
       ctx.fill();
@@ -3031,8 +3040,8 @@
 
       if (isHero && gear && gear.weaponColor) {
         ctx.save();
-        ctx.translate(11, 9);
-        ctx.rotate(0.12 + (attackPose ? -1.04 * atk : -0.03));
+        ctx.translate(8, 12);
+        ctx.rotate(-0.10 + (attackPose ? -0.72 - 0.38 * attackEase : 0));
         const weaponGlow = gear.weaponTier ? gear.weaponTier.glow : gear.weaponColor;
         const bladeGrad = ctx.createLinearGradient(0, -32, 0, 12);
         bladeGrad.addColorStop(0, "#ffffff");
@@ -3045,9 +3054,9 @@
         ctx.beginPath();
         ctx.moveTo(-2.6, 10);
         ctx.lineTo(-4.2, -1);
-        ctx.lineTo(-2.8, -24);
-        ctx.lineTo(0, -32);
-        ctx.lineTo(2.8, -24);
+        ctx.lineTo(-2.4, -20);
+        ctx.lineTo(0, -27);
+        ctx.lineTo(2.4, -20);
         ctx.lineTo(4.2, -1);
         ctx.lineTo(2.6, 10);
         ctx.closePath();
@@ -3055,7 +3064,7 @@
         ctx.lineWidth = 1.1;
         ctx.strokeStyle = "rgba(255,255,255,0.92)";
         ctx.beginPath();
-        ctx.moveTo(0, -27); ctx.lineTo(0, 5);
+        ctx.moveTo(0, -23); ctx.lineTo(0, 5);
         ctx.stroke();
         const guardGrad = ctx.createLinearGradient(-7, 0, 7, 0);
         guardGrad.addColorStop(0, shade(gear.weaponColor, -28));
@@ -3068,8 +3077,8 @@
         roundRect(-2.4, 9, 4.8, 10, 2.4); ctx.fill();
         const spark = 0.35 + 0.45 * Math.sin(performance.now()/170);
         ctx.fillStyle = "rgba(255,255,255,0.98)";
-        ctx.beginPath(); ctx.arc(0, -25, 1.4 + spark*0.8, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(2.4, -15, 0.9 + spark*0.4, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, -21, 1.4 + spark*0.8, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(2.2, -12, 0.9 + spark*0.4, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(-2.0, -8, 0.75 + spark*0.3, 0, Math.PI*2); ctx.fill();
         ctx.restore();
       }
@@ -3385,6 +3394,13 @@
         triggerAttack();
         window.__metaWorldAttackTap = 0;
       }
+      if (window.__metaWorldExitTap) {
+        closeModal();
+        closeShop();
+        toggleInventory(false);
+        toggleEquipment(false);
+        window.__metaWorldExitTap = 0;
+      }
 
       if (!player.moving) player.walkPhase += dt * 2.4;
       if (player.gearFlashT > 0) player.gearFlashT = Math.max(0, player.gearFlashT - dt);
@@ -3660,20 +3676,20 @@
         ctx.translate(fx.x, fx.y);
         const rot = fx.dir === 'left' ? Math.PI : fx.dir === 'up' ? -Math.PI/2 : fx.dir === 'down' ? Math.PI/2 : 0;
         ctx.rotate(rot);
-        ctx.strokeStyle = 'rgba(255,255,255,0.98)';
-        ctx.lineWidth = 5;
+        ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+        ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.arc(0, 0, 24, -1.10, 0.34);
+        ctx.arc(0, 0, 22, -0.98, 0.18);
         ctx.stroke();
-        ctx.strokeStyle = 'rgba(147,197,253,0.92)';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(0, 0, 30, -1.12, 0.26);
-        ctx.stroke();
-        ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+        ctx.strokeStyle = 'rgba(248,250,252,0.72)';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(0, 0, 28, -1.04, 0.14);
+        ctx.arc(0, 0, 26, -1.02, 0.08);
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(96,165,250,0.88)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, 18, -0.94, 0.12);
         ctx.stroke();
         ctx.restore();
       }
@@ -3707,14 +3723,19 @@
       requestAnimationFrame(loop);
     }
 
-    canvas.addEventListener("pointerdown", () => {
+    canvas.addEventListener("pointerdown", (e) => {
       if (!isTouchDevice()) return;
       const now = performance.now();
       if (modalState.open && modalState.portal) {
-        if (now - touchTapAt < 340) confirmEnter(modalState.portal);
+        if (activePortal && modalState.portal && activePortal.key === modalState.portal.key && now - touchTapAt < 340) {
+          confirmEnter(modalState.portal);
+        } else {
+          closeModal();
+        }
         touchTapAt = now;
       } else if (activePortal) {
         openPortalUI(activePortal);
+        touchTapAt = now;
       }
     }, { passive: true });
 
