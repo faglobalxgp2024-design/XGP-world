@@ -203,9 +203,14 @@
     modalInner.style.pointerEvents = "auto";
     modalInner.style.textAlign = "center";
     modalInner.style.font = "1100 18px system-ui";
-    modalInner.style.color = "rgba(10,14,24,0.92)";
+    modalInner.style.color = "#f8fafc";
     modalInner.style.userSelect = "none";
     modalInner.style.webkitUserSelect = "none";
+    modalInner.style.background = "transparent";
+    modalInner.style.border = "none";
+    modalInner.style.boxShadow = "none";
+    modalInner.style.backdropFilter = "none";
+    modalInner.style.webkitBackdropFilter = "none";
 
     const modalTitle = ensureEl("lego_modal_title", "div", modalInner);
     modalTitle.style.font = "1200 22px system-ui";
@@ -899,25 +904,55 @@
     function iconMarkup(item, equipped = false) {
       const mode = item?.icon || item?.slot || "item";
       const rare = rarityStyle(item?.price || 0);
-      let bg = `radial-gradient(circle at 50% 18%, ${shade(rare.color, 50)}, #0f172a 76%)`;
-      let shape = "";
-      if (mode === "helm") {
-        bg = `radial-gradient(circle at 50% 26%, ${shade(rare.color, 34)}, #05070d 72%)`;
-        shape = '<div style="position:absolute;left:9px;right:9px;top:10px;height:20px;border-radius:14px 14px 8px 8px;background:linear-gradient(180deg,#020617,#1f2937);border:1px solid rgba(255,255,255,0.12)"></div><div style="position:absolute;left:13px;right:13px;top:17px;height:12px;border-radius:8px;background:linear-gradient(90deg,transparent,rgba(239,68,68,0.85),transparent)"></div><div style="position:absolute;left:18px;right:18px;top:26px;height:10px;border-radius:0 0 12px 12px;background:linear-gradient(180deg,#111827,#374151)"></div><div style="position:absolute;left:26px;top:6px;width:10px;height:10px;transform:rotate(45deg);background:'+rare.color+';box-shadow:0 0 10px '+rare.glow+'"></div>';
-      } else if (mode === "armor") {
-        bg = `radial-gradient(circle at 50% 22%, ${shade(rare.color, 20)}, #020617 74%)`;
-        shape = '<div style="position:absolute;left:12px;right:12px;top:9px;height:30px;border-radius:12px;background:linear-gradient(180deg,#0f172a,#334155);border:1px solid rgba(255,255,255,0.10)"></div><div style="position:absolute;left:16px;right:16px;top:12px;height:8px;border-radius:8px;background:linear-gradient(90deg,transparent,'+rare.color+',transparent)"></div><div style="position:absolute;left:21px;right:21px;top:20px;height:14px;border-radius:8px;background:rgba(255,255,255,0.08)"></div><div style="position:absolute;left:27px;top:7px;width:8px;height:8px;transform:rotate(45deg);background:'+rare.color+';box-shadow:0 0 12px '+rare.glow+'"></div>';
-      } else if (mode === "sword") {
-        bg = `radial-gradient(circle at 50% 18%, ${shade(rare.color, 16)}, #020617 76%)`;
-        shape = '<div style="position:absolute;left:27px;top:7px;width:5px;height:30px;border-radius:3px;background:linear-gradient(180deg,#ffffff,#cbd5e1 42%,#94a3b8 100%);transform:rotate(32deg);box-shadow:0 0 12px rgba(255,255,255,0.38),0 0 22px '+rare.glow+'"></div><div style="position:absolute;left:17px;top:30px;width:22px;height:5px;border-radius:5px;background:'+rare.color+';transform:rotate(32deg)"></div><div style="position:absolute;left:15px;top:36px;width:7px;height:12px;border-radius:4px;background:#7f1d1d;transform:rotate(32deg)"></div><div style="position:absolute;left:11px;top:10px;width:12px;height:3px;background:rgba(255,255,255,0.8);transform:rotate(-24deg);filter:blur(0.4px)"></div>';
-      } else if (mode === "shield") {
-        bg = `radial-gradient(circle at 50% 20%, ${shade(rare.color, 28)}, #020617 74%)`;
-        shape = '<div style="position:absolute;left:12px;right:12px;top:8px;bottom:10px;background:linear-gradient(180deg,#cbd5e1,#475569);clip-path:polygon(50% 0%, 92% 18%, 86% 72%, 50% 100%, 14% 72%, 8% 18%);border:1px solid rgba(255,255,255,0.16);box-shadow:0 0 12px '+rare.glow+'44 inset"></div><div style="position:absolute;left:17px;right:17px;top:15px;height:6px;border-radius:6px;background:'+rare.color+'"></div><div style="position:absolute;left:24px;top:18px;width:4px;height:18px;border-radius:4px;background:#ffffff"></div><div style="position:absolute;left:18px;top:24px;width:16px;height:4px;border-radius:4px;background:#0f172a"></div>';
-      }
+      const t = performance.now() / 1000;
       const glow = item?.glow || item?.color || rare.glow || "rgba(148,163,184,0.45)";
+      const metallic = `linear-gradient(180deg, ${shade(rare.color, 58)} 0%, ${shade(rare.color, 22)} 24%, ${shade(rare.color, -18)} 58%, #020617 100%)`;
+      let bg = `radial-gradient(circle at 50% 18%, ${shade(rare.color, 42)}, #020617 78%)`;
+      let shape = "";
+      let rim = `box-shadow:inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -10px 20px rgba(0,0,0,0.26), 0 0 28px ${glow}88, 0 10px 22px rgba(2,6,23,0.34)`;
+      const shine = `<div style="position:absolute;left:8px;right:8px;top:6px;height:12px;border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,0.22),rgba(255,255,255,0));filter:blur(0.3px)"></div>`;
+      if (mode === "helm") {
+        bg = `radial-gradient(circle at 50% 20%, ${shade(rare.color, 28)}, #020617 80%)`;
+        shape = `
+          <div style="position:absolute;left:10px;right:10px;top:8px;height:22px;border-radius:15px 15px 10px 10px;background:${metallic};border:1px solid rgba(255,255,255,0.18)"></div>
+          <div style="position:absolute;left:14px;right:14px;top:15px;height:9px;border-radius:10px;background:linear-gradient(90deg,transparent,rgba(96,165,250,0.95),transparent);box-shadow:0 0 10px rgba(96,165,250,0.8)"></div>
+          <div style="position:absolute;left:19px;right:19px;top:24px;height:12px;border-radius:0 0 12px 12px;background:linear-gradient(180deg,#0f172a,#374151)"></div>
+          <div style="position:absolute;left:27px;top:5px;width:10px;height:10px;transform:rotate(45deg);background:${rare.color};box-shadow:0 0 14px ${glow}"></div>
+          <div style="position:absolute;left:8px;top:9px;width:8px;height:18px;border-radius:8px;background:linear-gradient(180deg,#111827,#020617)"></div>
+          <div style="position:absolute;right:8px;top:9px;width:8px;height:18px;border-radius:8px;background:linear-gradient(180deg,#111827,#020617)"></div>
+          ${shine}`;
+      } else if (mode === "armor") {
+        bg = `radial-gradient(circle at 50% 22%, ${shade(rare.color, 20)}, #020617 78%)`;
+        shape = `
+          <div style="position:absolute;left:11px;right:11px;top:8px;height:31px;border-radius:12px;background:${metallic};border:1px solid rgba(255,255,255,0.16)"></div>
+          <div style="position:absolute;left:17px;right:17px;top:12px;height:8px;border-radius:8px;background:linear-gradient(90deg,transparent,${rare.color},transparent);box-shadow:0 0 10px ${glow}"></div>
+          <div style="position:absolute;left:20px;right:20px;top:20px;height:14px;border-radius:8px;background:rgba(255,255,255,0.08)"></div>
+          <div style="position:absolute;left:7px;top:12px;width:11px;height:12px;border-radius:6px;background:linear-gradient(180deg,#0f172a,#334155)"></div>
+          <div style="position:absolute;right:7px;top:12px;width:11px;height:12px;border-radius:6px;background:linear-gradient(180deg,#0f172a,#334155)"></div>
+          <div style="position:absolute;left:27px;top:6px;width:8px;height:8px;transform:rotate(45deg);background:${rare.color};box-shadow:0 0 12px ${glow}"></div>
+          ${shine}`;
+      } else if (mode === "sword") {
+        bg = `radial-gradient(circle at 50% 18%, ${shade(rare.color, 18)}, #020617 80%)`;
+        shape = `
+          <div style="position:absolute;left:27px;top:6px;width:6px;height:31px;border-radius:4px;background:linear-gradient(180deg,#ffffff,#e2e8f0 28%,#cbd5e1 52%,#94a3b8 84%,#334155 100%);transform:rotate(32deg);box-shadow:0 0 12px rgba(255,255,255,0.52),0 0 24px ${glow}"></div>
+          <div style="position:absolute;left:18px;top:30px;width:22px;height:5px;border-radius:6px;background:linear-gradient(90deg,${shade(rare.color,-18)},${rare.color},${shade(rare.color,-18)});transform:rotate(32deg);box-shadow:0 0 10px ${glow}"></div>
+          <div style="position:absolute;left:16px;top:36px;width:8px;height:13px;border-radius:4px;background:linear-gradient(180deg,#7f1d1d,#1f2937);transform:rotate(32deg)"></div>
+          <div style="position:absolute;left:13px;top:10px;width:14px;height:3px;background:rgba(255,255,255,0.95);transform:rotate(-25deg);filter:blur(0.3px)"></div>
+          <div style="position:absolute;left:30px;top:8px;width:3px;height:20px;background:rgba(255,255,255,0.55);transform:rotate(32deg)"></div>
+          <div style="position:absolute;left:33px;top:2px;width:6px;height:6px;border-radius:999px;background:#fff;box-shadow:0 0 16px ${glow},0 0 26px rgba(255,255,255,0.8)"></div>`;
+      } else if (mode === "shield") {
+        bg = `radial-gradient(circle at 50% 20%, ${shade(rare.color, 24)}, #020617 78%)`;
+        shape = `
+          <div style="position:absolute;left:12px;right:12px;top:8px;bottom:10px;background:${metallic};clip-path:polygon(50% 0%, 92% 18%, 86% 72%, 50% 100%, 14% 72%, 8% 18%);border:1px solid rgba(255,255,255,0.16);box-shadow:0 0 12px ${glow}55 inset"></div>
+          <div style="position:absolute;left:17px;right:17px;top:15px;height:6px;border-radius:6px;background:${rare.color};box-shadow:0 0 10px ${glow}"></div>
+          <div style="position:absolute;left:24px;top:18px;width:4px;height:18px;border-radius:4px;background:#ffffff"></div>
+          <div style="position:absolute;left:18px;top:24px;width:16px;height:4px;border-radius:4px;background:#0f172a"></div>
+          <div style="position:absolute;left:22px;top:12px;width:8px;height:8px;border-radius:999px;background:rgba(255,255,255,0.85);box-shadow:0 0 12px ${glow}"></div>`;
+      }
       const stars = Math.max(1, Math.min(5, Math.ceil((item?.price || 1) / 220)));
-      const gems = Array.from({ length: stars }).map((_, i) => `<div style="position:absolute;bottom:5px;left:${8 + i * 10}px;width:6px;height:6px;border-radius:999px;background:${rare.color};box-shadow:0 0 10px ${glow}"></div>`).join("");
-      return `<div class="item-icon${equipped ? " active" : ""}" style="background:${bg};box-shadow:inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 1px rgba(255,255,255,0.06), 0 0 24px ${glow}66, 0 10px 20px rgba(2,6,23,0.28)">${shape}${gems}</div>`;
+      const gems = Array.from({ length: stars }).map((_, i) => `<div style="position:absolute;bottom:5px;left:${8 + i * 10}px;width:6px;height:6px;border-radius:999px;background:${rare.color};box-shadow:0 0 12px ${glow}"></div>`).join("");
+      const activeRing = equipped ? `0 0 0 2px ${rare.color}, 0 0 28px ${glow}` : `0 0 0 1px rgba(255,255,255,0.08)`;
+      return `<div class="item-icon${equipped ? " active" : ""}" style="background:${bg};box-shadow:${activeRing}, ${rim};overflow:hidden"><div style="position:absolute;inset:0;background:radial-gradient(circle at 22% 18%, rgba(255,255,255,0.22), transparent 34%), radial-gradient(circle at 80% 78%, ${glow}22, transparent 28%)"></div>${shape}${gems}</div>`;
     }
 
     function renderPanels() {
@@ -1737,7 +1772,7 @@
       if (p.key === "blacksmith") {
         modalState.open = true;
         modalState.portal = p;
-        UI.modal.style.display = "flex";
+        UI.modal.style.display = "flex"; UI.modal.style.pointerEvents = "auto";
         UI.modalTitle.innerHTML = blockSpan(`⚒ <b>${p.label}</b>`, {
           bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#f8fafc", pad: "12px 18px", radius: "18px", border: "1px solid rgba(148,163,184,0.18)"
         });
@@ -1745,23 +1780,23 @@
           bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#e2e8f0", pad: "14px 18px", radius: "18px", border: "1px solid rgba(148,163,184,0.18)"
         });
         UI.modalHint.innerHTML = blockSpan(`닫기: <b>ESC</b> / 바깥 터치`, {
-          bg: "rgba(15,23,42,0.88)", fg: "#cbd5e1", pad: "8px 12px", radius: "14px", border: "1px solid rgba(148,163,184,0.14)"
+          bg: "rgba(2,6,23,0.86)", fg: "#cbd5e1", pad: "7px 11px", radius: "13px", border: "1px solid rgba(148,163,184,0.14)", shadow:"0 10px 24px rgba(2,6,23,0.18)"
         });
         return;
       }
       modalState.open = true;
       modalState.portal = p;
-      UI.modal.style.display = "flex";
+      UI.modal.style.display = "flex"; UI.modal.style.pointerEvents = "auto";
       const isOpen = p.status === "open" && (!!p.url || !!p.message);
       UI.modalTitle.innerHTML = blockSpan(`🧱 <b>${p.label}</b>`, {
         bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#f8fafc", pad: "12px 18px", radius: "18px", border: "1px solid rgba(148,163,184,0.18)"
       });
       UI.modalBody.innerHTML = isOpen
         ? blockSpan(`입장하시겠습니까?<br/><b>Enter</b> 또는 화면을 한 번 더 터치`, {
-            bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#e2e8f0", pad: "14px 18px", radius: "18px", border: "1px solid rgba(148,163,184,0.18)"
+            bg: "linear-gradient(180deg, rgba(2,6,23,0.98), rgba(15,23,42,0.96))", fg: "#e2e8f0", pad: "12px 16px", radius: "16px", border: "1px solid rgba(56,189,248,0.18)", shadow:"0 14px 32px rgba(2,6,23,0.22)"
           })
         : blockSpan(`게임 준비중입니다.`, {
-            bg: "linear-gradient(180deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))", fg: "#e2e8f0", pad: "14px 18px", radius: "18px", border: "1px solid rgba(148,163,184,0.18)"
+            bg: "linear-gradient(180deg, rgba(2,6,23,0.98), rgba(15,23,42,0.96))", fg: "#e2e8f0", pad: "12px 16px", radius: "16px", border: "1px solid rgba(148,163,184,0.18)", shadow:"0 14px 32px rgba(2,6,23,0.22)"
           });
       UI.modalHint.innerHTML = blockSpan(`닫기: <b>ESC</b> / 바깥 터치`, {
         bg: "rgba(15,23,42,0.88)", fg: "#cbd5e1", pad: "8px 12px", radius: "14px", border: "1px solid rgba(148,163,184,0.14)"
@@ -2360,7 +2395,7 @@
       const hover = activePortal && activePortal.key === p.key;
       if (hover) {
         ctx.save();
-        ctx.globalAlpha = 0.15 + 0.08 * Math.sin(t * 6);
+        ctx.globalAlpha = 0.06 + 0.04 * Math.sin(t * 6);
         ctx.fillStyle = c.sign;
         roundRect(ez.x, ez.y, ez.w, ez.h, 12);
         ctx.fill();
@@ -2695,7 +2730,11 @@
         hatColor: hat ? hat.color : null,
         armorColor: armor ? armor.color : null,
         weaponColor: weapon ? weapon.color : null,
-        shieldColor: shield ? shield.color : null
+        shieldColor: shield ? shield.color : null,
+        hatTier: hat ? rarityStyle(hat.price) : null,
+        armorTier: armor ? rarityStyle(armor.price) : null,
+        weaponTier: weapon ? rarityStyle(weapon.price) : null,
+        shieldTier: shield ? rarityStyle(shield.price) : null
       };
     }
 
@@ -2745,7 +2784,7 @@
       ctx.globalAlpha = 1;
 
       const armorBase = gear && gear.armorColor ? gear.armorColor : '#111827';
-      const blueGlow = '#60a5fa';
+      const accentGlow = gear?.weaponTier?.color || gear?.armorTier?.color || '#60a5fa';
 
       ctx.save();
       ctx.translate(0, 10);
@@ -2779,16 +2818,18 @@
       ctx.fillStyle = "rgba(255,255,255,0.16)";
       roundRect(-10, -10, 20, 9, 5);
       ctx.fill();
-      ctx.strokeStyle = "rgba(96,165,250,0.55)";
+      ctx.strokeStyle = accentGlow;
       ctx.lineWidth = 2;
       roundRect(-14, -7, 28, 16, 7);
       ctx.stroke();
       ctx.fillStyle = "#111827";
       roundRect(-5, -4, 10, 18, 4);
       ctx.fill();
-      ctx.fillStyle = "#60a5fa";
+      ctx.fillStyle = accentGlow;
       roundRect(-2, -1, 4, 10, 2);
       ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.14)";
+      roundRect(-13, -12, 26, 4, 3); ctx.fill();
 
       ctx.save();
       ctx.translate(-19, -4);
@@ -2796,7 +2837,7 @@
       ctx.fillStyle = armorBase;
       roundRect(-5, 0, 10, 22, 5);
       ctx.fill();
-      ctx.fillStyle = blueGlow;
+      ctx.fillStyle = accentGlow;
       roundRect(-4, 3, 8, 5, 3);
       ctx.fill();
       ctx.restore();
@@ -2807,7 +2848,7 @@
       ctx.fillStyle = armorBase;
       roundRect(-5, 0, 10, 22, 5);
       ctx.fill();
-      ctx.fillStyle = blueGlow;
+      ctx.fillStyle = accentGlow;
       roundRect(-4, 3, 8, 5, 3);
       ctx.fill();
 
@@ -2830,9 +2871,12 @@
         ctx.fillStyle = "#0f172a";
         roundRect(-12, -1, 24, 5, 3); ctx.fill();
         ctx.fillStyle = gear.weaponColor;
+        ctx.shadowColor = gear.weaponTier ? gear.weaponTier.glow : gear.weaponColor;
+        ctx.shadowBlur = 16 + ((gear.weaponTier && gear.weaponTier.label==="MYTHIC") ? 8 : 0);
         roundRect(-5, 4, 10, 15, 3); ctx.fill();
         ctx.fillStyle = "rgba(255,255,255,0.98)";
         ctx.beginPath(); ctx.arc(10, -30, 2.6 + Math.sin(performance.now()/120)*0.9, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(3, -38, 1.8, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(-7, -18, 1.5, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(4, -12, 1.2, 0, Math.PI*2); ctx.fill();
         ctx.restore();
@@ -2847,6 +2891,8 @@
         shieldGrad.addColorStop(0, "#f8fafc");
         shieldGrad.addColorStop(0.32, "#94a3b8");
         shieldGrad.addColorStop(0.72, gear.shieldColor);
+        ctx.shadowColor = gear.shieldTier ? gear.shieldTier.glow : gear.shieldColor;
+        ctx.shadowBlur = 12;
         shieldGrad.addColorStop(1, "#020617");
         ctx.fillStyle = shieldGrad;
         ctx.beginPath();
@@ -2893,8 +2939,12 @@
         ctx.fill();
         ctx.fillStyle = "#111827";
         roundRect(-12, -28, 24, 7, 4); ctx.fill();
-        ctx.fillStyle = "#60a5fa";
+        ctx.fillStyle = gear?.hatTier?.color || "#60a5fa";
+        roundRect(-3,-48,6,10,3); ctx.fill();
+        ctx.fillStyle = gear?.hatTier?.color || "#60a5fa";
         roundRect(-9, -29, 18, 4, 2); ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.20)";
+        roundRect(-10,-42,20,4,2); ctx.fill();
         ctx.fillStyle = "rgba(255,255,255,0.12)";
         roundRect(-7,-45,14,4,2); ctx.fill();
       } else {
