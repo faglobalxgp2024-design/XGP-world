@@ -1,10 +1,15 @@
-/* HUN.JS - LEGO PREMIUM (single-file) v2.6
+/* HUN.JS - LEGO PREMIUM (single-file) v2.7
  * 적용:
  * 1) 모바일 조이스틱: 오른쪽으로 이동 + 살짝 크게
- * 2) 캐릭터 디테일: 갑옷/무기/방패 디테일 추가
- * 3) 존 입구: 고급스러운 “게이트/입구” 생성 + 시각적 강조
- * 4) 도로: 존 바깥 정렬 + 도로가 끊겨 보이지 않게 연장/연결 개선 + 차량 라인 안 잘리도록
- * 5) 가로등: 랜덤 → 도로를 따라 규칙적으로 정렬 배치
+ * 2) 캐릭터 디테일 유지 + 장착/해제 가능한 장비 시스템 추가
+ * 3) 존 입구: 고급스러운 “게이트/입구” 유지
+ * 4) 도로: 존 바깥 정렬 + 도로 끊김 방지 + 차량 도로 전용 이동
+ * 5) 가로등: 도로 따라 규칙 배치 유지
+ * 6) 배경/월드 스케일 축소 + 포탈/상점 위치 보정
+ * 7) 캐릭터 공중 부양 감소 + 걷는 모션 강화
+ * 8) I = 인벤토리 / TAB = 장착창
+ * 9) 모자/옷/무기 장착/해제 + 장착 이펙트
+ * 10) NPC는 하늘 영역 제외, 마을 구역 안에서만 이동
  *
  * 사용법: 이 파일 전체를 hub.js에 그대로 붙여넣기
  */
@@ -12,15 +17,20 @@
   "use strict";
 
   /* ----------------------- CONFIG ----------------------- */
-  const SPRITE_SRC = "https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EC%BA%90%EB%A6%AD%ED%84%B0%20%EC%9D%B4%EB%AF%B8%EC%A7%80.png"; // custom pixel character sprite
+  const SPRITE_SRC = "https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EC%BA%90%EB%A6%AD%ED%84%B0%20%EC%9D%B4%EB%AF%B8%EC%A7%80.png";
   const WORLD_ART_BASE_SRC = "https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EB%A7%B5-%EB%B0%94%ED%83%95.png";
   const WORLD_ART_SRC = "https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EB%A9%94%ED%83%80%EC%9B%94%EB%93%9C.png";
   const USE_CUSTOM_WORLD_ART = true;
   const USE_SPRITE_IF_LOADED = true;
 
+  const WORLD_SCALE = 0.84;
+  const BUILDING_SCALE = 0.82;
+  const SKY_BAND_RATIO = 0.18;
+
   /* ----------------------- Utilities ----------------------- */
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, t) => a + (b - a) * t;
+
   function shade(hex, amt) {
     const h = hex.replace("#", "");
     const r = clamp(parseInt(h.slice(0, 2), 16) + amt, 0, 255);
@@ -28,6 +38,7 @@
     const b = clamp(parseInt(h.slice(4, 6), 16) + amt, 0, 255);
     return `rgb(${r},${g},${b})`;
   }
+
   function hash01(s) {
     let h = 2166136261;
     for (let i = 0; i < s.length; i++) {
@@ -36,9 +47,11 @@
     }
     return ((h >>> 0) % 1000) / 1000;
   }
+
   function isTouchDevice() {
     return (navigator.maxTouchPoints || 0) > 0;
   }
+
   function mulberry32(seed) {
     let t = seed >>> 0;
     return function () {
@@ -48,11 +61,11 @@
       return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
     };
   }
+
   function seedFromWorld(w, h) {
     return ((w * 73856093) ^ (h * 19349663)) >>> 0;
   }
 
-  /* ----------------------- Safe DOM (no HTML edits) ----------------------- */
   function ensureEl(id, tag, parent = document.body) {
     let el = document.getElementById(id);
     if (!el) {
@@ -63,6 +76,80 @@
     return el;
   }
 
+  function px(v) { return `${v}px`; }
+
+  function slotKor(slot) {
+    if (slot === "hat") return "모자";
+    if (slot === "armor") return "옷";
+    if (slot === "weapon") return "무기";
+    return slot;
+  }
+
+  /* ----------------------- Equipment ----------------------- */
+  const INVENTORY_ITEMS = [
+    { id: "hat_red", slot: "hat", name: "Crimson Helm", color: "#dc2626", accent: "#111827", icon: "⛑" },
+    { id: "hat_blue", slot: "hat", name: "Azure Cap", color: "#0a84ff", accent: "#ffffff", icon: "🧢" },
+    { id: "armor_blackred", slot: "armor", name: "Black Red Armor", color: "#111827", accent: "#dc2626", icon: "🦺" },
+    { id: "armor_gold", slot: "armor", name: "Gold Armor", color: "#7c5a10", accent: "#ffd166", icon: "🥋" },
+    { id: "weapon_sword", slot: "weapon", name: "Hero Sword", color: "#9ca3af", accent: "#dc2626", icon: "🗡" },
+    { id: "weapon_lance", slot: "weapon", name: "Royal Lance", color: "#d1d5db", accent: "#0a84ff", icon: "⚔" }
+  ];
+
+  const equipment = {
+    hat: "hat_red",
+    armor: "armor_blackred",
+    weapon: "weapon_sword"
+  };
+
+  const equipFx = [];
+  function getItemById(id) {
+    return INVENTORY_ITEMS.find(v => v.id === id) || null;
+  }
+
+  function spawnEquipFx(x, y, baseColor = "#ffffff") {
+    const rng = mulberry32(((x * 1000) ^ (y * 1000) ^ Date.now()) >>> 0);
+    for (let i = 0; i < 26; i++) {
+      equipFx.push({
+        x,
+        y: y - 40,
+        vx: (rng() - 0.5) * 140,
+        vy: -40 - rng() * 120,
+        life: 0.75 + rng() * 0.25,
+        age: 0,
+        r: 3 + rng() * 4,
+        color: baseColor
+      });
+    }
+  }
+
+  function updateEquipFx(dt) {
+    for (let i = equipFx.length - 1; i >= 0; i--) {
+      const p = equipFx[i];
+      p.age += dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 220 * dt;
+      if (p.age >= p.life) equipFx.splice(i, 1);
+    }
+  }
+
+  function drawEquipFx(ctx) {
+    ctx.save();
+    for (const p of equipFx) {
+      const t = 1 - p.age / p.life;
+      ctx.globalAlpha = 0.85 * t;
+      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 2.4);
+      g.addColorStop(0, p.color);
+      g.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  /* ----------------------- Safe DOM / UI ----------------------- */
   function ensureUI() {
     const canvas = ensureEl("world", "canvas");
     canvas.style.display = "block";
@@ -75,7 +162,6 @@
     canvas.style.webkitUserSelect = "none";
     canvas.style.imageRendering = "auto";
 
-    // ===== UI CLEANUP PATCH =====
     const topbar = document.querySelector("header.topbar") || document.querySelector("#topbar") || document.querySelector("header");
     if (topbar) topbar.style.display = "none";
     document.documentElement.style.margin = "0";
@@ -91,7 +177,6 @@
       wrap.style.width = "100%";
     }
 
-    // Toast
     const toast = ensureEl("toast", "div");
     toast.style.position = "fixed";
     toast.style.left = "50%";
@@ -113,7 +198,6 @@
     toast.style.pointerEvents = "none";
     toast.hidden = true;
 
-    // Coord / FPS
     const coord = ensureEl("coord", "div");
     coord.style.position = "fixed";
     coord.style.left = "20px";
@@ -140,7 +224,6 @@
     fps.style.color = "rgba(10,18,30,0.80)";
     fps.style.backdropFilter = "blur(6px)";
 
-    // Fade
     const fade = ensureEl("fade", "div");
     fade.style.position = "fixed";
     fade.style.inset = "0";
@@ -150,7 +233,6 @@
     fade.style.transition = "opacity 240ms ease";
     fade.style.background = "#ffffff";
 
-    // Modal (clean)
     const modal = ensureEl("lego_modal", "div");
     modal.style.position = "fixed";
     modal.style.inset = "0";
@@ -193,24 +275,120 @@
     modalHint.style.font = "900 13px system-ui";
     modalHint.style.opacity = "0.72";
 
+    const inv = ensureEl("inventory_panel", "div");
+    const equip = ensureEl("equipment_panel", "div");
+    const mobileBtns = ensureEl("mobile_ui_btns", "div");
+    const invBtn = ensureEl("mobile_inv_btn", "button", mobileBtns);
+    const equipBtn = ensureEl("mobile_equip_btn", "button", mobileBtns);
+
+    inv.style.position = "fixed";
+    inv.style.right = "18px";
+    inv.style.top = "110px";
+    inv.style.width = "320px";
+    inv.style.maxHeight = "calc(100vh - 140px)";
+    inv.style.overflow = "auto";
+    inv.style.zIndex = "10002";
+    inv.style.padding = "14px";
+    inv.style.borderRadius = "18px";
+    inv.style.background = "rgba(255,255,255,0.84)";
+    inv.style.backdropFilter = "blur(10px)";
+    inv.style.border = "1px solid rgba(0,0,0,0.08)";
+    inv.style.boxShadow = "0 20px 50px rgba(0,0,0,0.16)";
+    inv.style.display = "none";
+
+    equip.style.position = "fixed";
+    equip.style.right = "354px";
+    equip.style.top = "110px";
+    equip.style.width = "300px";
+    equip.style.maxHeight = "calc(100vh - 140px)";
+    equip.style.overflow = "auto";
+    equip.style.zIndex = "10002";
+    equip.style.padding = "14px";
+    equip.style.borderRadius = "18px";
+    equip.style.background = "rgba(255,255,255,0.84)";
+    equip.style.backdropFilter = "blur(10px)";
+    equip.style.border = "1px solid rgba(0,0,0,0.08)";
+    equip.style.boxShadow = "0 20px 50px rgba(0,0,0,0.16)";
+    equip.style.display = "none";
+
+    mobileBtns.style.position = "fixed";
+    mobileBtns.style.left = "18px";
+    mobileBtns.style.bottom = "208px";
+    mobileBtns.style.zIndex = "10003";
+    mobileBtns.style.display = isTouchDevice() ? "flex" : "none";
+    mobileBtns.style.flexDirection = "column";
+    mobileBtns.style.gap = "10px";
+
+    [invBtn, equipBtn].forEach(btn => {
+      btn.style.width = "86px";
+      btn.style.height = "46px";
+      btn.style.border = "none";
+      btn.style.borderRadius = "14px";
+      btn.style.background = "rgba(255,255,255,0.88)";
+      btn.style.boxShadow = "0 14px 36px rgba(0,0,0,0.16)";
+      btn.style.font = "1000 13px system-ui";
+      btn.style.color = "#111827";
+      btn.style.backdropFilter = "blur(10px)";
+    });
+    invBtn.textContent = "INV";
+    equipBtn.textContent = "EQUIP";
+
     const style = ensureEl("lego_style_injected", "style", document.head);
     style.textContent = `
       #fade.on { opacity: 1; }
       #lego_modal { animation: legoPop 160ms ease both; }
       @keyframes legoPop { from{opacity:0; transform: translateY(8px);} to{opacity:1; transform: translateY(0);} }
       * { -webkit-tap-highlight-color: transparent; }
+      #inventory_panel::-webkit-scrollbar, #equipment_panel::-webkit-scrollbar { width: 10px; }
+      #inventory_panel::-webkit-scrollbar-thumb, #equipment_panel::-webkit-scrollbar-thumb {
+        background: rgba(0,0,0,0.18); border-radius: 999px;
+      }
+      .lego-panel-title {
+        font: 1000 16px system-ui;
+        color: rgba(10,14,24,0.92);
+        margin-bottom: 10px;
+        letter-spacing: .2px;
+      }
+      .lego-item-card {
+        display:flex; align-items:center; justify-content:space-between;
+        gap:10px; padding:10px 12px; margin-bottom:10px;
+        border-radius:14px; background:rgba(255,255,255,0.9);
+        border:1px solid rgba(0,0,0,0.08); box-shadow:0 10px 24px rgba(0,0,0,0.06);
+      }
+      .lego-item-left { display:flex; align-items:center; gap:10px; min-width:0; }
+      .lego-icon {
+        width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+        font-size:20px; color:#111827; box-shadow:inset 0 1px 0 rgba(255,255,255,.75);
+      }
+      .lego-item-name { font: 900 13px system-ui; color:#111827; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .lego-item-slot { font: 800 11px system-ui; color:rgba(17,24,39,.62); margin-top:2px; }
+      .lego-btn {
+        border:none; border-radius:12px; padding:9px 12px;
+        font: 900 12px system-ui; color:#fff; cursor:pointer;
+        box-shadow:0 10px 22px rgba(0,0,0,.14);
+      }
+      .lego-btn-equip { background:#0a84ff; }
+      .lego-btn-unequip { background:#dc2626; }
+      .lego-slot-box {
+        padding:12px; border-radius:14px; margin-bottom:10px;
+        background:rgba(255,255,255,.92); border:1px solid rgba(0,0,0,.08);
+        box-shadow:0 10px 24px rgba(0,0,0,.06);
+      }
+      .lego-slot-label { font: 1000 12px system-ui; color:#111827; margin-bottom:8px; }
+      .lego-slot-empty { font: 800 12px system-ui; color:rgba(17,24,39,.45); }
+      @media (max-width: 1100px) {
+        #equipment_panel { right: 18px; top: 110px; width: 300px; }
+        #inventory_panel { right: 18px; top: 430px; width: 300px; max-height: calc(100vh - 460px); }
+      }
     `;
 
-    /* ---------- Mobile Analog Joystick (Wheel) ---------- */
+    const JOY_SIZE = 168;
+    const JOY_KNOB = 72;
+    const JOY_RING = 136;
+
     const joy = ensureEl("joystick", "div");
-
-    // ✅ (1) 오른쪽 배치 + 살짝 크게
-    const JOY_SIZE = 168;     // 기존 142 → 168
-    const JOY_KNOB = 72;      // 62 → 72
-    const JOY_RING = 136;     // 114 → 136
-
     joy.style.position = "fixed";
-    joy.style.right = "18px";         // ✅ left → right
+    joy.style.right = "18px";
     joy.style.left = "auto";
     joy.style.bottom = "18px";
     joy.style.zIndex = "10001";
@@ -263,26 +441,28 @@
     function setJoy(ax, ay) {
       joyState.ax = ax;
       joyState.ay = ay;
-      const max = 52; // 기존 44 → 약간 확대
-      const px = ax * max;
-      const py = ay * max;
-      joyKnob.style.transform = `translate(calc(-50% + ${px}px), calc(-50% + ${py}px))`;
+      const max = 52;
+      const pxv = ax * max;
+      const pyv = ay * max;
+      joyKnob.style.transform = `translate(calc(-50% + ${pxv}px), calc(-50% + ${pyv}px))`;
       joyBase.style.background = joyState.active ? "rgba(255,255,255,0.86)" : "rgba(255,255,255,0.72)";
     }
+
     function joyPointerDown(e) {
       e.preventDefault();
       joyState.active = true;
       joyState.id = e.pointerId;
-      try { joy.setPointerCapture(e.pointerId); } catch {}
+      try { joy.setPointerCapture(e.pointerId); } catch (_) {}
       joyPointerMove(e);
     }
+
     function joyPointerMove(e) {
       if (!joyState.active || e.pointerId !== joyState.id) return;
       const r = joy.getBoundingClientRect();
       const cx = r.left + r.width / 2;
       const cy = r.top + r.height / 2;
-      const dx = (e.clientX - cx);
-      const dy = (e.clientY - cy);
+      const dx = e.clientX - cx;
+      const dy = e.clientY - cy;
       const max = 62;
       const len = Math.hypot(dx, dy) || 1;
       const k = Math.min(1, len / max);
@@ -293,19 +473,24 @@
       if (dd < dz) return setJoy(0, 0);
       setJoy(ax, ay);
     }
+
     function joyPointerUp(e) {
       if (e.pointerId !== joyState.id) return;
       joyState.active = false;
       joyState.id = -1;
       setJoy(0, 0);
-      try { joy.releasePointerCapture(e.pointerId); } catch {}
+      try { joy.releasePointerCapture(e.pointerId); } catch (_) {}
     }
+
     joy.addEventListener("pointerdown", joyPointerDown, { passive: false });
     joy.addEventListener("pointermove", joyPointerMove, { passive: false });
     joy.addEventListener("pointerup", joyPointerUp, { passive: false });
     joy.addEventListener("pointercancel", joyPointerUp, { passive: false });
 
-    return { canvas, toast, coord, fps, fade, modal, modalTitle, modalBody, modalHint, joyState };
+    return {
+      canvas, toast, coord, fps, fade, modal, modalTitle, modalBody, modalHint,
+      joyState, inventoryPanel: inv, equipmentPanel: equip, mobileInvBtn: invBtn, mobileEquipBtn: equipBtn
+    };
   }
 
   /* ----------------------- Start ----------------------- */
@@ -315,14 +500,16 @@
     const ctx = canvas.getContext("2d", { alpha: true });
 
     let W = 0, H = 0, DPR = 1;
-    const VIEW = { zoom: 0.86, w: 0, h: 0 };
-
-    const WORLD = { w: 3000, h: 2200, margin: 160 };
+    const VIEW = { zoom: 0.90, w: 0, h: 0 };
+    const WORLD = { w: 3000, h: 1900, margin: 150 };
+    const TOWN = { x: 0, y: 0, w: 0, h: 0 };
     const cam = { x: 0, y: 0, targetX: 0, targetY: 0 };
+    const artBounds = { x: 0, y: 0, w: 0, h: 0 };
 
-    function screenToWorld(sx, sy) { return { x: sx + cam.x, y: sy + cam.y }; }
+    function screenToWorld(sx, sy) {
+      return { x: sx + cam.x, y: sy + cam.y };
+    }
 
-    /* ----------------------- Optional character sprite ----------------------- */
     const sprite = { img: null, loaded: false, w: 1, h: 1 };
     if (SPRITE_SRC && USE_SPRITE_IF_LOADED) {
       const im = new Image();
@@ -333,11 +520,15 @@
         sprite.w = im.naturalWidth || 1;
         sprite.h = im.naturalHeight || 1;
       };
-      im.onerror = () => { sprite.loaded = false; sprite.img = null; };
+      im.onerror = () => {
+        sprite.loaded = false;
+        sprite.img = null;
+      };
       im.src = SPRITE_SRC;
     }
 
     const worldArt = { base: null, top: null, baseLoaded: false, topLoaded: false };
+
     function loadSceneImage(src, key) {
       if (!src) return;
       const im = new Image();
@@ -352,350 +543,82 @@
       };
       im.src = src;
     }
+
     if (USE_CUSTOM_WORLD_ART) {
       loadSceneImage(WORLD_ART_BASE_SRC, "base");
       loadSceneImage(WORLD_ART_SRC, "top");
     }
+
     function hasCustomWorldArt() {
       return !!(USE_CUSTOM_WORLD_ART && (worldArt.baseLoaded || worldArt.topLoaded));
     }
+
+    function computeArtBounds() {
+      const img = worldArt.topLoaded ? worldArt.top : (worldArt.baseLoaded ? worldArt.base : null);
+      if (!img) {
+        artBounds.x = 0;
+        artBounds.y = 0;
+        artBounds.w = WORLD.w;
+        artBounds.h = WORLD.h;
+        return;
+      }
+      const iw = img.naturalWidth || WORLD.w;
+      const ih = img.naturalHeight || WORLD.h;
+      const scale = Math.min(WORLD.w / iw, WORLD.h / ih);
+      const dw = iw * scale;
+      const dh = ih * scale;
+      artBounds.w = dw;
+      artBounds.h = dh;
+      artBounds.x = (WORLD.w - dw) * 0.5;
+      artBounds.y = Math.max(0, (WORLD.h - dh) * 0.5);
+    }
+
     function drawCustomWorldArt() {
       if (!hasCustomWorldArt()) return false;
+      computeArtBounds();
       ctx.save();
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
-      if (worldArt.baseLoaded && worldArt.base) ctx.drawImage(worldArt.base, 0, 0, WORLD.w, WORLD.h);
-      if (worldArt.topLoaded && worldArt.top) ctx.drawImage(worldArt.top, 0, 0, WORLD.w, WORLD.h);
+      if (worldArt.baseLoaded && worldArt.base) {
+        ctx.drawImage(worldArt.base, artBounds.x, artBounds.y, artBounds.w, artBounds.h);
+      }
+      if (worldArt.topLoaded && worldArt.top) {
+        ctx.drawImage(worldArt.top, artBounds.x, artBounds.y, artBounds.w, artBounds.h);
+      }
       ctx.restore();
       return true;
     }
-
-    /* ----------------------- Roads / Sidewalks / Crossings / Signals ----------------------- */
-    const roads = [];
-    const sidewalks = [];
-    const crossings = [];
-    const signals = [];
-
-    /* ----------------------- Portals + Shops ----------------------- */
-    const portals = [
-      // GAME (6)
-      { key: "avoid", label: "DODGE", status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "archery", label: "ARCHERY", status: "open", url: "https://faglobalxgp2024-design.github.io/-/", type: "tower", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "janggi", label: "JANGGI", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "omok", label: "OMOK", status: "soon", url: "", type: "cafe", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "snow", label: "SNOWBALL", status: "soon", url: "", type: "igloo", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "jump", label: "JUMP", status: "soon", url: "", type: "gym", size: "M", x: 0, y: 0, w: 0, h: 0 },
-
-      // COMMUNITY (5)
-      { key: "twitter", label: "TWITTER", status: "open", url: "https://x.com/FAGLOBAL_", type: "social", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "telegram", label: "TELEGRAM", status: "open", url: "https://t.me/faglobalgp", type: "social", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "wallet", label: "WALLET", status: "open", url: "https://faglobal.site/", type: "wallet", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "market", label: "MARKET", status: "open", url: "https://famarket.store/", type: "market", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "support", label: "SUPPORT", status: "open", url: "", message: "문의: faglobal.xgp2024@gmail.com", type: "support", size: "M", x: 0, y: 0, w: 0, h: 0 },
-
-      // ADS (4)
-      { key: "mcd", label: "McDonald's", status: "soon", url: "", type: "mcd", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "bbq", label: "BBQ", status: "open", url: "https://youtu.be/CP28c0QvRig", type: "bbq", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "baskin", label: "BASKIN", status: "soon", url: "", type: "baskin", size: "M", x: 0, y: 0, w: 0, h: 0 },
-      { key: "paris", label: "PARIS", status: "soon", url: "", type: "paris", size: "M", x: 0, y: 0, w: 0, h: 0 },
-    ];
-    const portalsByKey = (k) => portals.find((p) => p.key === k);
-
-    /* ----------------------- ZONES ----------------------- */
-    let ZONES = {
-      game: { x: 0, y: 0, w: 0, h: 0, label: "GAME ZONE", color: "#0a84ff", entrance: null },
-      community: { x: 0, y: 0, w: 0, h: 0, label: "COMMUNITY ZONE", color: "#34c759", entrance: null },
-      ads: { x: 0, y: 0, w: 0, h: 0, label: "AD ZONE", color: "#ff2d55", entrance: null },
-    };
-
-    function ptInRect(x, y, r) { return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h; }
-    function rectsOverlap(a, b, pad = 0) {
-      return !(
-        a.x + a.w + pad < b.x - pad ||
-        a.x - pad > b.x + b.w + pad ||
-        a.y + a.h + pad < b.y - pad ||
-        a.y - pad > b.y + b.h + pad
-      );
-    }
-    function rectInAnyZone(rect, pad = 0) {
-      return rectsOverlap(rect, ZONES.game, pad) || rectsOverlap(rect, ZONES.community, pad) || rectsOverlap(rect, ZONES.ads, pad);
-    }
-
-    /* ----------------------- Player ----------------------- */
-    const player = { x: 360, y: 360, r: 18, speed: 250, moving: false, animT: 0, bobT: 0, dir: "down" };
-    if (isTouchDevice()) player.speed = 185;
-
-    let activePortal = null;
-    let entering = false;
-
-    /* ----------------------- Input ----------------------- */
-    const keys = new Set();
-    let dragging = false;
-    let dragOffset = { x: 0, y: 0 };
-
-    window.addEventListener("keydown", (e) => {
-      const k = e.key.toLowerCase();
-      keys.add(k);
-      if (k === "enter" || k === "e") {
-        if (modalState.open && modalState.portal) confirmEnter(modalState.portal);
-        else if (activePortal) openPortalUI(activePortal);
-      }
-      if (k === "escape") closeModal();
-    });
-    window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
-
-    function getPointer(e) {
-      const r = canvas.getBoundingClientRect();
-      return { x: (e.clientX - r.left) / VIEW.zoom, y: (e.clientY - r.top) / VIEW.zoom };
-    }
-
-    // drag player (PC only)
-    canvas.addEventListener("pointerdown", (e) => {
-      if (isTouchDevice()) return;
-      const p = getPointer(e);
-      const w = screenToWorld(p.x, p.y);
-      const dx = w.x - player.x, dy = w.y - player.y;
-      if (dx * dx + dy * dy <= (player.r + 18) * (player.r + 18)) {
-        dragging = true;
-        dragOffset.x = player.x - w.x;
-        dragOffset.y = player.y - w.y;
-        canvas.setPointerCapture(e.pointerId);
-      }
-    });
-    canvas.addEventListener("pointermove", (e) => {
-      if (!dragging) return;
-      const p = getPointer(e);
-      const prev = { x: player.x, y: player.y };
-      const w = screenToWorld(p.x, p.y);
-      player.x = w.x + dragOffset.x;
-      player.y = w.y + dragOffset.y;
-      clampPlayerToWorld();
-      updateDirFromDelta(player.x - prev.x, player.y - prev.y);
-      player.moving = true;
-      player.animT += 1 / 60;
-    });
-    canvas.addEventListener("pointerup", () => { dragging = false; });
-
-    function clampPlayerToWorld() {
-      player.x = clamp(player.x, WORLD.margin, WORLD.w - WORLD.margin);
-      player.y = clamp(player.y, WORLD.margin, WORLD.h - WORLD.margin);
-    }
-
-    /* ----------------------- Cars ----------------------- */
-    const cars = [];
-    const CAR_COLORS = ["#ff3b30", "#ffcc00", "#34c759", "#0a84ff", "#af52de", "#ff2d55", "#ffffff"];
-
-    function seedCars(rng) {
-      cars.length = 0;
-      if (roads.length === 0) return;
-
-      const makeCar = (r, axis) => {
-        const col = CAR_COLORS[(rng() * CAR_COLORS.length) | 0];
-        const speed = 98 + rng() * 118;
-
-        if (axis === "h") {
-          const lane = rng() < 0.5 ? 0 : 1;
-          const dir = rng() < 0.5 ? 1 : -1;
-          return {
-            kind: "car", axis: "h", dir, color: col, speed,
-            w: 58 + rng() * 22, h: 26 + rng() * 10,
-            x: r.x + rng() * r.w,
-            y: r.y + (lane === 0 ? r.h * 0.36 : r.h * 0.66),
-            bob: rng() * 10, roadId: r._id
-          };
-        } else {
-          const lane = rng() < 0.5 ? 0 : 1;
-          const dir = rng() < 0.5 ? 1 : -1;
-          return {
-            kind: "car", axis: "v", dir, color: col, speed,
-            w: 26 + rng() * 10, h: 62 + rng() * 22,
-            x: r.x + (lane === 0 ? r.w * 0.36 : r.w * 0.66),
-            y: r.y + rng() * r.h,
-            bob: rng() * 10, roadId: r._id
-          };
-        }
-      };
-
-      for (const r of roads) {
-        // 존과 겹치는 도로에 차 생성 금지(품질)
-        if (rectInAnyZone(r, 12)) continue;
-        const n = r.axis === "h" ? 4 + ((rng() * 2) | 0) : 3 + ((rng() * 2) | 0);
-        for (let i = 0; i < n; i++) cars.push(makeCar(r, r.axis));
-      }
-    }
-
-    /* ----------------------- Props / Signs / NPCs ----------------------- */
-    const props = [];
-    const signs = [];
-    let portalNPCs = [];
-    let portalEmblems = [];
-    const roamers = [];
-
-    function isOnRoadLike(x, y) {
-      for (const r of roads) {
-        if (x >= r.x - 18 && x <= r.x + r.w + 18 && y >= r.y - 18 && y <= r.y + r.h + 18) return true;
-      }
-      return false;
-    }
-    function isInsideBuildingBuffer(x, y) {
-      for (const p of portals) {
-        const pad = 130;
-        if (x >= p.x - pad && x <= p.x + p.w + pad && y >= p.y - pad && y <= p.y + p.h + pad) return true;
-      }
-      return false;
-    }
-    function isInsideZonesBuffer(x, y) {
-      const pad = 18;
-      return (
-        (x >= ZONES.game.x - pad && x <= ZONES.game.x + ZONES.game.w + pad && y >= ZONES.game.y - pad && y <= ZONES.game.y + ZONES.game.h + pad) ||
-        (x >= ZONES.community.x - pad && x <= ZONES.community.x + ZONES.community.w + pad && y >= ZONES.community.y - pad && y <= ZONES.community.y + ZONES.community.h + pad) ||
-        (x >= ZONES.ads.x - pad && x <= ZONES.ads.x + ZONES.ads.w + pad && y >= ZONES.ads.y - pad && y <= ZONES.ads.y + ZONES.ads.h + pad)
-      );
-    }
-
-    // Poisson-like placement for cleaner spacing
-    function scatterPoints(rng, count, minDist, maxTry, okFn) {
-      const pts = [];
-      const cell = minDist / Math.SQRT2;
-      const gw = Math.ceil(WORLD.w / cell);
-      const gh = Math.ceil(WORLD.h / cell);
-      const grid = new Array(gw * gh).fill(-1);
-      function gi(x, y) { return (x | 0) + (y | 0) * gw; }
-      function nearOK(x, y) {
-        const cx = (x / cell) | 0;
-        const cy = (y / cell) | 0;
-        const r = 2;
-        for (let yy = Math.max(0, cy - r); yy <= Math.min(gh - 1, cy + r); yy++) {
-          for (let xx = Math.max(0, cx - r); xx <= Math.min(gw - 1, cx + r); xx++) {
-            const idx = grid[gi(xx, yy)];
-            if (idx < 0) continue;
-            const p = pts[idx];
-            const d = Math.hypot(p.x - x, p.y - y);
-            if (d < minDist) return false;
-          }
-        }
-        return true;
-      }
-      let tries = 0;
-      while (pts.length < count && tries < maxTry) {
-        tries++;
-        const x = WORLD.margin + rng() * (WORLD.w - WORLD.margin * 2);
-        const y = WORLD.margin + rng() * (WORLD.h - WORLD.margin * 2);
-        if (!okFn(x, y)) continue;
-        if (!nearOK(x, y)) continue;
-        const cx = (x / cell) | 0, cy = (y / cell) | 0;
-        grid[gi(cx, cy)] = pts.length;
-        pts.push({ x, y });
-      }
-      return pts;
-    }
-
-    // ✅ (5) 가로등: 랜덤 → 도로를 따라 규칙적 배치
-    function seedLampsAlongRoads(rng) {
-      // 기존 랜덤 lamp 제거
-      for (let i = props.length - 1; i >= 0; i--) {
-        if (props[i].kind === "lamp") props.splice(i, 1);
-      }
-
-      const interval = 260;
-      const offset = 86;
-      for (const r of roads) {
-        if (rectInAnyZone(r, 18)) continue;
-
-        if (r.axis === "h") {
-          const start = Math.ceil((r.x + 40) / interval) * interval;
-          for (let x = start; x <= r.x + r.w - 40; x += interval) {
-            const y1 = r.y - offset;
-            const y2 = r.y + r.h + offset * 0.62;
-            if (!isInsideZonesBuffer(x, y1) && !isInsideBuildingBuffer(x, y1)) props.push({ kind: "lamp", x, y: y1, s: 1.02 });
-            if (!isInsideZonesBuffer(x, y2) && !isInsideBuildingBuffer(x, y2)) props.push({ kind: "lamp", x, y: y2, s: 1.02 });
-          }
-        } else {
-          const start = Math.ceil((r.y + 40) / interval) * interval;
-          for (let y = start; y <= r.y + r.h - 40; y += interval) {
-            const x1 = r.x - offset;
-            const x2 = r.x + r.w + offset * 0.62;
-            if (!isInsideZonesBuffer(x1, y) && !isInsideBuildingBuffer(x1, y)) props.push({ kind: "lamp", x: x1, y, s: 1.02 });
-            if (!isInsideZonesBuffer(x2, y) && !isInsideBuildingBuffer(x2, y)) props.push({ kind: "lamp", x: x2, y, s: 1.02 });
-          }
-        }
-      }
-    }
-
-    function seedProps(rng) {
-      props.length = 0;
-      signs.length = 0;
-      portalNPCs = [];
-      portalEmblems = [];
-
-      // trees/flowers cleaner
-      const okNature = (x, y) => !isOnRoadLike(x, y) && !isInsideBuildingBuffer(x, y) && !isInsideZonesBuffer(x, y);
-      const treePts = scatterPoints(rng, 62, 92, 7000, okNature);
-      for (const p of treePts) props.push({ kind: "tree", x: p.x, y: p.y, s: 0.85 + rng() * 1.15 });
-
-      const flowerPts = scatterPoints(rng, 88, 56, 10000, okNature);
-      for (const p of flowerPts) props.push({ kind: "flower", x: p.x, y: p.y, s: 0.85 + rng() * 1.05 });
-
-      // benches near sidewalks
-      function okBench(x, y) {
-        if (isInsideBuildingBuffer(x, y) || isInsideZonesBuffer(x, y)) return false;
-        let near = false;
-        for (const s of sidewalks) {
-          const nx = clamp(x, s.x, s.x + s.w);
-          const ny = clamp(y, s.y, s.y + s.h);
-          if (Math.hypot(nx - x, ny - y) < 70) { near = true; break; }
-        }
-        return near && !isOnRoadLike(x, y);
-      }
-      const benchPts = scatterPoints(rng, 14, 160, 8000, okBench);
-      for (const p of benchPts) props.push({ kind: "bench", x: p.x, y: p.y, s: 0.95 + rng() * 0.35 });
-
-      // portal flowers (nice framing)
-      for (const p of portals) {
-        props.push({ kind: "flower", x: p.x + p.w * 0.20, y: p.y + p.h + 26, s: 1.05 });
-        props.push({ kind: "flower", x: p.x + p.w * 0.80, y: p.y + p.h + 18, s: 0.98 });
-      }
-
-      // portal NPC + emblem
-      for (const p of portals) {
-        const ex = p.x + p.w * 0.5;
-        const ey = p.y + p.h * 0.92;
-        if (["archery", "janggi", "omok"].includes(p.key)) {
-          portalNPCs.push({ kind: "npc", key: p.key, x: p.x + p.w + 48, y: p.y + p.h * 0.74 });
-        }
-        portalEmblems.push({ kind: "emblem", key: p.key, x: ex + 38, y: ey + 18 });
-      }
-
-      // ✅ 규칙적 가로등 추가
-      seedLampsAlongRoads(rng);
-    }
-
-    /* ----------------------- Roaming NPCs (20) ----------------------- */
+        /* ----------------------- Roaming NPCs ----------------------- */
     function seedRoamers(rng) {
       roamers.length = 0;
-      const N = 20;
+      const N = 18;
+
       function okPos(x, y) {
+        if (!inTownPlayable(x, y)) return false;
         if (isOnRoadLike(x, y)) return false;
         if (isInsideBuildingBuffer(x, y)) return false;
         if (isInsideZonesBuffer(x, y)) return false;
         return true;
       }
+
       for (let i = 0; i < N; i++) {
         let x = 0, y = 0;
         for (let t = 0; t < 240; t++) {
-          x = WORLD.margin + rng() * (WORLD.w - WORLD.margin * 2);
-          y = WORLD.margin + rng() * (WORLD.h - WORLD.margin * 2);
+          x = TOWN.x + 60 + rng() * (TOWN.w - 120);
+          y = TOWN.y + TOWN.h * 0.20 + 30 + rng() * (TOWN.h * 0.74 - 60);
           if (okPos(x, y)) break;
         }
         roamers.push({
-          kind: "roamer", x, y, r: 16,
-          speed: 92 + rng() * 46,
+          kind: "roamer",
+          x, y, r: 16,
+          speed: 88 + rng() * 42,
           dir: ["down", "left", "right", "up"][(rng() * 4) | 0],
           t: rng() * 10, tx: x, ty: y,
           colorIdx: (rng() * 6) | 0
         });
       }
     }
+
     function stepRoamers(dt, rng) {
       const palette = [
         { torso: "#0a84ff", pants: "#3b4251", hat: "#ff3b30" },
@@ -705,39 +628,47 @@
         { torso: "#ffd66b", pants: "#3b4251", hat: "#0a84ff" },
         { torso: "#7fd7ff", pants: "#2a2f3b", hat: "#ffcc00" }
       ];
+
       for (const n of roamers) {
         n.t += dt;
         if (Math.hypot(n.tx - n.x, n.ty - n.y) < 14 || rng() < 0.004) {
           let nx = n.x, ny = n.y;
           for (let k = 0; k < 48; k++) {
-            nx = clamp(n.x + (rng() - 0.5) * 520, WORLD.margin, WORLD.w - WORLD.margin);
-            ny = clamp(n.y + (rng() - 0.5) * 520, WORLD.margin, WORLD.h - WORLD.margin);
-            if (!isOnRoadLike(nx, ny) && !isInsideBuildingBuffer(nx, ny) && !isInsideZonesBuffer(nx, ny)) break;
+            nx = clamp(n.x + (rng() - 0.5) * 460, TOWN.x + 40, TOWN.x + TOWN.w - 40);
+            ny = clamp(n.y + (rng() - 0.5) * 360, TOWN.y + TOWN.h * 0.20 + 20, TOWN.y + TOWN.h - 40);
+            if (!isOnRoadLike(nx, ny) && !isInsideBuildingBuffer(nx, ny) && !isInsideZonesBuffer(nx, ny) && inTownPlayable(nx, ny)) break;
           }
-          n.tx = nx; n.ty = ny;
+          n.tx = nx;
+          n.ty = ny;
         }
-        const dx = n.tx - n.x, dy = n.ty - n.y;
+
+        const dx = n.tx - n.x;
+        const dy = n.ty - n.y;
         const len = Math.hypot(dx, dy) || 1;
         n.x += (dx / len) * n.speed * dt;
         n.y += (dy / len) * n.speed * dt;
+
         if (Math.abs(dy) >= Math.abs(dx)) n.dir = dy < 0 ? "up" : "down";
         else n.dir = dx < 0 ? "left" : "right";
-        n.x = clamp(n.x, WORLD.margin, WORLD.w - WORLD.margin);
-        n.y = clamp(n.y, WORLD.margin, WORLD.h - WORLD.margin);
+
+        n.x = clamp(n.x, TOWN.x + 40, TOWN.x + TOWN.w - 40);
+        n.y = clamp(n.y, TOWN.y + TOWN.h * 0.20 + 20, TOWN.y + TOWN.h - 40);
       }
       return palette;
     }
 
-    /* ----------------------- Stable ground patches ----------------------- */
-        let groundPatches = [];
+    /* ----------------------- Ground patches ----------------------- */
+    let groundPatches = [];
     function buildGroundPatches(rng) {
       groundPatches = [];
       for (let i = 0; i < 22; i++) {
         groundPatches.push({
-          x: WORLD.w * 0.10 + rng() * WORLD.w * 0.80,
-          y: WORLD.h * 0.26 + rng() * WORLD.h * 0.66,
-          rx: 70 + rng() * 180, ry: 20 + rng() * 62,
-          rot: (rng() - 0.5) * 0.7, a: 0.20 + rng() * 0.12
+          x: TOWN.x + TOWN.w * 0.08 + rng() * TOWN.w * 0.84,
+          y: TOWN.y + TOWN.h * 0.24 + rng() * TOWN.h * 0.66,
+          rx: 70 + rng() * 180,
+          ry: 20 + rng() * 62,
+          rot: (rng() - 0.5) * 0.7,
+          a: 0.20 + rng() * 0.12
         });
       }
     }
@@ -746,21 +677,26 @@
     const footprints = [];
     let footStepAcc = 0;
     function addFootprint(dt, rng) {
-      if (!player.moving) { footStepAcc = 0; return; }
+      if (!player.moving) {
+        footStepAcc = 0;
+        return;
+      }
       footStepAcc += dt * (player.speed / 220);
-      if (footStepAcc < 0.12) return;
+      if (footStepAcc < 0.10) return;
       footStepAcc = 0;
 
       let ox = 0, oy = 0;
-      if (player.dir === "up") oy = 8;
-      else if (player.dir === "down") oy = -6;
+      if (player.dir === "up") oy = 7;
+      else if (player.dir === "down") oy = -4;
       else if (player.dir === "left") ox = 8;
       else if (player.dir === "right") ox = -8;
 
+      const side = Math.sin(player.walkCycle * 12) > 0 ? 1 : -1;
       footprints.push({
-        x: player.x + ox + (rng() - 0.5) * 2,
-        y: player.y + 30 + oy + (rng() - 0.5) * 2,
-        life: 1.2, age: 0
+        x: player.x + ox + side * 5 + (rng() - 0.5) * 1.5,
+        y: player.y + 26 + oy + (rng() - 0.5) * 1.5,
+        life: 0.95,
+        age: 0
       });
     }
 
@@ -779,7 +715,8 @@
 
     function makePattern(w, h, drawFn) {
       const c = document.createElement("canvas");
-      c.width = w; c.height = h;
+      c.width = w;
+      c.height = h;
       const g = c.getContext("2d");
       drawFn(g, w, h);
       return ctx.createPattern(c, "repeat");
@@ -876,18 +813,7 @@
       ctx.arcTo(x, y, x + w, y, rr);
       ctx.closePath();
     }
-    function glossyHighlight(x, y, w, h, alpha = 0.14) {
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      const g = ctx.createLinearGradient(x, y, x + w, y + h);
-      g.addColorStop(0, "rgba(255,255,255,0.85)");
-      g.addColorStop(0.35, "rgba(255,255,255,0.18)");
-      g.addColorStop(1, "rgba(255,255,255,0)");
-      ctx.fillStyle = g;
-      roundRect(x + 6, y + 6, w - 12, Math.max(18, h * 0.34), 14);
-      ctx.fill();
-      ctx.restore();
-    }
+
     function groundAO(x, y, w, h, alpha = 0.2) {
       ctx.save();
       const g = ctx.createRadialGradient(x + w * 0.5, y + h * 0.8, 10, x + w * 0.5, y + h * 0.8, Math.max(w, h) * 0.95);
@@ -897,6 +823,7 @@
       ctx.fillRect(x - 140, y - 140, w + 280, h + 280);
       ctx.restore();
     }
+
     function softShadow(x, y, w, h, alpha = 0.1) {
       ctx.save();
       ctx.globalAlpha = alpha;
@@ -906,7 +833,7 @@
       ctx.restore();
     }
 
-    /* ----------------------- World layout (도로/존 정렬 + 입구 게이트) ----------------------- */
+    /* ----------------------- World layout ----------------------- */
     function layoutRoadNetwork() {
       roads.length = 0;
       sidewalks.length = 0;
@@ -914,25 +841,26 @@
       signals.length = 0;
       let id = 0;
 
-      const zonePad = 64;
+      const zonePad = 60;
       const zoneBlocks = [
         { x: ZONES.game.x - zonePad, y: ZONES.game.y - zonePad, w: ZONES.game.w + zonePad * 2, h: ZONES.game.h + zonePad * 2 },
         { x: ZONES.community.x - zonePad, y: ZONES.community.y - zonePad, w: ZONES.community.w + zonePad * 2, h: ZONES.community.h + zonePad * 2 },
-        { x: ZONES.ads.x - zonePad, y: ZONES.ads.y - zonePad, w: ZONES.ads.w + zonePad * 2, h: ZONES.ads.h + zonePad * 2 },
+        { x: ZONES.ads.x - zonePad, y: ZONES.ads.y - zonePad, w: ZONES.ads.w + zonePad * 2, h: ZONES.ads.h + zonePad * 2 }
       ];
 
-      const addRoadH = (y, x0, x1, h = 132) => {
+      const addRoadH = (y, x0, x1, h = 124) => {
         const r = { _id: id++, axis: "h", x: x0, y, w: (x1 - x0), h };
         roads.push(r);
-        sidewalks.push({ x: r.x, y: r.y - 48, w: r.w, h: 38 });
-        sidewalks.push({ x: r.x, y: r.y + r.h + 10, w: r.w, h: 38 });
+        sidewalks.push({ x: r.x, y: r.y - 44, w: r.w, h: 34 });
+        sidewalks.push({ x: r.x, y: r.y + r.h + 10, w: r.w, h: 34 });
         return r;
       };
-      const addRoadV = (x, y0, y1, w = 124) => {
+
+      const addRoadV = (x, y0, y1, w = 116) => {
         const r = { _id: id++, axis: "v", x, y: y0, w, h: (y1 - y0) };
         roads.push(r);
-        sidewalks.push({ x: r.x - 46, y: r.y, w: 34, h: r.h });
-        sidewalks.push({ x: r.x + r.w + 12, y: r.y, w: 34, h: r.h });
+        sidewalks.push({ x: r.x - 42, y: r.y, w: 30, h: r.h });
+        sidewalks.push({ x: r.x + r.w + 12, y: r.y, w: 30, h: r.h });
         return r;
       };
 
@@ -951,7 +879,7 @@
             }
           }
         }
-        return segs.filter(s => (s.b - s.a) > 260).sort((p, q) => p.a - q.a);
+        return segs.filter(s => (s.b - s.a) > 240).sort((p, q) => p.a - q.a);
       }
 
       function splitRangeByBlocksV(x, y0, y1, w) {
@@ -969,29 +897,30 @@
             }
           }
         }
-        return segs.filter(s => (s.b - s.a) > 260).sort((p, q) => p.a - q.a);
+        return segs.filter(s => (s.b - s.a) > 240).sort((p, q) => p.a - q.a);
       }
 
-      const L = WORLD.margin * 0.35, R = WORLD.w - WORLD.margin * 0.35;
-      const T = WORLD.margin * 0.35, B = WORLD.h - WORLD.margin * 0.35;
+      const L = TOWN.x + 30;
+      const R = TOWN.x + TOWN.w - 30;
+      const T = TOWN.y + TOWN.h * 0.18;
+      const B = TOWN.y + TOWN.h - 34;
 
-      const outerPad = 40;
-      addRoadH(T, L - outerPad, R + outerPad, 128);
-      addRoadH(B - 128, L - outerPad, R + outerPad, 128);
-      addRoadV(L, T - outerPad, B + outerPad, 120);
-      addRoadV(R - 120, T - outerPad, B + outerPad, 120);
+      addRoadH(T, L, R, 120);
+      addRoadH(B - 120, L, R, 120);
+      addRoadV(L, T, B, 112);
+      addRoadV(R - 112, T, B, 112);
 
-      const midY1 = WORLD.h * 0.50 - 66;
-      const midY2 = WORLD.h * 0.82 - 66;
-      const midX = WORLD.w * 0.50 - 60;
-      const leftX = WORLD.w * 0.18 - 60;
-      const rightX = WORLD.w * 0.82 - 60;
+      const midY1 = TOWN.y + TOWN.h * 0.51;
+      const midY2 = TOWN.y + TOWN.h * 0.80;
+      const leftX = TOWN.x + TOWN.w * 0.18;
+      const midX = TOWN.x + TOWN.w * 0.50;
+      const rightX = TOWN.x + TOWN.w * 0.82;
 
-      for (const s of splitRangeByBlocksH(midY1, L - 20, R + 20, 132)) addRoadH(midY1, s.a, s.b, 132);
-      for (const s of splitRangeByBlocksH(midY2, L - 20, R + 20, 132)) addRoadH(midY2, s.a, s.b, 132);
-      for (const s of splitRangeByBlocksV(leftX, T - 10, B + 10, 120)) addRoadV(leftX, s.a, s.b, 120);
-      for (const s of splitRangeByBlocksV(midX, T - 10, B + 10, 120)) addRoadV(midX, s.a, s.b, 120);
-      for (const s of splitRangeByBlocksV(rightX, T - 10, B + 10, 120)) addRoadV(rightX, s.a, s.b, 120);
+      for (const s of splitRangeByBlocksH(midY1, L - 10, R + 10, 124)) addRoadH(midY1, s.a, s.b, 124);
+      for (const s of splitRangeByBlocksH(midY2, L - 10, R + 10, 124)) addRoadH(midY2, s.a, s.b, 124);
+      for (const s of splitRangeByBlocksV(leftX, T - 10, B + 10, 112)) addRoadV(leftX, s.a, s.b, 112);
+      for (const s of splitRangeByBlocksV(midX, T - 10, B + 10, 112)) addRoadV(midX, s.a, s.b, 112);
+      for (const s of splitRangeByBlocksV(rightX, T - 10, B + 10, 112)) addRoadV(rightX, s.a, s.b, 112);
 
       const Hs = roads.filter(r => r.axis === "h");
       const Vs = roads.filter(r => r.axis === "v");
@@ -1006,24 +935,58 @@
     }
 
     function recalcWorld() {
-      VIEW.zoom = Math.min(1.05, Math.max(0.76, Math.min(W / 1280, H / 860) * 0.95));
+      VIEW.zoom = Math.min(1.05, Math.max(0.82, Math.min(W / 1280, H / 860) * 0.98));
       VIEW.w = W / VIEW.zoom;
       VIEW.h = H / VIEW.zoom;
 
-      WORLD.w = Math.max(4200, Math.floor(W * 4.4));
-      WORLD.h = Math.max(3000, Math.floor(H * 3.8));
+      WORLD.w = Math.max(3000, Math.floor(W * 3.6 * WORLD_SCALE));
+      WORLD.h = Math.max(1900, Math.floor(H * 2.8 * WORLD_SCALE));
+
+      TOWN.x = 0;
+      TOWN.y = 0;
+      TOWN.w = WORLD.w;
+      TOWN.h = WORLD.h;
+
+      computeArtBounds();
+
+      const ref = hasCustomWorldArt() ? artBounds : { x: 0, y: 0, w: WORLD.w, h: WORLD.h };
+      const safeTop = ref.y + ref.h * SKY_BAND_RATIO;
 
       ZONES = {
-        game: { x: WORLD.w * 0.08, y: WORLD.h * 0.14, w: WORLD.w * 0.36, h: WORLD.h * 0.30, label: "GAME ZONE", color: "#0a84ff", entrance: null },
-        community: { x: WORLD.w * 0.56, y: WORLD.h * 0.14, w: WORLD.w * 0.36, h: WORLD.h * 0.30, label: "COMMUNITY ZONE", color: "#34c759", entrance: null },
-        ads: { x: WORLD.w * 0.32, y: WORLD.h * 0.60, w: WORLD.w * 0.36, h: WORLD.h * 0.20, label: "AD ZONE", color: "#ff2d55", entrance: null },
+        game: {
+          x: ref.x + ref.w * 0.08,
+          y: safeTop + ref.h * 0.05,
+          w: ref.w * 0.34,
+          h: ref.h * 0.28,
+          label: "GAME ZONE",
+          color: "#0a84ff",
+          entrance: null
+        },
+        community: {
+          x: ref.x + ref.w * 0.58,
+          y: safeTop + ref.h * 0.05,
+          w: ref.w * 0.30,
+          h: ref.h * 0.28,
+          label: "COMMUNITY ZONE",
+          color: "#34c759",
+          entrance: null
+        },
+        ads: {
+          x: ref.x + ref.w * 0.34,
+          y: ref.y + ref.h * 0.60,
+          w: ref.w * 0.30,
+          h: ref.h * 0.18,
+          label: "AD ZONE",
+          color: "#ff2d55",
+          entrance: null
+        }
       };
 
       function setEntrance(z) {
-        const gateW = 260, gateH = 86;
+        const gateW = 220, gateH = 74;
         z.entrance = {
           x: z.x + z.w * 0.5 - gateW * 0.5,
-          y: z.y + z.h - gateH * 0.55,
+          y: z.y + z.h - gateH * 0.50,
           w: gateW,
           h: gateH
         };
@@ -1032,7 +995,7 @@
       setEntrance(ZONES.community);
       setEntrance(ZONES.ads);
 
-      const base = 220;
+      const base = 220 * BUILDING_SCALE;
       const mul = { S: 0.82, M: 1.0, L: 1.22 };
       for (const p of portals) {
         const m = mul[p.size] || 1;
@@ -1042,29 +1005,28 @@
 
       buildPatterns(mulberry32(seedFromWorld(WORLD.w, WORLD.h)));
       layoutRoadNetwork();
+            const desired = {
+        jump:     { x: ZONES.game.x + ZONES.game.w * 0.18, y: ZONES.game.y + ZONES.game.h * 0.30 },
+        archery:  { x: ZONES.game.x + ZONES.game.w * 0.50, y: ZONES.game.y + ZONES.game.h * 0.30 },
+        omok:     { x: ZONES.game.x + ZONES.game.w * 0.82, y: ZONES.game.y + ZONES.game.h * 0.30 },
+        avoid:    { x: ZONES.game.x + ZONES.game.w * 0.18, y: ZONES.game.y + ZONES.game.h * 0.74 },
+        janggi:   { x: ZONES.game.x + ZONES.game.w * 0.50, y: ZONES.game.y + ZONES.game.h * 0.74 },
+        snow:     { x: ZONES.game.x + ZONES.game.w * 0.82, y: ZONES.game.y + ZONES.game.h * 0.74 },
 
-      const desired = {
-        jump: { x: ZONES.game.x + ZONES.game.w * 0.20, y: ZONES.game.y + ZONES.game.h * 0.30 },
-        archery: { x: ZONES.game.x + ZONES.game.w * 0.50, y: ZONES.game.y + ZONES.game.h * 0.30 },
-        omok: { x: ZONES.game.x + ZONES.game.w * 0.80, y: ZONES.game.y + ZONES.game.h * 0.30 },
-        avoid: { x: ZONES.game.x + ZONES.game.w * 0.20, y: ZONES.game.y + ZONES.game.h * 0.74 },
-        janggi: { x: ZONES.game.x + ZONES.game.w * 0.50, y: ZONES.game.y + ZONES.game.h * 0.74 },
-        snow: { x: ZONES.game.x + ZONES.game.w * 0.80, y: ZONES.game.y + ZONES.game.h * 0.74 },
+        twitter:  { x: ZONES.community.x + ZONES.community.w * 0.24, y: ZONES.community.y + ZONES.community.h * 0.34 },
+        telegram: { x: ZONES.community.x + ZONES.community.w * 0.74, y: ZONES.community.y + ZONES.community.h * 0.34 },
+        wallet:   { x: ZONES.community.x + ZONES.community.w * 0.24, y: ZONES.community.y + ZONES.community.h * 0.76 },
+        market:   { x: ZONES.community.x + ZONES.community.w * 0.74, y: ZONES.community.y + ZONES.community.h * 0.76 },
+        support:  { x: ZONES.community.x + ZONES.community.w * 0.50, y: ZONES.community.y + ZONES.community.h * 0.56 },
 
-        twitter: { x: ZONES.community.x + ZONES.community.w * 0.25, y: ZONES.community.y + ZONES.community.h * 0.34 },
-        telegram: { x: ZONES.community.x + ZONES.community.w * 0.70, y: ZONES.community.y + ZONES.community.h * 0.34 },
-        wallet: { x: ZONES.community.x + ZONES.community.w * 0.25, y: ZONES.community.y + ZONES.community.h * 0.76 },
-        market: { x: ZONES.community.x + ZONES.community.w * 0.70, y: ZONES.community.y + ZONES.community.h * 0.76 },
-        support: { x: ZONES.community.x + ZONES.community.w * 0.48, y: ZONES.community.y + ZONES.community.h * 0.56 },
-
-        mcd: { x: ZONES.ads.x + ZONES.ads.w * 0.28, y: ZONES.ads.y + ZONES.ads.h * 0.36 },
-        bbq: { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.36 },
-        baskin: { x: ZONES.ads.x + ZONES.ads.w * 0.28, y: ZONES.ads.y + ZONES.ads.h * 0.76 },
-        paris: { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.76 },
+        mcd:      { x: ZONES.ads.x + ZONES.ads.w * 0.28, y: ZONES.ads.y + ZONES.ads.h * 0.36 },
+        bbq:      { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.36 },
+        baskin:   { x: ZONES.ads.x + ZONES.ads.w * 0.28, y: ZONES.ads.y + ZONES.ads.h * 0.76 },
+        paris:    { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.76 }
       };
 
       function clampIntoZone(p, z, d) {
-        const pad = 18;
+        const pad = 14;
         p.x = clamp(d.x - p.w / 2, z.x + pad, z.x + z.w - pad - p.w);
         p.y = clamp(d.y - p.h / 2, z.y + pad, z.y + z.h - pad - p.h);
       }
@@ -1081,8 +1043,8 @@
       seedProps(mulberry32(seedFromWorld(WORLD.w, WORLD.h) ^ 0x3456));
       seedRoamers(mulberry32(seedFromWorld(WORLD.w, WORLD.h) ^ 0x4567));
 
-      player.x = clamp(player.x, WORLD.margin + 80, WORLD.w - WORLD.margin - 80);
-      player.y = clamp(player.y, WORLD.margin + 80, WORLD.h - WORLD.margin - 80);
+      player.x = clamp(player.x, TOWN.x + 100, TOWN.x + TOWN.w - 100);
+      player.y = clamp(player.y, TOWN.y + TOWN.h * 0.24, TOWN.y + TOWN.h - 100);
     }
 
     function resize() {
@@ -1099,16 +1061,15 @@
     }
     window.addEventListener("resize", resize, { passive: true });
 
-    /* ----------------------- Player direction ----------------------- */
     function updateDirFromDelta(dx, dy) {
       if (Math.abs(dx) > Math.abs(dy)) player.dir = dx >= 0 ? "right" : "left";
       else if (Math.abs(dy) > 0.001) player.dir = dy >= 0 ? "down" : "up";
     }
 
-    /* ----------------------- Portal zones ----------------------- */
     function portalEnterZone(p) {
       return { x: p.x + p.w * 0.18, y: p.y + p.h * 0.56, w: p.w * 0.64, h: p.h * 0.30 };
     }
+
     function circleRectHit(cx, cy, cr, r) {
       const nx = clamp(cx, r.x, r.x + r.w);
       const ny = clamp(cy, r.y, r.y + r.h);
@@ -1116,7 +1077,6 @@
       return dx * dx + dy * dy <= cr * cr;
     }
 
-    /* ----------------------- Portal UI ----------------------- */
     const modalState = { open: false, portal: null };
 
     function blockSpan(html, {
@@ -1192,13 +1152,12 @@
         ctx.globalAlpha = 0.12 * t;
         ctx.fillStyle = "rgba(0,0,0,0.85)";
         ctx.beginPath();
-        ctx.ellipse(fp.x, fp.y, 6, 3, 0, 0, Math.PI * 2);
+        ctx.ellipse(fp.x, fp.y, 5.4, 2.7, 0, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
     }
 
-    /* ----------------------- Rendering: background ----------------------- */
     function drawSkyWorld() {
       const g = ctx.createLinearGradient(0, 0, 0, WORLD.h);
       g.addColorStop(0, "#bfe7ff");
@@ -1273,7 +1232,7 @@
         const cx = po.x + po.w * 0.5;
         const cy = po.y + po.h * 0.9;
         ctx.beginPath();
-        ctx.ellipse(cx, cy + 34, 74, 30, 0, 0, Math.PI * 2);
+        ctx.ellipse(cx, cy + 30, 66, 26, 0, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
@@ -1283,7 +1242,6 @@
       for (const r of roads) {
         groundAO(r.x, r.y + r.h - 18, r.w, 26, 0.18);
         ctx.save();
-
         ctx.globalAlpha = 0.14;
         ctx.fillStyle = "rgba(255,255,255,0.30)";
         roundRect(r.x - 6, r.y - 6, r.w + 12, r.h + 12, 44);
@@ -1346,14 +1304,14 @@
         ctx.restore();
       }
     }
-        function drawZoneGate(z, t) {
+
+    function drawZoneGate(z, t) {
       if (!z.entrance) return;
       const g = z.entrance;
       const pulse = 0.5 + 0.5 * Math.sin(t * 3.2);
 
       ctx.save();
       groundAO(g.x - 8, g.y + g.h - 10, g.w + 16, 30, 0.20);
-
       ctx.fillStyle = "rgba(255,255,255,0.16)";
       roundRect(g.x - 12, g.y - 10, g.w + 24, g.h + 18, 20);
       ctx.fill();
@@ -1380,11 +1338,9 @@
       ctx.font = "900 18px system-ui";
       ctx.textAlign = "center";
       ctx.fillText(z.label, g.x + g.w / 2, g.y + 32);
-
       ctx.font = "800 12px system-ui";
       ctx.fillStyle = "rgba(10,14,24,0.72)";
       ctx.fillText("ENTRANCE", g.x + g.w / 2, g.y + 52);
-
       ctx.restore();
     }
 
@@ -1392,7 +1348,6 @@
       const zones = [ZONES.game, ZONES.community, ZONES.ads];
       for (const z of zones) {
         ctx.save();
-
         ctx.globalAlpha = 0.06;
         ctx.fillStyle = z.color;
         roundRect(z.x, z.y, z.w, z.h, 34);
@@ -1412,12 +1367,10 @@
 
         ctx.globalAlpha = 1;
         drawZoneGate(z, t);
-
         ctx.restore();
       }
     }
-
-    function legoStyleForType(type) {
+        function legoStyleForType(type) {
       const map = {
         arcade: { wall: "#d8c4a2", frame: "#5e4630", knob: "#ffffff", grass: "#60d878", sign: "#ff5e57", glassA: "#9fe1ff", glassB: "#e8fbff", accent: "#ffd166" },
         tower:  { wall: "#d9c7a7", frame: "#59402a", knob: "#fff7d6", grass: "#67d67f", sign: "#0a84ff", glassA: "#b8e7ff", glassB: "#eefbff", accent: "#7c4dff" },
@@ -1432,7 +1385,7 @@
         mcd:    { wall: "#ddc7a8", frame: "#5e4430", knob: "#fff",    grass: "#67d67f", sign: "#ef4444", glassA: "#bce8ff", glassB: "#eefcff", accent: "#facc15" },
         bbq:    { wall: "#dcc6a4", frame: "#5f412b", knob: "#fff",    grass: "#66d77c", sign: "#dc2626", glassA: "#bbe6ff", glassB: "#eefcff", accent: "#fb923c" },
         baskin: { wall: "#dfcdb7", frame: "#6a4c3a", knob: "#fff",    grass: "#6bd87e", sign: "#ec4899", glassA: "#cceeff", glassB: "#f4fdff", accent: "#f9a8d4" },
-        paris:  { wall: "#e0d0b8", frame: "#6a503a", knob: "#fff",    grass: "#6ad87d", sign: "#2563eb", glassA: "#c6e9ff", glassB: "#f3fcff", accent: "#93c5fd" },
+        paris:  { wall: "#e0d0b8", frame: "#6a503a", knob: "#fff",    grass: "#6ad87d", sign: "#2563eb", glassA: "#c6e9ff", glassB: "#f3fcff", accent: "#93c5fd" }
       };
       return map[type] || map.arcade;
     }
@@ -1481,15 +1434,12 @@
       ctx.fillStyle = signCol;
       roundRect(x, y, w, h, 20);
       ctx.fill();
-
       ctx.globalAlpha = 0.12;
       ctx.fillStyle = "#fff";
       roundRect(x + 6, y + 6, w - 12, h * 0.42, 16);
       ctx.fill();
       ctx.globalAlpha = 1;
-
       drawLegoStudRow(x + 18, y + 10, w - 36, 6, signCol);
-
       ctx.fillStyle = "#fff";
       ctx.font = `1000 ${textSize}px system-ui`;
       ctx.textAlign = "center";
@@ -1503,20 +1453,17 @@
       ctx.fillStyle = frameCol;
       roundRect(x, y, w, h, 14);
       ctx.fill();
-
       const g = ctx.createLinearGradient(x, y, x + w, y + h);
       g.addColorStop(0, glassA);
       g.addColorStop(1, glassB);
       ctx.fillStyle = g;
       roundRect(x + 8, y + 8, w - 16, h - 16, 10);
       ctx.fill();
-
       ctx.globalAlpha = 0.24;
       ctx.fillStyle = "#fff";
       roundRect(x + 14, y + 12, w * 0.44, 12, 8);
       ctx.fill();
       ctx.globalAlpha = 1;
-
       ctx.strokeStyle = "rgba(255,255,255,0.55)";
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -1533,20 +1480,17 @@
       ctx.fillStyle = frameCol;
       roundRect(x, y, w, h, 16);
       ctx.fill();
-
       const dg = ctx.createLinearGradient(x, y, x, y + h);
       dg.addColorStop(0, shade(doorCol, 8));
       dg.addColorStop(1, shade(doorCol, -16));
       ctx.fillStyle = dg;
       roundRect(x + 6, y + 6, w - 12, h - 12, 12);
       ctx.fill();
-
       ctx.globalAlpha = 0.12;
       ctx.fillStyle = "#fff";
       roundRect(x + 10, y + 10, w - 20, h * 0.24, 10);
       ctx.fill();
       ctx.globalAlpha = 1;
-
       ctx.fillStyle = knobCol;
       ctx.beginPath();
       ctx.arc(x + w - 18, y + h * 0.56, 4, 0, Math.PI * 2);
@@ -1557,14 +1501,11 @@
     function drawPortalBuilding(p, t) {
       const c = legoStyleForType(p.type);
       const x = p.x, y = p.y, w = p.w, h = p.h;
-
       groundAO(x + 16, y + h - 10, w - 32, 30, 0.20);
       softShadow(x + 10, y + h - 12, w - 20, 18, 0.10);
 
-      // base body
       drawLegoBrickGrid(x, y + 20, w, h - 20);
 
-      // roof cap
       ctx.save();
       ctx.fillStyle = shade(c.wall, -10);
       roundRect(x + 10, y, w - 20, 34, 16);
@@ -1572,11 +1513,9 @@
       drawLegoStudRow(x + 34, y + 10, w - 68, Math.max(4, Math.floor((w - 68) / 44)), shade(c.wall, -12));
       ctx.restore();
 
-      // sign
       const signH = Math.max(50, h * 0.20);
       drawLegoSignPlaque(x + w * 0.10, y + 34, w * 0.80, signH, p.label, Math.max(18, Math.floor(signH * 0.34)), c.sign);
 
-      // windows / doors by size
       const winY = y + 34 + signH + 18;
       const doorY = y + h * 0.52;
       if (p.size === "L") {
@@ -1588,7 +1527,6 @@
         drawLegoDoor(x + w * 0.58, doorY, w * 0.22, h * 0.34, c.accent, c.frame, c.knob);
       }
 
-      // flowers / grass at feet
       ctx.save();
       ctx.globalAlpha = 0.9;
       ctx.fillStyle = c.grass;
@@ -1596,7 +1534,6 @@
       ctx.fill();
       ctx.restore();
 
-      // portal interaction glow
       const ez = portalEnterZone(p);
       const hover = activePortal && activePortal.key === p.key;
       if (hover) {
@@ -1605,7 +1542,6 @@
         ctx.fillStyle = c.sign;
         roundRect(ez.x, ez.y, ez.w, ez.h, 12);
         ctx.fill();
-
         ctx.globalAlpha = 0.75;
         ctx.strokeStyle = c.sign;
         ctx.lineWidth = 3;
@@ -1618,7 +1554,6 @@
     function drawCar(c) {
       ctx.save();
       ctx.translate(c.x, c.y + Math.sin(c.bob) * 0.8);
-
       ctx.globalAlpha = 0.18;
       ctx.fillStyle = "rgba(10,14,24,0.95)";
       ctx.beginPath();
@@ -1628,37 +1563,29 @@
 
       if (c.axis === "h") {
         if (c.dir < 0) ctx.scale(-1, 1);
-
         ctx.fillStyle = c.color;
         roundRect(-c.w / 2, -c.h / 2, c.w, c.h, 10);
         ctx.fill();
-
         ctx.fillStyle = "rgba(255,255,255,0.16)";
         roundRect(-c.w * 0.42, -c.h * 0.40, c.w * 0.84, c.h * 0.36, 8);
         ctx.fill();
-
         ctx.fillStyle = "#c7ecff";
         roundRect(-c.w * 0.22, -c.h * 0.32, c.w * 0.36, c.h * 0.28, 6);
         ctx.fill();
-
         ctx.fillStyle = "#111827";
         ctx.beginPath(); ctx.arc(-c.w * 0.28, c.h * 0.42, 6, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.arc(c.w * 0.28, c.h * 0.42, 6, 0, Math.PI * 2); ctx.fill();
       } else {
         if (c.dir < 0) ctx.scale(1, -1);
-
         ctx.fillStyle = c.color;
         roundRect(-c.w / 2, -c.h / 2, c.w, c.h, 10);
         ctx.fill();
-
         ctx.fillStyle = "rgba(255,255,255,0.16)";
         roundRect(-c.w * 0.40, -c.h * 0.42, c.w * 0.80, c.h * 0.30, 8);
         ctx.fill();
-
         ctx.fillStyle = "#c7ecff";
         roundRect(-c.w * 0.26, -c.h * 0.18, c.w * 0.52, c.h * 0.24, 6);
         ctx.fill();
-
         ctx.fillStyle = "#111827";
         ctx.beginPath(); ctx.arc(-c.w * 0.44, -c.h * 0.24, 5, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.arc(c.w * 0.44, -c.h * 0.24, 5, 0, Math.PI * 2); ctx.fill();
@@ -1672,30 +1599,25 @@
       ctx.save();
       ctx.translate(o.x, o.y);
       ctx.scale(o.s, o.s);
-
       ctx.globalAlpha = 0.16;
       ctx.fillStyle = "rgba(10,14,24,0.95)";
       ctx.beginPath();
       ctx.ellipse(0, 42, 26, 10, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalAlpha = 1;
-
       ctx.fillStyle = "#8b5a2b";
       roundRect(-10, -8, 20, 52, 8);
       ctx.fill();
-
       const greens = ["#3bcf74", "#35c96d", "#4bd985"];
       ctx.fillStyle = greens[(hash01(`${o.x},${o.y}`) * greens.length) | 0];
       ctx.beginPath(); ctx.arc(0, -28, 30, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(-18, -4, 24, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(18, -2, 22, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(0, 10, 26, 0, Math.PI * 2); ctx.fill();
-
       ctx.globalAlpha = 0.14;
       ctx.fillStyle = "#fff";
       ctx.beginPath(); ctx.arc(-8, -36, 12, 0, Math.PI * 2); ctx.fill();
       ctx.globalAlpha = 1;
-
       ctx.restore();
     }
 
@@ -1703,26 +1625,21 @@
       ctx.save();
       ctx.translate(o.x, o.y);
       ctx.scale(o.s, o.s);
-
       ctx.globalAlpha = 0.16;
       ctx.fillStyle = "rgba(10,14,24,0.95)";
       ctx.beginPath();
       ctx.ellipse(0, 42, 14, 6, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalAlpha = 1;
-
       ctx.fillStyle = "#374151";
       roundRect(-4, -42, 8, 78, 4);
       ctx.fill();
-
       ctx.fillStyle = "#4b5563";
       roundRect(-16, -48, 32, 10, 5);
       ctx.fill();
-
       ctx.fillStyle = "#fff6b3";
       roundRect(-10, -38, 20, 18, 6);
       ctx.fill();
-
       ctx.globalAlpha = 0.18 + 0.06 * Math.sin(t * 4 + o.x * 0.01);
       const g = ctx.createRadialGradient(0, -30, 2, 0, -30, 34);
       g.addColorStop(0, "rgba(255,246,179,0.70)");
@@ -1738,26 +1655,22 @@
       ctx.save();
       ctx.translate(o.x, o.y);
       ctx.scale(o.s, o.s);
-
       ctx.globalAlpha = 0.14;
       ctx.fillStyle = "rgba(10,14,24,0.90)";
       ctx.beginPath();
       ctx.ellipse(0, 14, 24, 8, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalAlpha = 1;
-
       ctx.fillStyle = "#7c5a3b";
       roundRect(-26, -8, 52, 10, 5);
       ctx.fill();
       roundRect(-22, -18, 44, 8, 4);
       ctx.fill();
-
       ctx.fillStyle = "#4b5563";
       roundRect(-20, 2, 5, 16, 3);
       ctx.fill();
       roundRect(15, 2, 5, 16, 3);
       ctx.fill();
-
       ctx.restore();
     }
 
@@ -1765,14 +1678,12 @@
       ctx.save();
       ctx.translate(o.x, o.y);
       ctx.scale(o.s, o.s);
-
       ctx.strokeStyle = "#2f9e59";
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(0, 8);
       ctx.lineTo(0, -10);
       ctx.stroke();
-
       const cols = ["#ff6b81", "#ffd166", "#7bdff2", "#c77dff", "#ff9f1c"];
       const col = cols[((hash01(`${o.x}:${o.y}`) * cols.length) | 0)];
       ctx.fillStyle = col;
@@ -1786,7 +1697,6 @@
       ctx.beginPath();
       ctx.arc(0, -13, 3, 0, Math.PI * 2);
       ctx.fill();
-
       ctx.restore();
     }
 
@@ -1794,31 +1704,317 @@
       const p = portalsByKey(e.key);
       if (!p) return;
       const c = legoStyleForType(p.type);
-
       ctx.save();
       ctx.translate(e.x, e.y);
-
       ctx.globalAlpha = 0.12;
       ctx.fillStyle = "rgba(10,14,24,0.9)";
       ctx.beginPath();
       ctx.ellipse(0, 8, 18, 7, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalAlpha = 1;
-
       ctx.fillStyle = "#fff";
       ctx.beginPath();
       ctx.arc(0, 0, 18, 0, Math.PI * 2);
       ctx.fill();
-
       ctx.lineWidth = 3;
       ctx.strokeStyle = c.sign;
       ctx.stroke();
-
       ctx.fillStyle = c.sign;
       ctx.font = "900 10px system-ui";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText((p.label || "?").slice(0, 2), 0, 1);
+      ctx.restore();
+    }
+
+    function drawSignal(sg, t) {
+      ctx.save();
+      ctx.translate(sg.x, sg.y);
+      ctx.fillStyle = "#374151";
+      roundRect(-4, -32, 8, 54, 4);
+      ctx.fill();
+      ctx.fillStyle = "#111827";
+      roundRect(-12, -54, 24, 22, 8);
+      ctx.fill();
+      const phase = (Math.sin(t * 1.7 + sg.x * 0.001 + sg.y * 0.001) + 1) * 0.5;
+      ctx.fillStyle = phase > 0.5 ? "#ef4444" : "#3f3f46";
+      ctx.beginPath(); ctx.arc(0, -46, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = phase <= 0.5 ? "#22c55e" : "#3f3f46";
+      ctx.beginPath(); ctx.arc(0, -38, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+
+    function drawEquipmentOverlay(x, y) {
+      const hat = getItemById(equipment.hat);
+      const armor = getItemById(equipment.armor);
+      const weapon = getItemById(equipment.weapon);
+      const sway = player.moving ? Math.sin(player.walkCycle * 12) * 2.2 : 0;
+
+      ctx.save();
+      ctx.translate(x, y);
+
+      if (player.dir === "left") ctx.scale(-1, 1);
+
+      if (armor) {
+        ctx.fillStyle = armor.color;
+        roundRect(-18, -40, 36, 22, 8);
+        ctx.fill();
+        ctx.strokeStyle = armor.accent;
+        ctx.lineWidth = 2;
+        roundRect(-14, -36, 28, 14, 6);
+        ctx.stroke();
+        ctx.globalAlpha = 0.20;
+        ctx.fillStyle = "#fff";
+        roundRect(-12, -36, 24, 6, 4);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
+      if (hat) {
+        ctx.fillStyle = hat.color;
+        roundRect(-15, -68, 30, 12, 8);
+        ctx.fill();
+        ctx.fillStyle = hat.accent;
+        roundRect(-11, -65, 22, 7, 5);
+        ctx.fill();
+      }
+
+      if (weapon) {
+        ctx.save();
+        ctx.translate(-28, -20 + sway * 0.4);
+        ctx.rotate(-0.72 + sway * 0.03);
+        ctx.fillStyle = weapon.color;
+        roundRect(-2, -18, 4, 32, 2);
+        ctx.fill();
+        ctx.fillStyle = weapon.accent;
+        roundRect(-5, 11, 10, 4, 2);
+        ctx.fill();
+        ctx.globalAlpha = 0.24;
+        const g = ctx.createLinearGradient(0, -22, 0, 10);
+        g.addColorStop(0, "rgba(255,255,255,0.80)");
+        g.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.strokeStyle = g;
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(0, -18);
+        ctx.lineTo(0, -32);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    function drawSpriteCharacter(x, y) {
+      if (!sprite.loaded || !sprite.img) return false;
+
+      const step = player.moving ? Math.sin(player.walkCycle * 12) : 0;
+      const bob = player.moving ? Math.abs(Math.sin(player.walkCycle * 6)) * 2.5 : 0;
+      const tilt = player.moving ? Math.sin(player.walkCycle * 12) * 0.018 : 0;
+
+      const drawW = 86;
+      const drawH = 104;
+      const footY = y + 23;
+      const imgY = footY - drawH + 6 - bob;
+
+      ctx.save();
+      ctx.globalAlpha = 0.24;
+      ctx.fillStyle = "rgba(10,14,24,0.42)";
+      ctx.beginPath();
+      ctx.ellipse(x, y + 24, 20 + Math.abs(step) * 2, 7 - Math.abs(step) * 0.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(x, imgY + drawH * 0.5);
+      if (player.dir === "left") ctx.scale(-1, 1);
+      ctx.rotate(tilt);
+      const sx = player.moving ? 1.0 + Math.abs(step) * 0.02 : 1;
+      const sy = player.moving ? 1.0 - Math.abs(step) * 0.03 : 1;
+      ctx.scale(sx, sy);
+      ctx.imageSmoothingEnabled = false;
+      ctx.imageSmoothingQuality = "low";
+      ctx.drawImage(sprite.img, -drawW / 2, -drawH / 2, drawW, drawH);
+      ctx.restore();
+
+      if (player.moving) {
+        ctx.save();
+        ctx.globalAlpha = 0.14;
+        ctx.strokeStyle = "rgba(255,255,255,0.75)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x - 8, y + 8);
+        ctx.lineTo(x - 14, y + 18 + step * 0.8);
+        ctx.moveTo(x + 8, y + 8);
+        ctx.lineTo(x + 14, y + 18 - step * 0.8);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      drawEquipmentOverlay(x, y - 2);
+      return true;
+    }
+
+    function drawMinifig(x, y, opts = {}) {
+      const isHero = !!opts.isHero;
+      const pal = opts.palette || {
+        torso: isHero ? "#111827" : "#0a84ff",
+        pants: isHero ? "#2d3748" : "#374151",
+        hat: isHero ? "#dc2626" : "#ffcc00",
+        skin: "#ffd7b5",
+        hair: "#1f2937"
+      };
+      const dir = opts.dirOverride || player.dir;
+      const walk = isHero ? player.walkCycle : 0;
+      const bob = isHero && player.moving ? Math.abs(Math.sin(walk * 6)) * 1.8 : 0;
+      const armSwing = isHero && player.moving ? Math.sin(walk * 12) * 0.45 : 0;
+      const legSwing = isHero && player.moving ? Math.sin(walk * 12 + Math.PI) * 0.36 : 0;
+
+      ctx.save();
+      ctx.translate(x, y + bob);
+      if (dir === "left") ctx.scale(-1, 1);
+
+      ctx.globalAlpha = 0.24;
+      ctx.fillStyle = "rgba(10,14,24,0.42)";
+      ctx.beginPath();
+      ctx.ellipse(0, 30, 20, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.save();
+      ctx.translate(0, 14);
+      ctx.rotate(legSwing * 0.18);
+      ctx.fillStyle = pal.pants;
+      roundRect(-13, 0, 10, 22, 4);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(0, 14);
+      ctx.rotate(-legSwing * 0.18);
+      ctx.fillStyle = pal.pants;
+      roundRect(3, 0, 10, 22, 4);
+      ctx.fill();
+      ctx.restore();
+
+      const armorItem = isHero ? getItemById(equipment.armor) : null;
+      const hatItem = isHero ? getItemById(equipment.hat) : null;
+      const weaponItem = isHero ? getItemById(equipment.weapon) : null;
+
+      const torsoColor = armorItem ? armorItem.color : pal.torso;
+      const torsoGrad = ctx.createLinearGradient(0, -20, 0, 12);
+      torsoGrad.addColorStop(0, shade(torsoColor, 12));
+      torsoGrad.addColorStop(1, shade(torsoColor, -10));
+      ctx.fillStyle = torsoGrad;
+      roundRect(-18, -14, 36, 30, 8);
+      ctx.fill();
+
+      ctx.globalAlpha = 0.10;
+      ctx.fillStyle = "#fff";
+      roundRect(-14, -10, 28, 8, 6);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      if (isHero) {
+        ctx.fillStyle = "rgba(255,255,255,0.14)";
+        roundRect(-11, -7, 22, 14, 6);
+        ctx.fill();
+        ctx.strokeStyle = armorItem ? armorItem.accent : "rgba(220,38,38,0.65)";
+        ctx.lineWidth = 2;
+        roundRect(-9, -5, 18, 10, 5);
+        ctx.stroke();
+      }
+
+      ctx.save();
+      ctx.translate(-18, -4);
+      ctx.rotate(-0.35 + armSwing * 0.6);
+      ctx.fillStyle = torsoColor;
+      roundRect(-4, 0, 8, 22, 4);
+      ctx.fill();
+      if (isHero) {
+        ctx.fillStyle = "#374151";
+        roundRect(-5, 10, 10, 10, 4);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(18, -4);
+      ctx.rotate(0.35 - armSwing * 0.6);
+      ctx.fillStyle = torsoColor;
+      roundRect(-4, 0, 8, 22, 4);
+      ctx.fill();
+
+      if (isHero) {
+        ctx.fillStyle = "#111827";
+        ctx.beginPath();
+        ctx.moveTo(10, 10);
+        ctx.lineTo(18, 8);
+        ctx.lineTo(20, 18);
+        ctx.lineTo(14, 24);
+        ctx.lineTo(8, 18);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = armorItem ? armorItem.accent : "#dc2626";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      ctx.fillStyle = pal.skin || "#ffd7b5";
+      roundRect(-13, -36, 26, 20, 8);
+      ctx.fill();
+
+      if (isHero) {
+        const hc = hatItem ? hatItem.color : "#111827";
+        const ha = hatItem ? hatItem.accent : "#dc2626";
+        ctx.fillStyle = hc;
+        roundRect(-15, -42, 30, 12, 8);
+        ctx.fill();
+        ctx.fillStyle = ha;
+        roundRect(-12, -40, 24, 8, 6);
+        ctx.fill();
+      } else {
+        ctx.fillStyle = pal.hair || "#1f2937";
+        roundRect(-14, -40, 28, 10, 7);
+        ctx.fill();
+        ctx.fillStyle = pal.hat || "#ffcc00";
+        roundRect(-10, -47, 20, 8, 5);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = "#111827";
+      ctx.beginPath(); ctx.arc(-5, -26, 1.6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(5, -26, 1.6, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 0.75;
+      ctx.fillRect(-4, -21, 8, 1.5);
+      ctx.globalAlpha = 1;
+
+      if (isHero && weaponItem) {
+        ctx.save();
+        ctx.translate(-22, 6);
+        ctx.rotate(-0.75 + armSwing * 0.28);
+        ctx.fillStyle = weaponItem.color;
+        roundRect(-2, -18, 4, 30, 2);
+        ctx.fill();
+        ctx.fillStyle = weaponItem.accent;
+        roundRect(-4, 9, 8, 4, 2);
+        ctx.fill();
+        ctx.globalAlpha = 0.24;
+        const g = ctx.createLinearGradient(0, -22, 0, 10);
+        g.addColorStop(0, "rgba(255,255,255,0.65)");
+        g.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.strokeStyle = g;
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(0, -16);
+        ctx.lineTo(0, -30);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      }
+
       ctx.restore();
     }
 
@@ -1828,31 +2024,10 @@
       const paletteMap = {
         archery: { torso: "#f59e0b", pants: "#374151", hat: "#0a84ff" },
         janggi:  { torso: "#ef4444", pants: "#374151", hat: "#facc15" },
-        omok:    { torso: "#8b5cf6", pants: "#374151", hat: "#ec4899" },
+        omok:    { torso: "#8b5cf6", pants: "#374151", hat: "#ec4899" }
       };
       const pal = paletteMap[key] || { torso: "#0a84ff", pants: "#374151", hat: "#ffcc00" };
       drawMinifig(0, 0, { isHero: false, palette: pal });
-      ctx.restore();
-    }
-
-    function drawSignal(sg, t) {
-      ctx.save();
-      ctx.translate(sg.x, sg.y);
-
-      ctx.fillStyle = "#374151";
-      roundRect(-4, -32, 8, 54, 4);
-      ctx.fill();
-
-      ctx.fillStyle = "#111827";
-      roundRect(-12, -54, 24, 22, 8);
-      ctx.fill();
-
-      const phase = (Math.sin(t * 1.7 + sg.x * 0.001 + sg.y * 0.001) + 1) * 0.5;
-      ctx.fillStyle = phase > 0.5 ? "#ef4444" : "#3f3f46";
-      ctx.beginPath(); ctx.arc(0, -46, 4, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = phase <= 0.5 ? "#22c55e" : "#3f3f46";
-      ctx.beginPath(); ctx.arc(0, -38, 4, 0, Math.PI * 2); ctx.fill();
-
       ctx.restore();
     }
 
@@ -1868,7 +2043,6 @@
       ctx.save();
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
-
       const title = "META WORLD";
       ctx.font = "1000 34px system-ui";
       ctx.fillStyle = "rgba(255,255,255,0.94)";
@@ -1876,7 +2050,6 @@
       ctx.lineWidth = 6;
       ctx.strokeText(title, W * 0.5, 18);
       ctx.fillText(title, W * 0.5, 18);
-
       ctx.font = "800 13px system-ui";
       ctx.fillStyle = "rgba(10,14,24,0.66)";
       ctx.fillText("PORTAL WORLD · COMMUNITY · ADS", W * 0.5, 58);
@@ -1886,17 +2059,14 @@
     function drawMiniMap() {
       const mw = 220, mh = 154;
       const x = W - mw - 18, y = 18;
-
       ctx.save();
       ctx.fillStyle = "rgba(255,255,255,0.84)";
       roundRect(x, y, mw, mh, 18);
       ctx.fill();
-
       ctx.lineWidth = 1;
       ctx.strokeStyle = "rgba(0,0,0,0.10)";
       roundRect(x, y, mw, mh, 18);
       ctx.stroke();
-
       const pad = 12;
       const sx = (mw - pad * 2) / WORLD.w;
       const sy = (mh - pad * 2) / WORLD.h;
@@ -1943,196 +2113,6 @@
       cam.y = lerp(cam.y, cam.targetY, Math.min(1, dt * 8.0));
     }
 
-    function drawSpriteCharacter(x, y) {
-      if (!sprite.loaded || !sprite.img) return false;
-      const bob = player.moving ? Math.sin(player.bobT) * 0.35 : 0;
-      const baseW = 92, baseH = 100;
-
-      ctx.save();
-      ctx.globalAlpha = 0.24;
-      ctx.fillStyle = "rgba(10,14,24,0.42)";
-      ctx.beginPath();
-      ctx.ellipse(x, y + 28, 22, 8, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-
-      ctx.save();
-      ctx.translate(x, y + bob);
-      if (player.dir === "left") ctx.scale(-1, 1);
-      const s = player.moving ? 0.98 + 0.02 * Math.sin(player.animT * 10) : 1;
-      ctx.scale(s, 1);
-      ctx.imageSmoothingEnabled = false;
-      ctx.imageSmoothingQuality = "low";
-      ctx.drawImage(sprite.img, -baseW / 2, -90, baseW, baseH * 1.14);
-      ctx.restore();
-      return true;
-    }
-
-    function drawMinifig(x, y, opts = {}) {
-      const isHero = !!opts.isHero;
-      const pal = opts.palette || {
-        torso: isHero ? "#111827" : "#0a84ff",
-        pants: isHero ? "#2d3748" : "#374151",
-        hat: isHero ? "#dc2626" : "#ffcc00",
-        skin: "#ffd7b5",
-        hair: "#1f2937"
-      };
-      const dir = opts.dirOverride || player.dir;
-      const walk = isHero ? player.animT : 0;
-      const bob = isHero ? Math.sin(player.bobT) * 1.2 : 0;
-      const armSwing = player.moving ? Math.sin(walk * 10) * 0.35 : 0;
-      const legSwing = player.moving ? Math.sin(walk * 10 + Math.PI) * 0.32 : 0;
-
-      ctx.save();
-      ctx.translate(x, y + bob);
-
-      if (dir === "left") ctx.scale(-1, 1);
-
-      ctx.globalAlpha = 0.24;
-      ctx.fillStyle = "rgba(10,14,24,0.42)";
-      ctx.beginPath();
-      ctx.ellipse(0, 30, 20, 8, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-
-      // legs
-      ctx.save();
-      ctx.translate(0, 14);
-      ctx.rotate(legSwing * 0.14);
-      ctx.fillStyle = pal.pants;
-      roundRect(-13, 0, 10, 22, 4);
-      ctx.fill();
-      ctx.restore();
-
-      ctx.save();
-      ctx.translate(0, 14);
-      ctx.rotate(-legSwing * 0.14);
-      ctx.fillStyle = pal.pants;
-      roundRect(3, 0, 10, 22, 4);
-      ctx.fill();
-      ctx.restore();
-
-      // torso
-      const torsoGrad = ctx.createLinearGradient(0, -20, 0, 12);
-      torsoGrad.addColorStop(0, shade(pal.torso, 12));
-      torsoGrad.addColorStop(1, shade(pal.torso, -10));
-      ctx.fillStyle = torsoGrad;
-      roundRect(-18, -14, 36, 30, 8);
-      ctx.fill();
-
-      ctx.globalAlpha = 0.10;
-      ctx.fillStyle = "#fff";
-      roundRect(-14, -10, 28, 8, 6);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-
-      // armor-like chest for hero
-      if (isHero) {
-        ctx.fillStyle = "rgba(255,255,255,0.14)";
-        roundRect(-11, -7, 22, 14, 6);
-        ctx.fill();
-        ctx.strokeStyle = "rgba(220,38,38,0.65)";
-        ctx.lineWidth = 2;
-        roundRect(-9, -5, 18, 10, 5);
-        ctx.stroke();
-      }
-
-      // arms
-      ctx.save();
-      ctx.translate(-18, -4);
-      ctx.rotate(-0.35 + armSwing * 0.5);
-      ctx.fillStyle = pal.torso;
-      roundRect(-4, 0, 8, 22, 4);
-      ctx.fill();
-      if (isHero) {
-        ctx.fillStyle = "#374151";
-        roundRect(-5, 10, 10, 10, 4);
-        ctx.fill();
-      }
-      ctx.restore();
-
-      ctx.save();
-      ctx.translate(18, -4);
-      ctx.rotate(0.35 - armSwing * 0.5);
-      ctx.fillStyle = pal.torso;
-      roundRect(-4, 0, 8, 22, 4);
-      ctx.fill();
-
-      if (isHero) {
-        // shield
-        ctx.fillStyle = "#111827";
-        ctx.beginPath();
-        ctx.moveTo(10, 10);
-        ctx.lineTo(18, 8);
-        ctx.lineTo(20, 18);
-        ctx.lineTo(14, 24);
-        ctx.lineTo(8, 18);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = "#dc2626";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-      ctx.restore();
-            // head
-      ctx.fillStyle = pal.skin || "#ffd7b5";
-      roundRect(-13, -36, 26, 20, 8);
-      ctx.fill();
-
-      // hair / helmet
-      if (isHero) {
-        ctx.fillStyle = "#111827";
-        roundRect(-15, -42, 30, 12, 8);
-        ctx.fill();
-        ctx.fillStyle = "#dc2626";
-        roundRect(-12, -40, 24, 8, 6);
-        ctx.fill();
-      } else {
-        ctx.fillStyle = pal.hair || "#1f2937";
-        roundRect(-14, -40, 28, 10, 7);
-        ctx.fill();
-        ctx.fillStyle = pal.hat || "#ffcc00";
-        roundRect(-10, -47, 20, 8, 5);
-        ctx.fill();
-      }
-
-      // face
-      ctx.fillStyle = "#111827";
-      ctx.beginPath(); ctx.arc(-5, -26, 1.6, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(5, -26, 1.6, 0, Math.PI * 2); ctx.fill();
-      ctx.globalAlpha = 0.75;
-      ctx.fillRect(-4, -21, 8, 1.5);
-      ctx.globalAlpha = 1;
-
-      // sword for hero
-      if (isHero) {
-        ctx.save();
-        ctx.translate(-22, 6);
-        ctx.rotate(-0.75 + armSwing * 0.25);
-        ctx.fillStyle = "#9ca3af";
-        roundRect(-2, -18, 4, 28, 2);
-        ctx.fill();
-        ctx.fillStyle = "#dc2626";
-        roundRect(-4, 8, 8, 4, 2);
-        ctx.fill();
-
-        ctx.globalAlpha = 0.24;
-        const g = ctx.createLinearGradient(0, -22, 0, 10);
-        g.addColorStop(0, "rgba(255,255,255,0.65)");
-        g.addColorStop(1, "rgba(255,255,255,0)");
-        ctx.strokeStyle = g;
-        ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.moveTo(0, -16);
-        ctx.lineTo(0, -28);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-        ctx.restore();
-      }
-
-      ctx.restore();
-    }
-
     function getFootY(entity) {
       if (entity.kind === "building") return entity.y + entity.h;
       if (entity.kind === "car") return entity.y + entity.h;
@@ -2140,7 +2120,6 @@
       if (entity.kind === "lamp") return entity.y + 68 * entity.s;
       if (entity.kind === "bench") return entity.y + 32 * entity.s;
       if (entity.kind === "flower") return entity.y + 12 * entity.s;
-      if (entity.kind === "sign") return entity.y + 40;
       if (entity.kind === "npc") return entity.y + 30;
       if (entity.kind === "emblem") return entity.y + 12;
       if (entity.kind === "signal") return entity.y + 40;
@@ -2182,10 +2161,12 @@
           updateDirFromDelta(vx, vy);
           player.animT += dt;
           player.bobT += dt * 10;
+          player.walkCycle += dt * 1.9;
         }
       }
 
       addFootprint(dt, rng);
+      updateEquipFx(dt);
 
       for (let i = footprints.length - 1; i >= 0; i--) {
         const fp = footprints[i];
@@ -2197,7 +2178,6 @@
         c.bob += dt * 3.0;
         const road = roads.find(r => r._id === c.roadId);
         if (!road) continue;
-
         if (c.axis === "h") {
           c.x += c.dir * c.speed * dt;
           if (c.dir > 0 && c.x - c.w / 2 > road.x + road.w + 40) c.x = road.x - 40;
@@ -2289,6 +2269,8 @@
         for (const sg of signals) renderables.push({ kind: "signal", ref: sg });
         for (const em of portalEmblems) renderables.push({ kind: "emblem", ref: em });
         for (const npc of portalNPCs) renderables.push({ kind: "npc", ref: npc });
+      } else {
+        for (const em of portalEmblems) renderables.push({ kind: "emblem", ref: em });
       }
 
       for (const c of cars) renderables.push({ kind: "car", ref: c });
@@ -2317,6 +2299,8 @@
             break;
         }
       }
+
+      drawEquipFx(ctx);
 
       ctx.restore();
 
@@ -2356,4 +2340,3 @@
     requestAnimationFrame(loop);
   });
 })();
-                          
