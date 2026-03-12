@@ -184,7 +184,7 @@
     fade.style.pointerEvents = "none";
     fade.style.opacity = "0";
     fade.style.transition = "opacity 240ms ease";
-    fade.style.background = "radial-gradient(circle at 50% 50%, rgba(15,23,42,0.18), rgba(2,6,23,0.82))";
+    fade.style.background = "radial-gradient(circle at 50% 50%, rgba(15,23,42,0.00), rgba(2,6,23,0.08))";
 
     const modal = ensureEl("lego_modal", "div");
     modal.innerHTML = "";
@@ -316,7 +316,7 @@
 
     const style = ensureEl("lego_style_injected", "style", document.head);
     style.textContent = `
-      #fade.on { opacity: 1; }
+      #fade.on { opacity: 0.22; }
       #lego_modal { animation: legoPop 160ms ease both; }
       @keyframes legoPop {
         from { opacity: 0; transform: translateY(8px); }
@@ -725,11 +725,11 @@
     };
 
     function rarityStyle(price = 0) {
-      if (price >= 850) return { tier: "mythic", label: "MYTHIC", glow: "#fb7185", color: "#f43f5e" };
-      if (price >= 600) return { tier: "legend", label: "LEGEND", glow: "#f59e0b", color: "#fbbf24" };
-      if (price >= 360) return { tier: "epic", label: "EPIC", glow: "#a78bfa", color: "#8b5cf6" };
-      if (price >= 180) return { tier: "rare", label: "RARE", glow: "#38bdf8", color: "#0ea5e9" };
-      return { tier: "common", label: "COMMON", glow: "#94a3b8", color: "#64748b" };
+      if (price >= 850) return { tier: "mythic", label: "MYTHIC", glow: "#ff4d6d", color: "#ff1744", flame: "rgba(255,63,94,0.95)", horn: 3 };
+      if (price >= 600) return { tier: "legend", label: "LEGEND", glow: "#ffb000", color: "#ffd54a", flame: "rgba(255,176,0,0.95)", horn: 2 };
+      if (price >= 360) return { tier: "epic", label: "EPIC", glow: "#a855f7", color: "#c084fc", flame: "rgba(192,132,252,0.92)", horn: 2 };
+      if (price >= 180) return { tier: "rare", label: "RARE", glow: "#22d3ee", color: "#38bdf8", flame: "rgba(56,189,248,0.90)", horn: 1 };
+      return { tier: "common", label: "COMMON", glow: "#94a3b8", color: "#94a3b8", flame: "rgba(148,163,184,0.72)", horn: 0 };
     }
 
     function buildBlacksmithCatalog() {
@@ -978,7 +978,14 @@
         return `<div style="position:absolute;left:${px}px;top:${py}px;width:${size}px;height:${size}px;border-radius:999px;background:rgba(255,255,255,0.95);box-shadow:0 0 10px ${glow},0 0 18px ${glow};opacity:${0.45 + i * 0.08}"></div>`;
       }).join("");
       const activeRing = equipped ? `0 0 0 2px ${rare.color}, 0 0 28px ${glow}, 0 0 52px ${glow}66` : `0 0 0 1px rgba(255,255,255,0.08)`;
-      return `<div class="item-icon${equipped ? " active" : ""}" style="background:${bg};box-shadow:${activeRing}, ${rim};overflow:hidden"><div style="position:absolute;inset:0;background:radial-gradient(circle at 22% 18%, rgba(255,255,255,0.22), transparent 34%), radial-gradient(circle at 80% 78%, ${glow}22, transparent 28%), radial-gradient(circle at 50% 50%, ${glow}20, transparent 56%)"></div>${shape}${gems}${sparks}</div>`;
+      const auraCols = [rare.flame || glow, glow, "rgba(255,255,255,0.95)"];
+      const flameFx = Array.from({ length: Math.max(3, stars) }).map((_, i) => {
+        const left = 6 + i * 11;
+        const h = 12 + (i % 3) * 6;
+        const col = auraCols[i % auraCols.length];
+        return `<div style="position:absolute;left:${left}px;bottom:${2 + (i%2)*3}px;width:10px;height:${h}px;filter:blur(2px);background:linear-gradient(180deg, rgba(255,255,255,0.0), ${col});clip-path:polygon(50% 0%, 75% 28%, 100% 100%, 0% 100%, 24% 28%)"></div>`;
+      }).join("");
+      return `<div class="item-icon${equipped ? " active" : ""}" style="background:${bg};box-shadow:${activeRing}, ${rim};overflow:hidden"><div style="position:absolute;inset:-10%;background:radial-gradient(circle at 22% 18%, rgba(255,255,255,0.22), transparent 34%), radial-gradient(circle at 80% 78%, ${glow}22, transparent 28%), radial-gradient(circle at 50% 50%, ${glow}20, transparent 56%)"></div>${flameFx}${shape}${gems}${sparks}</div>`;
     }
 
     function renderPanels() {
@@ -1329,9 +1336,9 @@
       const a = ART_BOUNDS.village || { x: WORLD.w * 0.05, y: WORLD.h * 0.08, w: WORLD.w * 0.90, h: WORLD.h * 0.80 };
       const sideGap = a.w * 0.09;
       const topGap = a.h * 0.06;
-      const midGap = a.h * 0.12;
+      const midGap = a.h * 0.14;
       const boxW = (a.w - sideGap) * 0.5;
-      const topH = a.h * 0.54;
+      const topH = a.h * 0.58;
       const adW = a.w * 0.94;
       const adH = a.h * 0.24;
       ZONES = {
@@ -1442,16 +1449,16 @@
       }
 
       const desired = {
-        archery: { x: ZONES.game.x + ZONES.game.w * 0.18, y: ZONES.game.y + ZONES.game.h * 0.22 },
-        shooting: { x: ZONES.game.x + ZONES.game.w * 0.76, y: ZONES.game.y + ZONES.game.h * 0.22 },
-        janggi:  { x: ZONES.game.x + ZONES.game.w * 0.22, y: ZONES.game.y + ZONES.game.h * 0.76 },
-        avoid:   { x: ZONES.game.x + ZONES.game.w * 0.78, y: ZONES.game.y + ZONES.game.h * 0.76 },
-        omok:    { x: ZONES.game.x + ZONES.game.w * 0.50, y: ZONES.game.y + ZONES.game.h * 0.52 },
+        archery: { x: ZONES.game.x + ZONES.game.w * 0.18, y: ZONES.game.y + ZONES.game.h * 0.15 },
+        shooting: { x: ZONES.game.x + ZONES.game.w * 0.78, y: ZONES.game.y + ZONES.game.h * 0.15 },
+        janggi:  { x: ZONES.game.x + ZONES.game.w * 0.18, y: ZONES.game.y + ZONES.game.h * 0.86 },
+        avoid:   { x: ZONES.game.x + ZONES.game.w * 0.80, y: ZONES.game.y + ZONES.game.h * 0.86 },
+        omok:    { x: ZONES.game.x + ZONES.game.w * 0.50, y: ZONES.game.y + ZONES.game.h * 0.51 },
 
-        twitter:  { x: ZONES.community.x + ZONES.community.w * 0.24, y: ZONES.community.y + ZONES.community.h * 0.24 },
-        wallet:   { x: ZONES.community.x + ZONES.community.w * 0.76, y: ZONES.community.y + ZONES.community.h * 0.30 },
-        telegram: { x: ZONES.community.x + ZONES.community.w * 0.22, y: ZONES.community.y + ZONES.community.h * 0.76 },
-        market:   { x: ZONES.community.x + ZONES.community.w * 0.76, y: ZONES.community.y + ZONES.community.h * 0.78 },
+        twitter:  { x: ZONES.community.x + ZONES.community.w * 0.22, y: ZONES.community.y + ZONES.community.h * 0.16 },
+        wallet:   { x: ZONES.community.x + ZONES.community.w * 0.78, y: ZONES.community.y + ZONES.community.h * 0.16 },
+        telegram: { x: ZONES.community.x + ZONES.community.w * 0.22, y: ZONES.community.y + ZONES.community.h * 0.86 },
+        market:   { x: ZONES.community.x + ZONES.community.w * 0.78, y: ZONES.community.y + ZONES.community.h * 0.86 },
         blacksmith: { x: ZONES.ads.x + ZONES.ads.w * 0.72, y: ZONES.ads.y + ZONES.ads.h * 0.70 }
       };
 
@@ -2061,9 +2068,9 @@
       ctx.strokeStyle = z.color;
       roundRect(g.x, g.y, g.w, g.h, 18);
       ctx.stroke();
-      ctx.globalAlpha = 0.10 + pulse * 0.07;
-      ctx.strokeStyle = "rgba(255,255,255,0.55)";
-      ctx.lineWidth = 4;
+      ctx.globalAlpha = 0.03 + pulse * 0.02;
+      ctx.strokeStyle = "rgba(255,255,255,0.16)";
+      ctx.lineWidth = 2;
       roundRect(g.x + 5, g.y + 5, g.w - 10, g.h - 10, 14);
       ctx.stroke();
       ctx.globalAlpha = 1;
@@ -2862,6 +2869,12 @@
       ctx.fillStyle = accentGlow;
       roundRect(-2, -1, 4, 10, 2);
       ctx.fill();
+      if (gear?.armorTier?.horn > 0) {
+        ctx.shadowColor = gear.armorTier.glow; ctx.shadowBlur = 16;
+        ctx.fillStyle = gear.armorTier.color;
+        ctx.beginPath(); ctx.moveTo(-16,-14); ctx.lineTo(-22,-24); ctx.lineTo(-10,-18); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(16,-14); ctx.lineTo(22,-24); ctx.lineTo(10,-18); ctx.closePath(); ctx.fill();
+      }
       ctx.fillStyle = "rgba(255,255,255,0.14)";
       roundRect(-13, -12, 26, 4, 3); ctx.fill();
 
@@ -2906,13 +2919,21 @@
         roundRect(-12, -1, 24, 5, 3); ctx.fill();
         ctx.fillStyle = gear.weaponColor;
         ctx.shadowColor = gear.weaponTier ? gear.weaponTier.glow : gear.weaponColor;
-        ctx.shadowBlur = 16 + ((gear.weaponTier && gear.weaponTier.label==="MYTHIC") ? 8 : 0);
+        ctx.shadowBlur = 22 + ((gear.weaponTier && gear.weaponTier.label==="MYTHIC") ? 16 : (gear.weaponTier && gear.weaponTier.label==="LEGEND") ? 10 : 0);
         roundRect(-5, 4, 10, 15, 3); ctx.fill();
+        const weaponPulse = 0.6 + 0.4 * Math.sin(performance.now()/110);
+        for (let i = 0; i < 4 + (gear.weaponTier?.horn || 0); i++) {
+          const fx = -10 + i * 7;
+          const fy = -8 - i * 8;
+          ctx.fillStyle = (gear.weaponTier?.flame || gear.weaponColor) + 'cc';
+          ctx.beginPath();
+          ctx.moveTo(fx, fy + 10); ctx.quadraticCurveTo(fx + 4, fy - 10 - i * 1.5, fx + 8, fy + 10); ctx.closePath(); ctx.fill();
+        }
         ctx.fillStyle = "rgba(255,255,255,0.98)";
-        ctx.beginPath(); ctx.arc(10, -30, 2.6 + Math.sin(performance.now()/120)*0.9, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(3, -38, 1.8, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(-7, -18, 1.5, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(4, -12, 1.2, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(10, -30, 2.8 + weaponPulse*1.1, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(3, -38, 1.8 + weaponPulse*0.5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-7, -18, 1.7, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(4, -12, 1.4, 0, Math.PI*2); ctx.fill();
         ctx.restore();
       }
       ctx.restore();
@@ -2923,10 +2944,11 @@
         ctx.rotate(-0.20);
         const shieldGrad = ctx.createLinearGradient(0, -24, 0, 24);
         shieldGrad.addColorStop(0, "#f8fafc");
-        shieldGrad.addColorStop(0.32, "#94a3b8");
+        shieldGrad.addColorStop(0.20, gear.shieldTier?.color || "#e2e8f0");
+        shieldGrad.addColorStop(0.56, "#94a3b8");
         shieldGrad.addColorStop(0.72, gear.shieldColor);
         ctx.shadowColor = gear.shieldTier ? gear.shieldTier.glow : gear.shieldColor;
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 20;
         shieldGrad.addColorStop(1, "#020617");
         ctx.fillStyle = shieldGrad;
         ctx.beginPath();
@@ -2934,9 +2956,16 @@
         ctx.fill();
         ctx.strokeStyle = "rgba(96,165,250,0.72)";
         ctx.lineWidth = 2.6; ctx.stroke();
-        ctx.fillStyle = "rgba(255,255,255,0.75)";
+        ctx.fillStyle = "rgba(255,255,255,0.82)";
         roundRect(-1.3, -15, 2.6, 28, 1.3); ctx.fill();
         roundRect(-9, -1.5, 18, 3, 1.3); ctx.fill();
+        for (let i = 0; i < 3 + (gear.shieldTier?.horn || 0); i++) {
+          const ang = performance.now()/380 + i * 2.09;
+          const px = Math.cos(ang) * (11 + i*1.5);
+          const py = Math.sin(ang) * (14 + i*1.5);
+          ctx.fillStyle = (gear.shieldTier?.flame || gear.shieldColor) + 'cc';
+          ctx.beginPath(); ctx.arc(px, py, i % 2 ? 1.6 : 2.1, 0, Math.PI*2); ctx.fill();
+        }
         ctx.restore();
       }
 
@@ -2977,6 +3006,15 @@
         roundRect(-3,-48,6,10,3); ctx.fill();
         ctx.fillStyle = gear?.hatTier?.color || "#60a5fa";
         roundRect(-9, -29, 18, 4, 2); ctx.fill();
+        const hornLevel = gear?.hatTier?.horn || 0;
+        if (hornLevel > 0) {
+          ctx.fillStyle = gear?.hatTier?.color || "#60a5fa";
+          ctx.shadowColor = gear?.hatTier?.glow || "#60a5fa";
+          ctx.shadowBlur = 18;
+          ctx.beginPath(); ctx.moveTo(-12,-36); ctx.lineTo(-20,-52); ctx.lineTo(-9,-45); ctx.closePath(); ctx.fill();
+          ctx.beginPath(); ctx.moveTo(12,-36); ctx.lineTo(20,-52); ctx.lineTo(9,-45); ctx.closePath(); ctx.fill();
+          if (hornLevel > 1) { ctx.beginPath(); ctx.moveTo(-4,-50); ctx.lineTo(0,-62); ctx.lineTo(4,-50); ctx.closePath(); ctx.fill(); }
+        }
         ctx.fillStyle = "rgba(255,255,255,0.20)";
         roundRect(-10,-42,20,4,2); ctx.fill();
         ctx.fillStyle = "rgba(255,255,255,0.12)";
