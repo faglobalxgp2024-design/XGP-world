@@ -191,13 +191,14 @@
     modal.style.inset = "0";
     modal.style.zIndex = "10000";
     modal.style.display = "none";
-    modal.style.alignItems = "center";
+    modal.style.alignItems = "flex-start";
     modal.style.justifyContent = "center";
-    modal.style.background = "rgba(2,6,23,0.08)";
-    modal.style.backdropFilter = "blur(0.5px)";
+    modal.style.paddingTop = "88px";
+    modal.style.background = "transparent";
+    modal.style.backdropFilter = "none";
 
     const modalInner = ensureEl("lego_modal_inner", "div", modal);
-    modalInner.style.width = "min(360px, calc(100vw - 28px))";
+    modalInner.style.width = "min(420px, calc(100vw - 28px))";
     modalInner.style.padding = "0";
     modalInner.style.pointerEvents = "auto";
     modalInner.style.textAlign = "center";
@@ -688,7 +689,7 @@
       attackT: 0,
       slashFx: [],
       slimes: [],
-      stars: 0,
+      stars: 10000,
       canAttack: true
     };
 
@@ -1209,30 +1210,36 @@
 
     function groundAO(x, y, w, h, alpha = 0.2) {
       ctx.save();
-      const g = ctx.createRadialGradient(x + w * 0.5, y + h * 0.8, 10, x + w * 0.5, y + h * 0.8, Math.max(w, h) * 0.95);
-      g.addColorStop(0, `rgba(10,14,24,${alpha})`);
+      const cx = x + w * 0.5;
+      const cy = y + h * 0.62;
+      const rx = Math.max(24, w * 0.42);
+      const ry = Math.max(8, h * 0.34);
+      const g = ctx.createRadialGradient(cx, cy, 4, cx, cy, Math.max(rx, ry) * 1.2);
+      g.addColorStop(0, `rgba(10,14,24,${alpha * 0.7})`);
       g.addColorStop(1, "rgba(10,14,24,0)");
       ctx.fillStyle = g;
-      ctx.fillRect(x - 140, y - 140, w + 280, h + 280);
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     }
 
     function softShadow(x, y, w, h, alpha = 0.1) {
       ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = "rgba(10,14,24,0.85)";
+      ctx.globalAlpha = alpha * 0.45;
+      ctx.fillStyle = "rgba(10,14,24,0.55)";
       roundRect(x, y, w, h, 18);
       ctx.fill();
       ctx.restore();
     }
 
     function blockSpan(html, opts = {}) {
-      const bg = opts.bg || "rgba(255,255,255,0.88)";
-      const fg = opts.fg || "#0a0e18";
-      const bd = opts.bd || opts.border || "rgba(0,0,0,0.08)";
+      const bg = opts.bg || "linear-gradient(180deg, rgba(10,14,24,0.96), rgba(18,25,40,0.94))";
+      const fg = opts.fg || "#f8fafc";
+      const bd = opts.bd || opts.border || "rgba(148,163,184,0.18)";
       const pad = opts.pad || "12px 16px";
       const radius = opts.radius || "16px";
-      const shadow = opts.shadow || "0 16px 40px rgba(0,0,0,0.14)";
+      const shadow = opts.shadow || "0 16px 40px rgba(0,0,0,0.28)";
       return `<span style="display:inline-block;padding:${pad};border-radius:${radius};background:${bg};color:${fg};border:1px solid ${bd};box-shadow:${shadow};">${html}</span>`;
     }
 
@@ -1514,9 +1521,9 @@
         { key: "apple", label: "APPLE", color: "#111827", accent: "#d1d5db" }
       ];
       const startX = ZONES.ads.x + 80;
-      const gap = 110;
-      const w = 250, h = 196;
-      const y = ZONES.ads.y + 72;
+      const gap = 150;
+      const w = 300, h = 228;
+      const y = ZONES.ads.y + 56;
       for (let i = 0; i < items.length; i++) {
         adBuildings.push({ ...items[i], x: startX + i * (w + gap), y, w, h });
       }
@@ -1979,32 +1986,30 @@
       const g = z.entrance;
       const pulse = 0.5 + 0.5 * Math.sin(t * 3.2);
       ctx.save();
-      groundAO(g.x - 8, g.y + g.h - 10, g.w + 16, 30, 0.20);
-      ctx.fillStyle = "rgba(255,255,255,0.16)";
-      roundRect(g.x - 12, g.y - 10, g.w + 24, g.h + 18, 20);
-      ctx.fill();
+      groundAO(g.x, g.y + g.h - 6, g.w, 16, 0.10);
       const grad = ctx.createLinearGradient(g.x, g.y, g.x, g.y + g.h);
-      grad.addColorStop(0, "rgba(255,255,255,0.92)");
-      grad.addColorStop(1, "rgba(235,244,255,0.88)");
+      grad.addColorStop(0, "rgba(15,23,42,0.96)");
+      grad.addColorStop(1, "rgba(30,41,59,0.94)");
       ctx.fillStyle = grad;
       roundRect(g.x, g.y, g.w, g.h, 18);
       ctx.fill();
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 2;
       ctx.strokeStyle = z.color;
       roundRect(g.x, g.y, g.w, g.h, 18);
       ctx.stroke();
-      ctx.globalAlpha = 0.15 + pulse * 0.10;
-      ctx.fillStyle = z.color;
-      roundRect(g.x + 6, g.y + 6, g.w - 12, g.h - 12, 14);
-      ctx.fill();
+      ctx.globalAlpha = 0.10 + pulse * 0.07;
+      ctx.strokeStyle = "rgba(255,255,255,0.55)";
+      ctx.lineWidth = 4;
+      roundRect(g.x + 5, g.y + 5, g.w - 10, g.h - 10, 14);
+      ctx.stroke();
       ctx.globalAlpha = 1;
-      ctx.fillStyle = "rgba(10,14,24,0.88)";
+      ctx.fillStyle = "rgba(248,250,252,0.96)";
       ctx.font = "900 16px system-ui";
       ctx.textAlign = "center";
-      ctx.fillText(z.label, g.x + g.w / 2, g.y + 30);
+      ctx.fillText(z.label, g.x + g.w / 2, g.y + 29);
       ctx.font = "800 11px system-ui";
-      ctx.fillStyle = "rgba(10,14,24,0.72)";
-      ctx.fillText("ENTRANCE", g.x + g.w / 2, g.y + 48);
+      ctx.fillStyle = "rgba(226,232,240,0.76)";
+      ctx.fillText("ENTRANCE", g.x + g.w / 2, g.y + 46);
       ctx.restore();
     }
         function drawZonesWorld(t) {
@@ -2146,8 +2151,8 @@
     function drawAdBuilding(b, t) {
       const c = legoStyleForType(b.key === "bbq" ? "bbq" : b.key === "baskin" ? "baskin" : b.key === "apple" ? "social" : "mcd");
       const x = b.x, y = b.y, w = b.w, h = b.h;
-      groundAO(x + 12, y + h - 18, w - 24, 42, 0.24);
-      softShadow(x + 16, y + h - 16, w - 32, 22, 0.12);
+      groundAO(x + 12, y + h - 18, w - 24, 42, 0.14);
+      softShadow(x + 22, y + h - 12, w - 44, 18, 0.06);
 
       ctx.save();
       const wall = ctx.createLinearGradient(x, y, x, y + h);
@@ -2156,6 +2161,10 @@
       ctx.fillStyle = wall;
       roundRect(x, y + 30, w, h - 30, 24);
       ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      roundRect(x, y + 30, w, h - 30, 24);
+      ctx.stroke();
 
       ctx.fillStyle = shade(c.frame, -10);
       roundRect(x + 20, y + h - 64, w - 40, 22, 8);
@@ -2283,6 +2292,38 @@
         ctx.drawImage(art, dx, dy, drawW, drawH);
         ctx.restore();
       } else {
+        if (p.key === "blacksmith") {
+          ctx.save();
+          const forgeWall = ctx.createLinearGradient(x, y + 12, x, y + h);
+          forgeWall.addColorStop(0, "#433025");
+          forgeWall.addColorStop(1, "#241711");
+          ctx.fillStyle = forgeWall;
+          roundRect(x, y + 26, w, h - 26, 24);
+          ctx.fill();
+          ctx.fillStyle = "#111827";
+          roundRect(x + w * 0.08, y + 34, w * 0.84, 58, 18);
+          ctx.fill();
+          ctx.strokeStyle = "rgba(251,191,36,0.55)";
+          ctx.lineWidth = 4;
+          roundRect(x + w * 0.08, y + 34, w * 0.84, 58, 18);
+          ctx.stroke();
+          ctx.fillStyle = "#fde68a";
+          ctx.font = `1000 ${Math.max(18, Math.floor(w * 0.10))}px system-ui`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("BLACKSMITH", x + w * 0.5, y + 64);
+          ctx.fillStyle = "#0f172a";
+          roundRect(x + w * 0.36, y + h * 0.55, w * 0.28, h * 0.28, 18);
+          ctx.fill();
+          ctx.fillStyle = "#94a3b8";
+          roundRect(x + w * 0.16, y + h * 0.50, w * 0.14, h * 0.18, 12);
+          roundRect(x + w * 0.70, y + h * 0.50, w * 0.14, h * 0.18, 12);
+          ctx.fill();
+          ctx.fillStyle = "rgba(251,191,36,0.85)";
+          ctx.beginPath(); ctx.arc(x + w * 0.22, y + h * 0.44, 10, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(x + w * 0.78, y + h * 0.44, 10, 0, Math.PI * 2); ctx.fill();
+          ctx.restore();
+        } else {
         drawLegoBrickGrid(x, y + 18, w, h - 18);
 
         ctx.save();
@@ -2304,6 +2345,7 @@
         } else {
           drawLegoWindow(x + w * 0.12, winY, w * 0.28, h * 0.18, c.frame, c.glassA, c.glassB);
           drawLegoDoor(x + w * 0.58, doorY, w * 0.22, h * 0.28, c.accent, c.frame, c.knob);
+        }
         }
       }
 
