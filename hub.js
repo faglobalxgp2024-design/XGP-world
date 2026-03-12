@@ -255,9 +255,11 @@
 
     const invBtn = ensureEl("btn_inventory", "button", mobileBtns);
     const eqBtn = ensureEl("btn_equipment", "button", mobileBtns);
+    const atkBtn = ensureEl("btn_attack", "button", mobileBtns);
     invBtn.textContent = "I / 인벤";
     eqBtn.textContent = "TAB / 장착";
-    [invBtn, eqBtn].forEach((b) => {
+    atkBtn.textContent = "ATTACK";
+    [invBtn, eqBtn, atkBtn].forEach((b) => {
       b.style.minWidth = "96px";
       b.style.cursor = "pointer";
       b.style.border = "1px solid rgba(0,0,0,0.10)";
@@ -268,6 +270,10 @@
       b.style.borderRadius = "14px";
       b.style.boxShadow = "0 12px 28px rgba(0,0,0,0.12)";
     });
+    atkBtn.style.background = "linear-gradient(180deg,#ff6b6b,#dc2626)";
+    atkBtn.style.color = "#fff";
+    atkBtn.style.fontWeight = "1000";
+    atkBtn.style.minWidth = "110px";
 
     const style = ensureEl("lego_style_injected", "style", document.head);
     style.textContent = `
@@ -338,9 +344,9 @@
     `;
 
     const joy = ensureEl("joystick", "div");
-    const JOY_SIZE = 168;
-    const JOY_KNOB = 72;
-    const JOY_RING = 136;
+    const JOY_SIZE = 136;
+    const JOY_KNOB = 58;
+    const JOY_RING = 104;
     joy.style.position = "fixed";
     joy.style.right = "18px";
     joy.style.left = "auto";
@@ -437,9 +443,14 @@
     joy.addEventListener("pointerup", joyPointerUp, { passive: false });
     joy.addEventListener("pointercancel", joyPointerUp, { passive: false });
 
+    atkBtn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      window.__metaWorldAttackTap = performance.now();
+    }, { passive: false });
+
     return {
       canvas, toast, coord, fps, fade, modal, modalTitle, modalBody, modalHint,
-      inventoryPanel, equipmentPanel, invBtn, eqBtn, joyState
+      inventoryPanel, equipmentPanel, invBtn, eqBtn, atkBtn, joyState
     };
   }
 
@@ -450,8 +461,8 @@
     const ctx = canvas.getContext("2d", { alpha: true });
 
     let W = 0, H = 0, DPR = 1;
-    const VIEW = { zoom: 0.70, w: 0, h: 0 };
-    const WORLD = { w: 4600, h: 3200, margin: 220 };
+    const VIEW = { zoom: 0.72, w: 0, h: 0 };
+    const WORLD = { w: 6400, h: 4600, margin: 240 };
     const cam = { x: 0, y: 0, targetX: 0, targetY: 0 };
     const ART_BOUNDS = { x: 0, y: 0, w: 0, h: 0, skyLineY: 0, village: null };
 
@@ -775,6 +786,13 @@
       else if (Math.abs(dy) > 0.001) player.dir = dy >= 0 ? "down" : "up";
     }
 
+    function triggerAttack() {
+      if (combatState.attackT <= 0) {
+        combatState.attackT = 0.28;
+        player.gearFlashT = 0.25;
+      }
+    }
+
     window.addEventListener("keydown", (e) => {
       const k = e.key.toLowerCase();
       if (k === "tab") {
@@ -790,10 +808,7 @@
       keys.add(k);
       if (k === " ") {
         e.preventDefault();
-        if (combatState.attackT <= 0) {
-          combatState.attackT = 0.28;
-          player.gearFlashT = 0.25;
-        }
+        triggerAttack();
       }
       if (k === "enter" || k === "e") {
         if (modalState.open && modalState.portal) confirmEnter(modalState.portal);
@@ -1004,17 +1019,18 @@
     }
 
     function layoutZonesFromArt() {
-      const a = ART_BOUNDS.village || { x: WORLD.w * 0.06, y: WORLD.h * 0.08, w: WORLD.w * 0.88, h: WORLD.h * 0.78 };
-      const gapX = a.w * 0.12;
-      const gapY = a.h * 0.14;
-      const topH = a.h * 0.42;
-      const boxW = (a.w - gapX) * 0.5;
-      const adW = a.w * 0.90;
-      const adH = a.h * 0.26;
+      const a = ART_BOUNDS.village || { x: WORLD.w * 0.05, y: WORLD.h * 0.08, w: WORLD.w * 0.90, h: WORLD.h * 0.80 };
+      const sideGap = a.w * 0.09;
+      const topGap = a.h * 0.06;
+      const midGap = a.h * 0.12;
+      const boxW = (a.w - sideGap) * 0.5;
+      const topH = a.h * 0.54;
+      const adW = a.w * 0.94;
+      const adH = a.h * 0.24;
       ZONES = {
         game: {
           x: a.x,
-          y: a.y + a.h * 0.05,
+          y: a.y + topGap,
           w: boxW,
           h: topH,
           label: "GAME ZONE",
@@ -1022,8 +1038,8 @@
           entrance: null
         },
         community: {
-          x: a.x + boxW + gapX,
-          y: a.y + a.h * 0.05,
+          x: a.x + boxW + sideGap,
+          y: a.y + topGap,
           w: boxW,
           h: topH,
           label: "COMMUNITY ZONE",
@@ -1032,7 +1048,7 @@
         },
         ads: {
           x: a.x + (a.w - adW) * 0.5,
-          y: a.y + topH + gapY + a.h * 0.06,
+          y: a.y + topGap + topH + midGap,
           w: adW,
           h: adH,
           label: "AD ZONE",
@@ -1045,7 +1061,7 @@
         const gateH = 96;
         z.entrance = {
           x: z.x + z.w * 0.5 - gateW * 0.5,
-          y: z.y + z.h - gateH * 0.44,
+          y: z.y + z.h - gateH * 0.35,
           w: gateW,
           h: gateH
         };
@@ -1069,11 +1085,11 @@
         sidewalks.push({ x: r.x, y: r.y + r.h + 12, w: r.w, h: 30 });
         return r;
       };
-      const addRoadV = (x, y0, y1, w = 110) => {
+      const addRoadV = (x, y0, y1, w = 118) => {
         const r = { _id: id++, axis: "v", x, y: y0, w, h: y1 - y0 };
         roads.push(r);
-        sidewalks.push({ x: r.x - 40, y: r.y, w: 28, h: r.h });
-        sidewalks.push({ x: r.x + r.w + 12, y: r.y, w: 28, h: r.h });
+        sidewalks.push({ x: r.x - 42, y: r.y, w: 30, h: r.h });
+        sidewalks.push({ x: r.x + r.w + 12, y: r.y, w: 30, h: r.h });
         return r;
       };
 
@@ -1082,13 +1098,13 @@
       const right = a.x + a.w * 0.98;
       const top = a.y + a.h * 0.02;
       const bottom = a.y + a.h * 0.96;
-      const gapX = a.w * 0.12;
-      addRoadH(top, left, right, 120);
-      addRoadH(ZONES.game.y + ZONES.game.h + 180, left, right, 126);
-      addRoadH(ZONES.ads.y + ZONES.ads.h + 180, left, right, 126);
 
-      addRoadV(ZONES.game.x + ZONES.game.w + gapX * 0.34, top, bottom, 118);
-      addRoadV(ZONES.community.x - gapX * 0.34 - 118, top, bottom, 118);
+      addRoadH(top, left, right, 122);
+      addRoadH(ZONES.game.y + ZONES.game.h + 220, left, right, 126);
+      addRoadH(ZONES.ads.y + ZONES.ads.h + 220, left, right, 126);
+
+      addRoadV(ZONES.game.x + ZONES.game.w + 170, top, bottom, 120);
+      addRoadV(ZONES.community.x - 290, top, bottom, 120);
       addRoadV(right - 150, top, bottom, 112);
 
       const Hs = roads.filter((r) => r.axis === "h");
@@ -1105,35 +1121,36 @@
     }
 
     function portalSizeScale(size) {
-      if (size === "L") return 1.65;
-      if (size === "M") return 1.52;
-      return 1.42;
+      if (size === "L") return 1.48;
+      if (size === "M") return 1.36;
+      return 1.24;
     }
 
     function layoutPortals() {
       const base = 430;
       for (const p of portals) {
         const m = portalSizeScale(p.size);
-        p.w = base * 1.08 * m;
-        p.h = base * 0.78 * m;
+        p.w = base * 1.02 * m;
+        p.h = base * 0.74 * m;
       }
 
       const desired = {
-        archery: { x: ZONES.game.x + ZONES.game.w * 0.26, y: ZONES.game.y + ZONES.game.h * 0.28 },
-        omok: { x: ZONES.game.x + ZONES.game.w * 0.74, y: ZONES.game.y + ZONES.game.h * 0.28 },
-        avoid: { x: ZONES.game.x + ZONES.game.w * 0.26, y: ZONES.game.y + ZONES.game.h * 0.74 },
-        janggi: { x: ZONES.game.x + ZONES.game.w * 0.74, y: ZONES.game.y + ZONES.game.h * 0.74 },
-        twitter: { x: ZONES.community.x + ZONES.community.w * 0.26, y: ZONES.community.y + ZONES.community.h * 0.28 },
-        telegram: { x: ZONES.community.x + ZONES.community.w * 0.74, y: ZONES.community.y + ZONES.community.h * 0.28 },
-        wallet: { x: ZONES.community.x + ZONES.community.w * 0.26, y: ZONES.community.y + ZONES.community.h * 0.74 },
-        market: { x: ZONES.community.x + ZONES.community.w * 0.74, y: ZONES.community.y + ZONES.community.h * 0.74 }
+        archery: { x: ZONES.game.x + ZONES.game.w * 0.20, y: ZONES.game.y + ZONES.game.h * 0.22 },
+        janggi:  { x: ZONES.game.x + ZONES.game.w * 0.74, y: ZONES.game.y + ZONES.game.h * 0.28 },
+        avoid:   { x: ZONES.game.x + ZONES.game.w * 0.26, y: ZONES.game.y + ZONES.game.h * 0.72 },
+        omok:    { x: ZONES.game.x + ZONES.game.w * 0.76, y: ZONES.game.y + ZONES.game.h * 0.78 },
+
+        twitter:  { x: ZONES.community.x + ZONES.community.w * 0.24, y: ZONES.community.y + ZONES.community.h * 0.24 },
+        wallet:   { x: ZONES.community.x + ZONES.community.w * 0.76, y: ZONES.community.y + ZONES.community.h * 0.30 },
+        telegram: { x: ZONES.community.x + ZONES.community.w * 0.22, y: ZONES.community.y + ZONES.community.h * 0.76 },
+        market:   { x: ZONES.community.x + ZONES.community.w * 0.76, y: ZONES.community.y + ZONES.community.h * 0.78 }
       };
 
       function clampIntoZone(p, z, d) {
-        const padX = 72;
-        const padY = 72;
+        const padX = 110;
+        const padY = 110;
         p.x = clamp(d.x - p.w / 2, z.x + padX, z.x + z.w - padX - p.w);
-        p.y = clamp(d.y - p.h / 2, z.y + padY, z.y + z.h - padY - p.h - 12);
+        p.y = clamp(d.y - p.h / 2, z.y + padY, z.y + z.h - padY - p.h - 40);
       }
 
       for (const p of portals) {
@@ -1733,13 +1750,13 @@
       const zones = [ZONES.game, ZONES.community, ZONES.ads];
       for (const z of zones) {
         ctx.save();
-        ctx.globalAlpha = 0.018;
+        ctx.globalAlpha = 0.006;
         ctx.fillStyle = z.color;
         roundRect(z.x, z.y, z.w, z.h, 42);
         ctx.fill();
-        ctx.globalAlpha = 0.08;
+        ctx.globalAlpha = 0.022;
         ctx.strokeStyle = z.color;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2;
         roundRect(z.x, z.y, z.w, z.h, 42);
         ctx.stroke();
         drawZoneGate(z, t);
@@ -2724,6 +2741,11 @@
         }
       }
 
+      if (window.__metaWorldAttackTap) {
+        triggerAttack();
+        window.__metaWorldAttackTap = 0;
+      }
+
       if (!player.moving) player.walkPhase += dt * 2.4;
       if (player.gearFlashT > 0) player.gearFlashT = Math.max(0, player.gearFlashT - dt);
       if (combatState.attackT > 0) {
@@ -2799,7 +2821,7 @@
       }
       if (combatState.attackT > 0.14 && combatState.canAttack) {
         combatState.canAttack = false;
-        const range = 74;
+        const range = 92;
         let fxX = player.x, fxY = player.y;
         if (player.dir === 'left') fxX -= 36;
         else if (player.dir === 'right') fxX += 36;
