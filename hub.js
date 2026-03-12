@@ -1131,6 +1131,7 @@
     function onMobilePortalAction() {
       if (!activePortal) return;
       if (activePortal.key === "blacksmith") {
+        closeModal();
         renderShop("all");
         return;
       }
@@ -1138,6 +1139,8 @@
         closeModal();
         UI.toast.hidden = true;
         UI.toast.style.display = "none";
+        UI.toast.innerHTML = "";
+        if (UI.enterBtn) UI.enterBtn.style.display = "none";
         entering = false;
         try {
           window.location.assign(activePortal.url);
@@ -1147,21 +1150,21 @@
         return;
       }
       closeModal();
-      mobileToastUntil = performance.now() + 1600;
+      if (UI.enterBtn) UI.enterBtn.style.display = "none";
+      mobileToastUntil = performance.now() + 1850;
       UI.toast.hidden = false;
       UI.toast.style.display = "block";
       UI.toast.innerHTML = blockSpan(
         `🧱 <b>${activePortal.label}</b><br/>${activePortal.message || "게임 준비중입니다."}`,
         { bg: "linear-gradient(180deg, rgba(10,14,24,0.96), rgba(18,25,40,0.94))", fg:"#f8fafc", bd:"rgba(148,163,184,0.16)", shadow:"0 14px 36px rgba(0,0,0,0.24)" }
       );
-      UI.enterBtn.style.display = "none";
       setTimeout(() => {
-        if (!shopState.open && performance.now() >= mobileToastUntil) {
+        if (!modalState.open && !shopState.open && performance.now() >= mobileToastUntil) {
           UI.toast.hidden = true;
           UI.toast.style.display = "none";
           UI.toast.innerHTML = "";
         }
-      }, 1650);
+      }, 1850);
     }
     UI.enterBtn.addEventListener("click", onMobilePortalAction);
     renderPanels();
@@ -1211,11 +1214,13 @@
         triggerAttack();
       }
       if (k === "enter" || k === "e") {
+        const portalTarget = activePortal || getNearestPortalCandidate(isTouchDevice() ? 240 : 260);
         if (modalState.open && modalState.portal) {
           confirmEnter(modalState.portal);
-        } else if (activePortal) {
-          if (isTouchDevice()) openPortalUI(activePortal);
-          else confirmEnter(activePortal);
+        } else if (portalTarget) {
+          activePortal = portalTarget;
+          if (isTouchDevice()) openPortalUI(portalTarget);
+          else confirmEnter(portalTarget);
         }
       }
       if (k === "escape") {
@@ -1569,14 +1574,14 @@
         if (["avoid", "shooting", "archery", "janggi", "omok"].includes(p.key)) {
           const z = ZONES.game;
           const gameLayout = touchLayout ? {
-            archery: { x: z.x + 18, y: z.y + 8 },
-            janggi: { x: z.x + z.w * 0.67 - p.w * 0.5, y: z.y + z.h - p.h - 14 },
-            omok: { x: z.x + z.w * 0.12, y: z.y + z.h * 0.47 - p.h * 0.5 },
-            avoid: { x: z.x + z.w * 0.92 - p.w * 0.5, y: z.y + z.h * 0.68 - p.h * 0.5 },
-            shooting: { x: z.x + z.w - p.w - 42, y: z.y + 8 }
+            archery: { x: z.x + 18, y: z.y + 10 },
+            janggi: { x: z.x + z.w * 0.70 - p.w * 0.5, y: z.y + z.h - p.h - 10 },
+            omok: { x: z.x + z.w * 0.10, y: z.y + z.h * 0.47 - p.h * 0.5 },
+            avoid: { x: z.x + z.w - p.w - 8, y: z.y + z.h * 0.70 - p.h * 0.5 },
+            shooting: { x: z.x + z.w - p.w - 94, y: z.y - 6 }
           } : {
             archery: { x: z.x + 52, y: z.y + 12 },
-            janggi: { x: z.x + z.w * 0.34 - p.w * 0.5, y: z.y + z.h * 0.62 - p.h * 0.5 },
+            janggi: { x: z.x + z.w * 0.40 - p.w * 0.5, y: z.y + z.h * 0.70 - p.h * 0.5 },
             omok: { x: z.x + z.w * 0.50 - p.w * 0.5, y: z.y + z.h * 0.40 - p.h * 0.5 },
             avoid: { x: z.x + z.w * 0.73 - p.w * 0.5, y: z.y + z.h * 0.60 - p.h * 0.5 },
             shooting: { x: z.x + z.w - p.w - 60, y: z.y + 18 }
@@ -1884,7 +1889,9 @@
 
     /* ----------------------- Portal / modal ----------------------- */
     function portalEnterZone(p) {
-      return { x: p.x + p.w * 0.18, y: p.y + p.h * 0.56, w: p.w * 0.64, h: p.h * 0.30 };
+      return isTouchDevice()
+        ? { x: p.x + p.w * 0.10, y: p.y + p.h * 0.44, w: p.w * 0.80, h: p.h * 0.44 }
+        : { x: p.x + p.w * 0.08, y: p.y + p.h * 0.42, w: p.w * 0.84, h: p.h * 0.48 };
     }
 
     function circleRectHit(cx, cy, cr, r) {
@@ -1895,6 +1902,21 @@
     }
 
     const modalState = { open: false, portal: null };
+
+    function getNearestPortalCandidate(maxDist = 220) {
+      let best = null;
+      let bestDist = maxDist;
+      for (const p of portals) {
+        const cx = p.x + p.w * 0.5;
+        const cy = p.y + p.h * 0.72;
+        const dist = Math.hypot(player.x - cx, player.y - cy);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = p;
+        }
+      }
+      return best;
+    }
 
     function fadeTo(action, ms = 220) {
       UI.fade.classList.add("on");
@@ -3680,9 +3702,10 @@
           UI.toast.hidden = true;
           UI.toast.style.display = "none";
           UI.toast.innerHTML = "";
-          UI.enterBtn.style.display = "block";
+          if (UI.enterBtn) UI.enterBtn.style.display = "block";
         } else {
           UI.toast.hidden = false;
+          UI.toast.style.display = "block";
           UI.toast.innerHTML = blockSpan(
             activePortal.key === "blacksmith"
               ? `⚒ <b>${activePortal.label}</b><br/>상점을 열려면 <b>E</b> 또는 <b>Enter</b>`
