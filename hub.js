@@ -318,7 +318,7 @@
     const mobileBtns = ensureEl("mobile_hud_buttons", "div");
     mobileBtns.style.position = "fixed";
     mobileBtns.style.left = "14px";
-    mobileBtns.style.top = "54px";
+    mobileBtns.style.top = "44px";
     mobileBtns.style.bottom = "auto";
     mobileBtns.style.right = "auto";
     mobileBtns.style.zIndex = "10002";
@@ -709,7 +709,7 @@
 
     const portals = [
       { key: "avoid", label: "AIRPLANE", status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "shooting", label: "SHOOTING", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", message: "슈팅게임에 입장하시겠습니까?", type: "tower", size: "L", x: 0, y: 0, w: 0, h: 0 },
+      { key: "shooting", label: "SHOOTING", status: "open", url: "https://faglobalxgp2024-design.github.io/-/", message: "슈팅게임에 입장하시겠습니까?", type: "tower", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "archery", label: "ARCHERY", status: "soon", url: "", message: "게임 준비중입니다.", type: "tower", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "janggi", label: "JANGGI", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "omok", label: "OMOK", status: "soon", url: "", message: "게임 준비중입니다.", type: "cafe", size: "L", x: 0, y: 0, w: 0, h: 0 },
@@ -751,6 +751,7 @@
 
     let activePortal = null;
     let entering = false;
+    let mobileToastUntil = 0;
 
     const combatState = {
       attackT: 0,
@@ -887,7 +888,7 @@
       if (combatState.stars < item.price) {
         UI.toast.hidden = false;
         UI.toast.innerHTML = blockSpan(`⭐ 스타가 부족합니다.<br/><b>${item.price}</b> STAR 필요`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
-        setTimeout(() => { if (!modalState.open && !shopState.open) UI.toast.hidden = true; }, 1200);
+        setTimeout(() => { if (!modalState.open && !shopState.open && performance.now() >= mobileToastUntil) { UI.toast.hidden = true; UI.toast.style.display = "none"; } }, 1200);
         return;
       }
       combatState.stars -= item.price;
@@ -1136,6 +1137,7 @@
       if (activePortal.status === "open" && activePortal.url) {
         closeModal();
         UI.toast.hidden = true;
+        UI.toast.style.display = "none";
         entering = false;
         try {
           window.location.assign(activePortal.url);
@@ -1144,14 +1146,20 @@
         }
         return;
       }
+      closeModal();
+      mobileToastUntil = performance.now() + 1600;
       UI.toast.hidden = false;
+      UI.toast.style.display = "block";
       UI.toast.innerHTML = blockSpan(
         `🧱 <b>${activePortal.label}</b><br/>${activePortal.message || "게임 준비중입니다."}`,
         { bg: "linear-gradient(180deg, rgba(10,14,24,0.96), rgba(18,25,40,0.94))", fg:"#f8fafc", bd:"rgba(148,163,184,0.16)", shadow:"0 14px 36px rgba(0,0,0,0.24)" }
       );
       setTimeout(() => {
-        if (!shopState.open) UI.toast.hidden = true;
-      }, 1400);
+        if (!shopState.open && performance.now() >= mobileToastUntil) {
+          UI.toast.hidden = true;
+          UI.toast.style.display = "none";
+        }
+      }, 1650);
     }
     UI.enterBtn.addEventListener("click", onMobilePortalAction);
     renderPanels();
@@ -1555,11 +1563,11 @@
         if (["avoid", "shooting", "archery", "janggi", "omok"].includes(p.key)) {
           const z = ZONES.game;
           const gameLayout = touchLayout ? {
-            archery: { x: z.x + 34, y: z.y + 20 },
-            janggi: { x: z.x + z.w * 0.58 - p.w * 0.5, y: z.y + z.h - p.h - 18 },
-            omok: { x: z.x + z.w * 0.18, y: z.y + z.h * 0.48 - p.h * 0.5 },
-            avoid: { x: z.x + z.w * 0.70 - p.w * 0.5, y: z.y + z.h * 0.60 - p.h * 0.5 },
-            shooting: { x: z.x + z.w - p.w - 26, y: z.y + 18 }
+            archery: { x: z.x + 20, y: z.y + 10 },
+            janggi: { x: z.x + z.w * 0.60 - p.w * 0.5, y: z.y + z.h - p.h - 8 },
+            omok: { x: z.x + z.w * 0.14, y: z.y + z.h * 0.45 - p.h * 0.5 },
+            avoid: { x: z.x + z.w * 0.83 - p.w * 0.5, y: z.y + z.h * 0.65 - p.h * 0.5 },
+            shooting: { x: z.x + z.w - p.w - 30, y: z.y + 8 }
           } : {
             archery: { x: z.x + 52, y: z.y + 12 },
             janggi: { x: z.x + z.w * 0.30 - p.w * 0.5, y: z.y + z.h * 0.58 - p.h * 0.5 },
@@ -1579,7 +1587,7 @@
           if (touchLayout) {
             if (p.key === "twitter") placeByRect(p, z, leftX, topY);
             else if (p.key === "wallet") placeByRect(p, z, rightX, topY + 6);
-            else if (p.key === "telegram") placeByRect(p, z, rightX - 8, bottomY - 8);
+            else if (p.key === "telegram") placeByRect(p, z, rightX + 6, bottomY + 4);
             else if (p.key === "market") placeByRect(p, z, leftX + 24, bottomY - 22);
           } else {
             if (p.key === "twitter") placeByRect(p, z, leftX, topY);
@@ -1900,7 +1908,7 @@
       UI.modalTitle.innerHTML = "";
       UI.modalBody.innerHTML = "";
       UI.modalHint.innerHTML = "";
-      if (!shopState.open) UI.toast.hidden = true;
+      if (!shopState.open) { UI.toast.hidden = true; UI.toast.style.display = "none"; UI.toast.innerHTML = ""; }
       if (UI.enterBtn) UI.enterBtn.style.display = "none";
     }
 
@@ -1924,10 +1932,12 @@
           fadeTo(() => { window.location.href = p.url; }, 220);
         }
       } else {
+        mobileToastUntil = performance.now() + 1600;
         UI.toast.hidden = false;
+        UI.toast.style.display = "block";
         UI.toast.innerHTML = blockSpan(`🧱 <b>${p.label}</b><br/>${p.message || "게임 준비중입니다."}`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
         setTimeout(() => {
-          if (!modalState.open && !shopState.open) UI.toast.hidden = true;
+          if (!modalState.open && !shopState.open && performance.now() >= mobileToastUntil) { UI.toast.hidden = true; UI.toast.style.display = "none"; }
         }, 1500);
       }
     }
@@ -1952,15 +1962,22 @@
         : (p.status === "open" && (!!p.url || !!p.message)
             ? `🧱 <b>${p.label}</b><br/>입장하시겠습니까?`
             : `🧱 <b>${p.label}</b><br/>${p.message || "게임 준비중입니다."}`);
-      UI.toast.hidden = false;
-      UI.toast.innerHTML = blockSpan(message, {
-        bg: "linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.95))",
-        fg: "#f8fafc",
-        pad: "12px 18px",
-        radius: "18px",
-        border: "1px solid rgba(148,163,184,0.16)",
-        shadow: "0 14px 30px rgba(2,6,23,0.22)"
-      });
+      if (isTouchDevice()) {
+        UI.toast.hidden = true;
+        UI.toast.style.display = "none";
+        UI.toast.innerHTML = "";
+      } else {
+        UI.toast.hidden = false;
+        UI.toast.style.display = "block";
+        UI.toast.innerHTML = blockSpan(message, {
+          bg: "linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.95))",
+          fg: "#f8fafc",
+          pad: "12px 18px",
+          radius: "18px",
+          border: "1px solid rgba(148,163,184,0.16)",
+          shadow: "0 14px 30px rgba(2,6,23,0.22)"
+        });
+      }
     }
 
     UI.modal.addEventListener("click", (e) => {
@@ -3279,13 +3296,27 @@
 
     function seedTitans(rng) {
       combatState.titans.length = 0;
+      const titanSpots = [
+        { x: ZONES.game.x + ZONES.game.w * 0.52, y: ZONES.game.y + ZONES.game.h + 260 },
+        { x: ZONES.community.x + ZONES.community.w * 0.62, y: ZONES.community.y + ZONES.community.h + 240 },
+        { x: ZONES.ads.x + ZONES.ads.w * 0.42, y: ZONES.ads.y + ZONES.ads.h + 250 },
+        { x: ZONES.community.x + ZONES.community.w * 0.30, y: ZONES.community.y + ZONES.community.h + 300 }
+      ];
+      const pickSpot = (i) => {
+        const s = titanSpots[i % titanSpots.length];
+        return { x: s.x + (rng() - 0.5) * 120, y: s.y + (rng() - 0.5) * 90 };
+      };
+      const bruteSpot = pickSpot(0);
+      const colossusSpot = pickSpot(2);
       const defs = [
-        { key: "brute", label: "MECHA BRUTE", scale: 10, maxHp: 300, reward: 10, x: ZONES.community.x + ZONES.community.w * 0.50, y: ZONES.community.y + ZONES.community.h + 360, speed: 18 },
-        { key: "colossus", label: "VOID COLOSSUS", scale: 30, maxHp: 2000, reward: 50, x: ZONES.ads.x + ZONES.ads.w * 0.54, y: ZONES.ads.y + ZONES.ads.h + 520, speed: 8 }
+        { key: "brute", label: "MECHA BRUTE", scale: 20, maxHp: 420, reward: 10, x: bruteSpot.x, y: bruteSpot.y, speed: 18 },
+        { key: "colossus", label: "VOID COLOSSUS", scale: 60, maxHp: 2600, reward: 50, x: colossusSpot.x, y: colossusSpot.y, speed: 8 }
       ];
       for (const d of defs) {
         combatState.titans.push({
           ...d,
+          homeX: d.x,
+          homeY: d.y,
           hp: d.maxHp,
           dead: false,
           respawn: 0,
@@ -3634,7 +3665,11 @@
 
       if (!modalState.open && activePortal) {
         if (isTouchDevice()) {
-          UI.toast.hidden = true;
+          if (performance.now() >= mobileToastUntil) {
+            UI.toast.hidden = true;
+            UI.toast.style.display = "none";
+            UI.toast.innerHTML = "";
+          }
           UI.enterBtn.style.display = "block";
         } else {
           UI.toast.hidden = false;
@@ -3648,7 +3683,7 @@
           );
         }
       } else if (!modalState.open) {
-        UI.toast.hidden = true;
+        if (performance.now() >= mobileToastUntil) { UI.toast.hidden = true; UI.toast.style.display = "none"; UI.toast.innerHTML = ""; }
         if (UI.enterBtn) UI.enterBtn.style.display = "none";
       }
 
