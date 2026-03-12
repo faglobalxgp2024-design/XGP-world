@@ -553,6 +553,7 @@
     const signs = [];
     let portalNPCs = [];
     let portalEmblems = [];
+    const adBuildings = [];
     const roamers = [];
     const footprints = [];
     const cars = [];
@@ -1081,16 +1082,16 @@
 
     function portalSizeScale(size) {
       if (size === "L") return 1.00;
-      if (size === "M") return 0.88;
-      return 0.78;
+      if (size === "M") return 0.90;
+      return 0.82;
     }
 
     function layoutPortals() {
-      const base = 230;
+      const base = 420;
       for (const p of portals) {
         const m = portalSizeScale(p.size);
-        p.w = base * 1.08 * m;
-        p.h = base * 0.78 * m;
+        p.w = base * 1.18 * m;
+        p.h = base * 0.88 * m;
       }
 
       const desired = {
@@ -1222,11 +1223,35 @@
       }
     }
 
+    function layoutAdBuildings() {
+      adBuildings.length = 0;
+      const items = [
+        { key: "bbq", label: "BBQ", color: "#d62828", accent: "#ff9f1c" },
+        { key: "baskin", label: "BASKIN", color: "#ff4fa3", accent: "#ffd1e8" },
+        { key: "kfc", label: "KFC", color: "#ef4444", accent: "#ffffff" },
+        { key: "apple", label: "APPLE", color: "#111827", accent: "#d1d5db" }
+      ];
+      const cols = [0.22, 0.50, 0.78, 0.50];
+      const rows = [0.35, 0.35, 0.35, 0.74];
+      const widths = [300, 300, 300, 360];
+      const heights = [208, 208, 208, 226];
+      for (let i = 0; i < items.length; i++) {
+        const w = widths[i], h = heights[i];
+        adBuildings.push({
+          ...items[i],
+          x: ZONES.ads.x + ZONES.ads.w * cols[i] - w * 0.5,
+          y: ZONES.ads.y + ZONES.ads.h * rows[i] - h * 0.5,
+          w, h
+        });
+      }
+    }
+
     function seedProps(rng) {
       props.length = 0;
       signs.length = 0;
       portalNPCs = [];
       portalEmblems = [];
+      layoutAdBuildings();
 
       const okNature = (x, y) =>
         isInVillage(x, y, 10) &&
@@ -1302,7 +1327,7 @@
 
     function seedRoamers(rng) {
       roamers.length = 0;
-      const N = 20;
+      const N = 6;
 
       function okPos(x, y) {
         if (!isInVillage(x, y, 12)) return false;
@@ -1835,6 +1860,124 @@
       ctx.restore();
     }
 
+    function drawAdBuilding(b, t) {
+      const c = legoStyleForType(b.key === "bbq" ? "bbq" : b.key === "baskin" ? "baskin" : b.key === "apple" ? "social" : "mcd");
+      const x = b.x, y = b.y, w = b.w, h = b.h;
+      groundAO(x + 12, y + h - 18, w - 24, 42, 0.24);
+      softShadow(x + 16, y + h - 16, w - 32, 22, 0.12);
+
+      ctx.save();
+      const wall = ctx.createLinearGradient(x, y, x, y + h);
+      wall.addColorStop(0, shade(c.wall, 10));
+      wall.addColorStop(1, shade(c.wall, -12));
+      ctx.fillStyle = wall;
+      roundRect(x, y + 30, w, h - 30, 24);
+      ctx.fill();
+
+      ctx.fillStyle = shade(c.frame, -10);
+      roundRect(x + 20, y + h - 64, w - 40, 22, 8);
+      ctx.fill();
+
+      const awningY = y + h * 0.46;
+      for (let i = 0; i < 8; i++) {
+        ctx.fillStyle = i % 2 ? "#ffffff" : b.color;
+        ctx.beginPath();
+        ctx.moveTo(x + 18 + i * ((w - 36) / 8), awningY);
+        ctx.lineTo(x + 18 + (i + 1) * ((w - 36) / 8), awningY);
+        ctx.lineTo(x + 28 + (i + 1) * ((w - 36) / 8), awningY + 38);
+        ctx.lineTo(x + 8 + i * ((w - 36) / 8), awningY + 38);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      const signW = w * 0.78;
+      const signH = 64;
+      const signX = x + (w - signW) * 0.5;
+      const signY = y;
+      const sg = ctx.createLinearGradient(signX, signY, signX + signW, signY + signH);
+      sg.addColorStop(0, shade(b.color, 4));
+      sg.addColorStop(1, shade(b.color, -28));
+      ctx.fillStyle = sg;
+      roundRect(signX, signY, signW, signH, 22);
+      ctx.fill();
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = b.key === "apple" ? "rgba(255,255,255,0.35)" : "rgba(255,230,180,0.35)";
+      roundRect(signX, signY, signW, signH, 22);
+      ctx.stroke();
+      ctx.fillStyle = b.key === "apple" ? "#f8fafc" : "#fff7d6";
+      ctx.font = `1000 ${b.key === "apple" ? 28 : 26}px system-ui`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(b.label, x + w * 0.5, signY + signH * 0.54);
+
+      if (b.key === "apple") {
+        ctx.fillStyle = "#f8fafc";
+        ctx.beginPath();
+        ctx.arc(x + w * 0.5, y + 102, 18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.clearRect(x + w * 0.5 + 4, y + 90, 14, 20);
+        ctx.fillStyle = "#f8fafc";
+        ctx.beginPath();
+        ctx.ellipse(x + w * 0.5 + 13, y + 81, 8, 4, -0.5, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (b.key === "kfc") {
+        ctx.fillStyle = "#ffffff";
+        roundRect(x + 24, y + 88, 60, 72, 12);
+        ctx.fill();
+        ctx.fillStyle = "#111827";
+        roundRect(x + 42, y + 100, 24, 18, 8);
+        ctx.fill();
+        ctx.strokeStyle = "#ef4444";
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(x + 36, y + 92);
+        ctx.lineTo(x + 36, y + 156);
+        ctx.moveTo(x + 72, y + 92);
+        ctx.lineTo(x + 72, y + 156);
+        ctx.stroke();
+      } else if (b.key === "bbq") {
+        ctx.fillStyle = "#3f3f46";
+        roundRect(x + 34, y + 92, 66, 42, 10);
+        ctx.fill();
+        ctx.fillStyle = "#fb923c";
+        ctx.beginPath();
+        ctx.arc(x + 66, y + 116, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.6)";
+        roundRect(x + 50, y + 88, 8, 8, 4);
+        roundRect(x + 64, y + 84, 8, 8, 4);
+        roundRect(x + 78, y + 88, 8, 8, 4);
+        ctx.fill();
+      } else if (b.key === "baskin") {
+        ctx.fillStyle = "#fdf2f8";
+        for (let i=0;i<3;i++) {
+          ctx.beginPath();
+          ctx.arc(x + 50 + i*26, y + 110 - (i===1?8:0), 14, 0, Math.PI*2);
+          ctx.fill();
+        }
+        ctx.fillStyle = "#f59e0b";
+        ctx.beginPath();
+        ctx.moveTo(x + 64, y + 118);
+        ctx.lineTo(x + 90, y + 160);
+        ctx.lineTo(x + 38, y + 160);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.fillStyle = "rgba(188,232,255,0.90)";
+      roundRect(x + 24, y + h * 0.58, w * 0.28, h * 0.20, 12);
+      roundRect(x + w * 0.68 - w * 0.18, y + h * 0.58, w * 0.18, h * 0.20, 12);
+      ctx.fill();
+      ctx.fillStyle = "#1f2937";
+      roundRect(x + w * 0.41, y + h * 0.54, w * 0.18, h * 0.30, 12);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.28)";
+      roundRect(x + 28, y + h * 0.60, w * 0.22, h * 0.06, 8);
+      roundRect(x + w * 0.70 - w * 0.14, y + h * 0.60, w * 0.12, h * 0.06, 8);
+      ctx.fill();
+      ctx.restore();
+    }
+
     function drawPortalBuilding(p, t) {
       const c = legoStyleForType(p.type);
       const x = p.x, y = p.y, w = p.w, h = p.h;
@@ -1843,7 +1986,7 @@
 
       if (hasShopArt(p.key)) {
         const art = shopArt[p.key].img;
-        const pad = 10;
+        const pad = 4;
         const boxW = w - pad * 2;
         const boxH = h - pad * 2;
         const ratio = Math.min(boxW / Math.max(1, art.naturalWidth || art.width), boxH / Math.max(1, art.naturalHeight || art.height));
@@ -1852,19 +1995,9 @@
         const dx = x + (w - drawW) * 0.5;
         const dy = y + (h - drawH) * 0.5;
         ctx.save();
-        ctx.fillStyle = "rgba(255,255,255,0.18)";
-        roundRect(x, y, w, h, 22);
-        ctx.fill();
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
         ctx.drawImage(art, dx, dy, drawW, drawH);
-        ctx.restore();
-
-        ctx.save();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = "rgba(255,255,255,0.26)";
-        roundRect(x, y, w, h, 22);
-        ctx.stroke();
         ctx.restore();
       } else {
         drawLegoBrickGrid(x, y + 18, w, h - 18);
@@ -2425,19 +2558,33 @@
       roundRect(-13, -34, 26, 19, 8);
       ctx.fill();
 
-      if (isHero && gear && gear.hatColor) {
+      if (isHero) {
+        const helmColor = (gear && gear.hatColor) ? gear.hatColor : "#dc2626";
+        const helmGrad = ctx.createLinearGradient(0, -48, 0, -24);
+        helmGrad.addColorStop(0, shade(helmColor, 22));
+        helmGrad.addColorStop(0.45, helmColor);
+        helmGrad.addColorStop(1, shade(helmColor, -28));
         ctx.fillStyle = "#111827";
-        roundRect(-15, -40, 30, 12, 8);
+        roundRect(-17, -44, 34, 18, 10);
         ctx.fill();
-        ctx.fillStyle = gear.hatColor;
-        roundRect(-12, -39, 24, 7, 5);
+        ctx.fillStyle = helmGrad;
+        ctx.beginPath();
+        ctx.moveTo(-16, -31);
+        ctx.quadraticCurveTo(-14, -46, 0, -49);
+        ctx.quadraticCurveTo(14, -46, 16, -31);
+        ctx.lineTo(12, -18);
+        ctx.lineTo(8, -16);
+        ctx.lineTo(8, -28);
+        ctx.lineTo(-8, -28);
+        ctx.lineTo(-8, -16);
+        ctx.lineTo(-12, -18);
+        ctx.closePath();
         ctx.fill();
-      } else if (isHero) {
+        ctx.fillStyle = "rgba(255,255,255,0.22)";
+        roundRect(-8, -42, 16, 5, 3);
+        ctx.fill();
         ctx.fillStyle = "#111827";
-        roundRect(-15, -40, 30, 12, 8);
-        ctx.fill();
-        ctx.fillStyle = "#dc2626";
-        roundRect(-12, -39, 24, 7, 5);
+        roundRect(-9, -29, 18, 4, 3);
         ctx.fill();
       } else {
         ctx.fillStyle = pal.hair || "#1f2937";
@@ -2623,6 +2770,7 @@
       const renderables = [];
       if (!usingCustomWorldArt) {
         for (const p of portals) renderables.push({ kind: "building", ref: p });
+        for (const b of adBuildings) renderables.push({ kind: "adbuilding", ref: b });
         for (const pr of props) renderables.push({ kind: pr.kind, ref: pr });
         for (const sg of signals) renderables.push({ kind: "signal", ref: sg });
         for (const em of portalEmblems) renderables.push({ kind: "emblem", ref: em });
@@ -2641,6 +2789,7 @@
         const r = item.ref;
         switch (item.kind) {
           case "building": drawPortalBuilding(r, t); break;
+          case "adbuilding": drawAdBuilding(r, t); break;
           case "car": drawCar(r); break;
           case "tree": drawTree(r); break;
           case "lamp": drawLamp(r, t); break;
