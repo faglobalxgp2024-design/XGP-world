@@ -175,6 +175,7 @@
     toast.style.textAlign = "center";
     toast.style.pointerEvents = "none";
     toast.hidden = true;
+    toast.setAttribute("data-keep-hint","1");
 
     const coord = ensureEl("coord", "div");
     coord.style.position = "fixed";
@@ -388,8 +389,8 @@
     const desktopFireBtn = ensureEl("btn_fireball_desktop", "button");
     const desktopHasteBtn = ensureEl("btn_haste_desktop", "button");
     desktopSaveBtn.textContent = "저장";
-    desktopFireBtn.textContent = "Q  FIRE";
-    desktopHasteBtn.textContent = "R  SPEED";
+    desktopFireBtn.textContent = "Q FIRE";
+    desktopHasteBtn.textContent = "R SPEED";
     desktopSaveBtn.style.position = "fixed";
     desktopSaveBtn.style.left = "14px";
     desktopSaveBtn.style.top = "14px";
@@ -2135,10 +2136,10 @@
         { key: "tiktok", label: "TIKTOK", color: "#111827", accent: "#f472b6" },
         { key: "instagram", label: "INSTAGRAM", color: "#8b5cf6", accent: "#f59e0b" }
       ];
-      const startX = ZONES.ads.x + 210;
-      const gap = 82;
-      const w = 428, h = 274;
-      const y = ZONES.ads.y + 44;
+      const startX = ZONES.ads.x + 230;
+      const gap = 42;
+      const w = 472, h = 304;
+      const y = ZONES.ads.y + 28;
       for (let i = 0; i < items.length; i++) {
         adBuildings.push({ ...items[i], x: startX + i * (w + gap), y, w, h });
       }
@@ -4464,14 +4465,18 @@
               : `🧱 <b>${activePortal.label}</b><br/>${activePortal.message || "게임 준비중입니다."}<br/><span style="font-size:12px;opacity:0.78">Enter / E</span>`);
           UI.toast.hidden = false;
           UI.toast.style.display = "block";
+          UI.toast.style.visibility = "visible";
+          UI.toast.style.opacity = "1";
+          UI.toast.style.pointerEvents = "none";
           UI.toast.style.left = "50%";
           UI.toast.style.right = "auto";
           UI.toast.style.top = "86px";
           UI.toast.style.transform = "translate(-50%, 0)";
+          UI.toast.style.zIndex = "10020";
           UI.toast.innerHTML = blockSpan(msg, { bg: "linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.95))", fg: "#f8fafc", pad: "12px 18px", radius: "18px", border: "1px solid rgba(148,163,184,0.16)", shadow: "0 14px 30px rgba(2,6,23,0.22)" });
         }
       } else if (!modalState.open) {
-        if (performance.now() >= mobileToastUntil) { UI.toast.hidden = true; UI.toast.style.display = "none"; UI.toast.innerHTML = ""; }
+        if (performance.now() >= mobileToastUntil) { UI.toast.hidden = true; UI.toast.style.display = "none"; UI.toast.style.visibility = "hidden"; UI.toast.style.opacity = "0"; UI.toast.innerHTML = ""; }
         if (UI.enterBtn) {
           UI.enterBtn.style.display = "none";
           UI.enterBtn.disabled = false;
@@ -4504,8 +4509,8 @@
       };
       applyCd(UI.fireBtn, cdFire, "FIRE");
       applyCd(UI.hasteBtn, cdSpeed, "SPEED");
-      applyCd(UI.desktopFireBtn, cdFire, "FIRE");
-      applyCd(UI.desktopHasteBtn, cdSpeed, "SPEED");
+      applyCd(UI.desktopFireBtn, cdFire, "Q FIRE");
+      applyCd(UI.desktopHasteBtn, cdSpeed, "R SPEED");
 
       updateCamera(dt);
 
@@ -4763,7 +4768,7 @@
         const cs=getComputedStyle(el);
         const top=parseFloat(cs.top||'999'); const left=parseFloat(cs.left||'999');
         const fixed=(cs.position==='fixed'||cs.position==='sticky'||cs.position==='absolute');
-        if(el.id==='toast' || el.id==='lego_modal' || el.id==='lego_modal_inner') continue;
+        if(el.id==='toast' || el.id==='lego_modal' || el.id==='lego_modal_inner' || el.closest('[data-keep-hint="1"]')) continue;
         if(fixed && top<90 && left<520 && ((t.includes('Enter')||t.includes('/E')||t.includes('손 떼면')) && t.includes('입장'))){
           el.style.display='none'; el.style.visibility='hidden'; el.style.opacity='0'; el.style.pointerEvents='none';
         }
