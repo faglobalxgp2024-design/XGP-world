@@ -4587,3 +4587,53 @@
     requestAnimationFrame(loop);
   });
 })();
+
+
+// ===== v88 PATCH (zoom fix, fireball targeting, skill movement, armor off, ad images) =====
+(function(){
+  // Disable double-tap / pinch zoom on mobile
+  try{
+    const meta=document.querySelector('meta[name="viewport"]');
+    if(meta){
+      meta.setAttribute('content','width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no');
+    }
+    document.addEventListener('gesturestart',e=>e.preventDefault());
+    document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
+    document.body.style.touchAction='manipulation';
+  }catch(e){}
+
+  // Remove persistent top hint
+  const hideHint=()=>{
+    document.querySelectorAll('div,span').forEach(el=>{
+      const t=(el.textContent||'').toLowerCase();
+      if(t.includes('enter')&&t.includes('입장')) el.style.display='none';
+      if(t.includes('손')&&t.includes('입장')) el.style.display='none';
+    });
+  };
+  setInterval(hideHint,1000);
+
+  // Fireball smarter targeting (nearest monster)
+  const getNearestMonster=(x,y)=>{
+    const list=window.monsters||window.MOBS||[];
+    let best=null,bd=1e9;
+    for(const m of list){
+      const dx=m.x-x,dy=m.y-y;
+      const d=dx*dx+dy*dy;
+      if(d<bd){bd=d;best=m;}
+    }
+    return best;
+  };
+  window.__patchFireballTarget=getNearestMonster;
+
+  // Allow skills while moving
+  window.allowSkillWhileMoving=true;
+
+  // Disable armor visual
+  window.disableArmorVisual=true;
+
+  // Ad image sources (raw github)
+  window.AD_YOUTUBE_SRC="https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EA%B4%91%EA%B3%A0%20%EC%9C%A0%ED%8A%9C%EB%B8%8C.png";
+  window.AD_INSTAGRAM_SRC="https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EA%B4%91%EA%B3%A0%20%EC%9D%B8%EC%8A%A4%ED%83%80%EA%B7%B8%EB%9E%A8.png";
+  window.AD_TIKTOK_SRC="https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EA%B4%91%EA%B3%A0%20%ED%8B%B1%ED%86%A1.png";
+
+})();
