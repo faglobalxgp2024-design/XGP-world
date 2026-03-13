@@ -2137,9 +2137,9 @@
         { key: "instagram", label: "INSTAGRAM", color: "#8b5cf6", accent: "#f59e0b" }
       ];
       const startX = ZONES.ads.x + 228;
-      const gap = 28;
-      const w = 496, h = 326;
-      const y = ZONES.ads.y + 52;
+      const gap = 24;
+      const w = 522, h = 342;
+      const y = ZONES.ads.y + 74;
       for (let i = 0; i < items.length; i++) {
         adBuildings.push({ ...items[i], x: startX + i * (w + gap), y, w, h });
       }
@@ -2919,6 +2919,11 @@
         const ih = adImg.naturalHeight * scale;
         const ix = x + (w - iw) * 0.5;
         const iy = y + Math.max(0, (h - ih) * 0.32);
+        if (b.key === "youtube") {
+          ctx.fillStyle = "#ffffff";
+          roundRect(ix + iw * 0.21, iy + ih * 0.03, iw * 0.58, ih * 0.12, 18);
+          ctx.fill();
+        }
         ctx.drawImage(adImg, ix, iy, iw, ih);
         ctx.fillStyle = "rgba(10,14,24,0.82)";
         roundRect(x + w*0.5 - 66, y + h - 42, 132, 24, 12);
@@ -4463,7 +4468,7 @@
             ? `⚒ <b>${activePortal.label}</b><br/>Enter Shop?<br/><span style="font-size:12px;opacity:0.82">Enter / E</span>`
             : (hasLink
               ? `🧱 <b>${activePortal.label}</b><br/>Enter Portal?<br/><span style="font-size:12px;opacity:0.82">Enter / E</span>`
-              : `🧱 <b>${activePortal.label}</b><br/>${activePortal.message || "COMING SOON"}<br/><span style="font-size:12px;opacity:0.82">Enter / E</span>`);
+              : `🧱 <b>${activePortal.label}</b><br/>${activePortal.message || "COMING SOON"}`);
           UI.toast.hidden = false;
           UI.toast.style.display = "block";
           UI.toast.style.visibility = "visible";
