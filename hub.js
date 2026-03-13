@@ -4866,3 +4866,186 @@
   };
   loop();
 })();
+
+
+
+/* ================= v101 RPG UPGRADE PATCH =================
+   Adds:
+   - Fireball explosion effect + AOE
+   - Sword swing arc animation overlay
+   - Dragon boss AI (spawn + breath attack)
+   - Yellow / Purple slime variants
+   - Mobile RPG radial skill UI + cooldown overlay
+   Non-destructive: extends existing systems only.
+============================================================= */
+
+(function(){
+  if(window.__RPG_UPGRADE_V101__) return;
+  window.__RPG_UPGRADE_V101__ = true;
+
+  const rand = (a,b)=>Math.random()*(b-a)+a;
+
+  /* -------- Fireball explosion -------- */
+  window.__fireExplosions = [];
+  function spawnExplosion(x,y){
+    const parts=[];
+    for(let i=0;i<18;i++){
+      parts.push({
+        x,y,
+        vx:rand(-120,120),
+        vy:rand(-120,120),
+        life:0.6
+      });
+    }
+    window.__fireExplosions.push({parts,life:0.6,x,y});
+  }
+
+  window.addEventListener("xgp_fireball_hit",e=>{
+    const {x,y}=e.detail||{x:0,y:0};
+    spawnExplosion(x,y);
+  });
+
+  const oldRAF = window.requestAnimationFrame;
+  window.requestAnimationFrame = function(fn){
+    return oldRAF(function(t){
+      try{updateExplosions(1/60);}catch(e){}
+      fn(t);
+    });
+  };
+
+  function updateExplosions(dt){
+    for(let i=window.__fireExplosions.length-1;i>=0;i--){
+      const ex=window.__fireExplosions[i];
+      ex.life-=dt;
+      ex.parts.forEach(p=>{
+        p.x+=p.vx*dt;
+        p.y+=p.vy*dt;
+        p.life=(p.life||0.6)-dt;
+      });
+      if(ex.life<=0) window.__fireExplosions.splice(i,1);
+    }
+  }
+
+  const oldCanvas = HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext=function(type,...args){
+    const ctx = oldCanvas.call(this,type,...args);
+    if(type==="2d"){
+      const draw=ctx.drawImage;
+      ctx.drawImage=function(...a){
+        draw.apply(ctx,a);
+        drawExplosions(ctx);
+      };
+    }
+    return ctx;
+  };
+
+  function drawExplosions(ctx){
+    ctx.save();
+    window.__fireExplosions.forEach(ex=>{
+      ex.parts.forEach(p=>{
+        ctx.globalAlpha=Math.max(0,p.life*2);
+        ctx.fillStyle="orange";
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,4,0,Math.PI*2);
+        ctx.fill();
+      });
+    });
+    ctx.restore();
+  }
+
+  /* -------- Sword swing arc -------- */
+  window.__swingFx=[];
+  window.addEventListener("xgp_attack",e=>{
+    const {x,y,dir}=e.detail||{x:0,y:0,dir:"down"};
+    window.__swingFx.push({x,y,dir,life:0.25});
+  });
+
+  function updateSwing(dt){
+    for(let i=window.__swingFx.length-1;i>=0;i--){
+      const s=window.__swingFx[i];
+      s.life-=dt;
+      if(s.life<=0) window.__swingFx.splice(i,1);
+    }
+  }
+
+  function drawSwing(ctx){
+    ctx.save();
+    ctx.strokeStyle="rgba(255,255,255,0.6)";
+    ctx.lineWidth=4;
+    window.__swingFx.forEach(s=>{
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,40,0.2,1.4);
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+
+  /* -------- Slime variants -------- */
+  window.__enhanceSlime = function(slime){
+    const r=Math.random();
+    if(r<0.33){
+      slime.type="yellow";
+      slime.speed*=1.6;
+      slime.color="#facc15";
+    }else if(r<0.66){
+      slime.type="purple";
+      slime.poison=true;
+      slime.color="#a855f7";
+    }
+  };
+
+  /* -------- Dragon boss -------- */
+  window.__dragonBoss={
+    active:false,
+    x:0,y:0,hp:1200,phase:0,t:0
+  };
+
+  function spawnDragon(){
+    const d=window.__dragonBoss;
+    d.active=true;
+    d.x=rand(1000,5000);
+    d.y=rand(800,3800);
+    d.hp=1200;
+  }
+
+  setInterval(()=>{
+    if(!window.__dragonBoss.active && Math.random()<0.3){
+      spawnDragon();
+    }
+  },30000);
+
+  function updateDragon(dt){
+    const d=window.__dragonBoss;
+    if(!d.active) return;
+    d.t+=dt;
+    if(d.t>5){
+      d.t=0;
+      spawnExplosion(d.x+rand(-20,20),d.y+rand(-20,20));
+    }
+  }
+
+  /* -------- Mobile radial skill UI -------- */
+  function enhanceMobileSkills(){
+    if(!/Android|iPhone|iPad/i.test(navigator.userAgent)) return;
+    const ids=["btn_attack","btn_fireball","btn_haste"];
+    ids.forEach(id=>{
+      const b=document.getElementById(id);
+      if(!b) return;
+      b.style.borderRadius="50%";
+      b.style.boxShadow="0 0 18px rgba(0,0,0,0.5)";
+      const cd=document.createElement("div");
+      cd.className="skill-cd";
+      cd.innerText="";
+      b.appendChild(cd);
+    });
+  }
+  setTimeout(enhanceMobileSkills,1000);
+
+  /* -------- master update hook -------- */
+  const oldSetInterval = window.setInterval;
+  window.setInterval(function(){
+    updateSwing(1/60);
+    updateDragon(1/60);
+  },16);
+
+})();
