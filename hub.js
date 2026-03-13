@@ -784,6 +784,112 @@
       enhance: { weapon: 0, shield: 0, hat: 0, armor: 0 }
     };
 
+    /* ----------------------- Save / Profile ----------------------- */
+    const SAVE_KEY_PREFIX = "xgp_save_";
+    const PROFILE_KEY = "xgp_profile_id";
+    let activeProfileId = "";
+
+    function makeDefaultProfileId() {
+      return `player_${Math.random().toString(36).slice(2, 8)}`;
+    }
+
+    function snapshotSave() {
+      return {
+        version: 1,
+        stars: combatState.stars,
+        player: { x: player.x, y: player.y, dir: player.dir },
+        equipped: { ...inventoryState.equipped },
+        enhance: { ...inventoryState.enhance },
+        ownedIds: inventoryState.items.filter((it) => it.owned).map((it) => it.id)
+      };
+    }
+
+    function applySaveData(data) {
+      if (!data || typeof data !== "object") return;
+      if (typeof data.stars === "number") combatState.stars = Math.max(0, data.stars);
+      if (data.player) {
+        if (typeof data.player.x === "number") player.x = data.player.x;
+        if (typeof data.player.y === "number") player.y = data.player.y;
+        if (typeof data.player.dir === "string") player.dir = data.player.dir;
+      }
+      const owned = new Set(Array.isArray(data.ownedIds) ? data.ownedIds : []);
+      for (const item of inventoryState.items) {
+      }
+      for (const item of inventoryState.items) {
+        if (item.price === 0) item.owned = true;
+        else item.owned = owned.has(item.id);
+      }
+      if (data.equipped && typeof data.equipped === "object") {
+        inventoryState.equipped = {
+          hat: data.equipped.hat || inventoryState.equipped.hat,
+          armor: data.equipped.armor || inventoryState.equipped.armor,
+          weapon: data.equipped.weapon || inventoryState.equipped.weapon,
+          shield: data.equipped.shield || inventoryState.equipped.shield,
+        };
+      }
+      if (data.enhance && typeof data.enhance === "object") {
+        inventoryState.enhance = {
+          weapon: Math.max(0, Math.min(10, data.enhance.weapon || 0)),
+          shield: Math.max(0, Math.min(10, data.enhance.shield || 0)),
+          hat: Math.max(0, Math.min(10, data.enhance.hat || 0)),
+          armor: Math.max(0, Math.min(10, data.enhance.armor || 0)),
+        };
+      }
+    }
+
+    function persistGame(force = false) {
+      if (!activeProfileId) return;
+      try {
+        localStorage.setItem(PROFILE_KEY, activeProfileId);
+        localStorage.setItem(SAVE_KEY_PREFIX + activeProfileId, JSON.stringify(snapshotSave()));
+      } catch (_) {}
+    }
+
+    function loadProfile(profileId) {
+      activeProfileId = String(profileId || "").trim() || makeDefaultProfileId();
+      try {
+        localStorage.setItem(PROFILE_KEY, activeProfileId);
+        const raw = localStorage.getItem(SAVE_KEY_PREFIX + activeProfileId);
+        if (raw) applySaveData(JSON.parse(raw));
+        else persistGame(true);
+      } catch (_) {}
+    }
+
+    function openStartupOverlay() {
+      let overlay = document.getElementById('startup_overlay');
+      if (overlay) overlay.remove();
+      overlay = document.createElement('div');
+      overlay.id = 'startup_overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(2,6,23,.68);backdrop-filter:blur(6px)';
+      const savedId = (() => { try { return localStorage.getItem(PROFILE_KEY) || ''; } catch (_) { return ''; } })();
+      overlay.innerHTML = `
+        <div style="width:min(92vw,420px);padding:22px 20px;border-radius:24px;background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(30,41,59,.95));border:1px solid rgba(148,163,184,.18);box-shadow:0 24px 60px rgba(0,0,0,.38);color:#f8fafc;font:700 14px system-ui">
+          <div style="font:1000 24px system-ui;margin-bottom:8px">XGP SAVE</div>
+          <div style="color:rgba(226,232,240,.74);margin-bottom:14px">고유 ID를 입력하면 같은 브라우저에서 저장 데이터를 이어서 불러옵니다.</div>
+          <input id="startup_profile_id" placeholder="고유 ID 입력" value="${savedId}" style="width:100%;box-sizing:border-box;padding:14px 16px;border-radius:14px;border:1px solid rgba(148,163,184,.22);background:rgba(2,6,23,.75);color:#fff;font:900 14px system-ui;outline:none" />
+          <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+            <button id="startup_begin_btn" style="flex:1;min-width:120px;border:none;border-radius:14px;padding:13px 14px;background:linear-gradient(180deg,#38bdf8,#2563eb);color:#fff;font:1000 14px system-ui;cursor:pointer">시작 / 불러오기</button>
+            <button id="startup_new_btn" style="flex:1;min-width:120px;border:none;border-radius:14px;padding:13px 14px;background:linear-gradient(180deg,#334155,#0f172a);color:#fff;font:1000 14px system-ui;cursor:pointer">새 ID 생성</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+      const input = overlay.querySelector('#startup_profile_id');
+      const start = () => {
+        const id = String(input.value || '').trim() || makeDefaultProfileId();
+        input.value = id;
+        loadProfile(id);
+        try { renderPanels(); } catch (_) {}
+        overlay.remove();
+      };
+      overlay.querySelector('#startup_begin_btn').onclick = start;
+      overlay.querySelector('#startup_new_btn').onclick = () => {
+        input.value = makeDefaultProfileId();
+      };
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') start();
+      });
+    }
+
     function rarityStyle(price = 0) {
       if (price >= 850) return { tier: "mythic", label: "MYTHIC", glow: "#ff4d6d", color: "#ff1744", flame: "rgba(255,63,94,0.95)", horn: 3 };
       if (price >= 600) return { tier: "legend", label: "LEGEND", glow: "#ffb000", color: "#ffd54a", flame: "rgba(255,176,0,0.95)", horn: 2 };
@@ -906,7 +1012,6 @@
       player.gearFlashT = 0.8;
       renderPanels();
       renderShop();
-      persistGame();
     }
 
     function enhanceCost(slot) {
@@ -932,12 +1037,10 @@
         return;
       }
       combatState.stars -= cost;
-      persistGame();
       const successRate = Math.max(0.45, 0.92 - lv * 0.05);
       if (Math.random() <= successRate) {
         inventoryState.enhance[slot] = lv + 1;
         player.gearFlashT = 0.9;
-        persistGame();
         UI.toast.hidden = false;
         UI.toast.style.display = "block";
         UI.toast.innerHTML = blockSpan(`✨ <b>${item.name}</b> 강화 성공 <b>+${lv + 1}</b>`, { bg: "rgba(15,23,42,0.94)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
@@ -1027,7 +1130,6 @@
       inventoryState.equipped[item.slot] = cur === item.id ? null : item.id;
       player.gearFlashT = 0.65;
       renderPanels();
-      persistGame();
     }
 
     function iconMarkup(item, equipped = false) {
@@ -2052,7 +2154,6 @@
         return;
       }
       if (p.status === "open" && p.url) {
-        persistGame(true);
         if (isTouchDevice()) {
           entering = false;
           try {
@@ -3454,7 +3555,7 @@
       const colossusSpot = pickSpot(2);
       const defs = [
         { key: "brute", label: "MECHA BRUTE", scale: 40, maxHp: 900, reward: 15, x: bruteSpot.x, y: bruteSpot.y, speed: 18 },
-        { key: "colossus", label: "VOID COLOSSUS", scale: 120, maxHp: 4200, reward: 60, x: colossusSpot.x, y: colossusSpot.y, speed: 8 }
+        { key: "colossus", label: "ANCIENT DRAGON", scale: 120, maxHp: 4200, reward: 60, x: colossusSpot.x, y: colossusSpot.y, speed: 8 }
       ];
       for (const d of defs) {
         combatState.titans.push({
@@ -3496,6 +3597,74 @@
 
     function drawTitan(m, t) {
       if (m.dead) return;
+      if (m.key === "colossus") {
+        const s = m.scale;
+        const bob = Math.sin(t * 1.6 + m.wobble) * 6;
+        ctx.save();
+        ctx.translate(m.x, m.y + bob);
+        ctx.globalAlpha = 0.22;
+        ctx.fillStyle = "rgba(10,14,24,0.78)";
+        ctx.beginPath();
+        ctx.ellipse(0, s * 1.25, s * 1.15, s * 0.26, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        const grad = ctx.createLinearGradient(0, -s * 1.8, 0, s * 1.1);
+        grad.addColorStop(0, m.hitFlash > 0 ? "#f8fafc" : "#7f1d1d");
+        grad.addColorStop(0.4, m.hitFlash > 0 ? "#fca5a5" : "#b91c1c");
+        grad.addColorStop(1, "#111827");
+        ctx.fillStyle = grad;
+        // wings
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.15, -s * 0.45);
+        ctx.quadraticCurveTo(-s * 1.55, -s * 1.2, -s * 1.95, -s * 0.1);
+        ctx.quadraticCurveTo(-s * 1.2, -s * 0.05, -s * 0.65, s * 0.28);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(s * 0.15, -s * 0.45);
+        ctx.quadraticCurveTo(s * 1.55, -s * 1.2, s * 1.95, -s * 0.1);
+        ctx.quadraticCurveTo(s * 1.2, -s * 0.05, s * 0.65, s * 0.28);
+        ctx.closePath();
+        ctx.fill();
+        // tail
+        ctx.strokeStyle = "rgba(127,29,29,0.9)";
+        ctx.lineWidth = Math.max(10, s * 0.12);
+        ctx.beginPath();
+        ctx.moveTo(0, s * 0.65);
+        ctx.quadraticCurveTo(s * 0.8, s * 1.0, s * 1.45, s * 1.35);
+        ctx.stroke();
+        // body
+        roundRect(-s * 0.58, -s * 0.92, s * 1.16, s * 1.45, s * 0.22); ctx.fill();
+        // neck/head
+        roundRect(-s * 0.22, -s * 1.42, s * 0.44, s * 0.62, s * 0.16); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.28, -s * 1.24);
+        ctx.lineTo(-s * 0.12, -s * 1.62);
+        ctx.lineTo(-s * 0.02, -s * 1.18);
+        ctx.closePath(); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(s * 0.28, -s * 1.24);
+        ctx.lineTo(s * 0.12, -s * 1.62);
+        ctx.lineTo(s * 0.02, -s * 1.18);
+        ctx.closePath(); ctx.fill();
+        // legs
+        roundRect(-s * 0.44, s * 0.4, s * 0.20, s * 0.70, s * 0.08); ctx.fill();
+        roundRect(s * 0.24, s * 0.4, s * 0.20, s * 0.70, s * 0.08); ctx.fill();
+        // glow accents
+        ctx.fillStyle = "rgba(251,191,36,0.96)";
+        ctx.beginPath(); ctx.arc(-s * 0.11, -s * 1.12, s * 0.06, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(s * 0.11, -s * 1.12, s * 0.06, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "rgba(248,113,113,0.95)";
+        ctx.fillRect(-s * 0.18, -s * 0.44, s * 0.36, s * 0.12);
+        ctx.fillStyle = "rgba(255,255,255,0.95)";
+        ctx.font = `900 ${Math.max(14, s * 0.12)}px system-ui`;
+        ctx.textAlign = "center";
+        ctx.fillText("ANCIENT DRAGON", 0, -s * 1.82);
+        ctx.restore();
+        drawMonsterHpBar(m, s * 1.6);
+        return;
+      }
+      if (m.dead) return;
       const s = m.scale;
       const bob = Math.sin(t * 2 + m.wobble) * (s > 20 ? 4 : 2);
       ctx.save();
@@ -3532,9 +3701,9 @@
       ctx.fillStyle = "rgba(255,255,255,0.95)";
       ctx.font = `900 ${Math.max(10, s * 0.16)}px system-ui`;
       ctx.textAlign = "center";
-      ctx.fillText(m.label, 0, -s * 2.15);
+      ctx.fillText(m.label, 0, -s * 2.12);
       ctx.restore();
-      drawMonsterHpBar(m, Math.max(90, s * 2.3));
+      drawMonsterHpBar(m, s * 1.4);
     }
 
     function drawSlime(m, t) {
@@ -3675,7 +3844,7 @@
         if (b.x > WORLD.w + 120) b.x = -120;
       }
 
-      roamerPalette = stepRoamers(dt, rng);
+      const roamerPalette = stepRoamers(dt, rng);
 
       for (const m of combatState.slimes) {
         if (m.dead) {
@@ -4011,9 +4180,6 @@
       b.x = Math.random() * WORLD.w;
       b.y = 50 + Math.random() * 200;
     }
-    window.addEventListener("beforeunload", () => persistGame(true));
-    document.addEventListener("visibilitychange", () => { if (document.visibilityState !== "visible") persistGame(true); });
-    openStartupOverlay();
     requestAnimationFrame(loop);
   });
 })();
