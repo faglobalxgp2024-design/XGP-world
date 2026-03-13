@@ -4827,3 +4827,42 @@
   loop();
 })();
 
+
+
+// ===== v100 PATCH (AD zone size/position tuning desktop+mobile) =====
+(function(){
+  function isMobile(){ return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent); }
+  const mobile = isMobile();
+  const applyFix = ()=>{
+    try{
+      if(!window.adBuildings || !window.adBuildings.length) return;
+      const n = window.adBuildings.length;
+      // Keep current order; tune only size/spacing/offset.
+      const sizes = mobile ? [0.82,0.82,0.82] : [0.93,0.93,0.93];
+      const gap = mobile ? 98 : 112;   // tighter spacing
+      const shiftX = mobile ? -170 : -18; // move further left on mobile, tiny left on desktop
+      const shiftY = mobile ? 0 : 0;
+      // anchor around existing center to avoid broader layout breakage
+      const xs = window.adBuildings.map(b=>b.x||0);
+      const ys = window.adBuildings.map(b=>b.y||0);
+      const centerX = (Math.min(...xs) + Math.max(...xs)) / 2 + shiftX;
+      const baseY = Math.min(...ys) + shiftY;
+      const startX = centerX - gap * (n-1) / 2;
+      for(let i=0;i<n;i++){
+        const b = window.adBuildings[i];
+        b.x = startX + i*gap;
+        b.y = baseY;
+        const baseScale = (typeof b.__baseScale === "number") ? b.__baseScale : ((typeof b.scale === "number" && b.scale>0) ? b.scale : 1);
+        if(typeof b.__baseScale !== "number") b.__baseScale = baseScale;
+        b.scale = b.__baseScale * (sizes[i] || sizes[sizes.length-1] || 1);
+        // if width/height numeric, shrink them too for renderers that use dimensions directly
+      }
+    }catch(e){}
+  };
+  let rafId = 0;
+  const loop = ()=>{
+    applyFix();
+    rafId = requestAnimationFrame(loop);
+  };
+  loop();
+})();
