@@ -879,6 +879,7 @@
         input.value = id;
         loadProfile(id);
         try { renderPanels(); } catch (_) {}
+        startupOverlayOpen = false;
         overlay.remove();
       };
       overlay.querySelector('#startup_begin_btn').onclick = start;
@@ -3272,6 +3273,7 @@
       const legSwing = moving ? Math.sin(walkPhase + Math.PI) * 0.42 : 0;
       const atk = isHero ? combatState.attackT / 0.28 : 0;
       const attackPose = isHero && combatState.attackT > 0;
+      const attackEase = attackPose ? Math.sin(Math.min(1, atk) * Math.PI) : 0;
 
       ctx.save();
       ctx.translate(x, y + bob + 4);
@@ -3350,8 +3352,8 @@
       ctx.restore();
 
       ctx.save();
-      ctx.translate(19, -4);
-      ctx.rotate(0.32 - armSwing * 0.45 + (isHero && combatState.attackT>0 ? 0.9 * atk : 0));
+      ctx.translate(18, -5);
+      ctx.rotate(0.26 - armSwing * 0.38 + (attackPose ? (0.35 + 1.18 * attackEase) : 0));
       ctx.fillStyle = armorBase;
       roundRect(-5, 0, 10, 22, 5);
       ctx.fill();
@@ -3361,8 +3363,8 @@
 
       if (isHero && gear && gear.weaponColor) {
         ctx.save();
-        ctx.translate(8, 7);
-        ctx.rotate(0.06 + (attackPose ? -1.08 * atk : -0.02));
+        ctx.translate(4.8, 9.6);
+        ctx.rotate(-0.18 + (attackPose ? (-0.46 - 0.92 * attackEase) : -0.08));
         const weaponGlow = gear.weaponTier ? gear.weaponTier.glow : gear.weaponColor;
         const bladeGrad = ctx.createLinearGradient(0, -40, 0, 14);
         bladeGrad.addColorStop(0, "#ffffff");
@@ -3373,19 +3375,19 @@
         ctx.shadowBlur = 18 + ((gear.weaponTier && gear.weaponTier.label==="MYTHIC") ? 12 : (gear.weaponTier && gear.weaponTier.label==="LEGEND") ? 7 : 0);
         ctx.fillStyle = bladeGrad;
         ctx.beginPath();
-        ctx.moveTo(-3.2, 12);
-        ctx.lineTo(-5.4, -2);
-        ctx.lineTo(-3.0, -25);
-        ctx.lineTo(0, -34);
-        ctx.lineTo(3.0, -25);
-        ctx.lineTo(5.4, -2);
-        ctx.lineTo(3.2, 12);
+        ctx.moveTo(-3.0, 10);
+        ctx.lineTo(-4.6, -1);
+        ctx.lineTo(-2.7, -22);
+        ctx.lineTo(0, -30);
+        ctx.lineTo(2.7, -22);
+        ctx.lineTo(4.6, -1);
+        ctx.lineTo(3.0, 10);
         ctx.closePath();
         ctx.fill();
         ctx.lineWidth = 1.2;
         ctx.strokeStyle = "rgba(255,255,255,0.95)";
         ctx.beginPath();
-        ctx.moveTo(0, -35); ctx.lineTo(0, 6);
+        ctx.moveTo(0, -30); ctx.lineTo(0, 5);
         ctx.stroke();
         const guardGrad = ctx.createLinearGradient(-9, 0, 9, 0);
         guardGrad.addColorStop(0, shade(gear.weaponColor, -28));
@@ -3393,9 +3395,9 @@
         guardGrad.addColorStop(1, shade(gear.weaponColor, -28));
         ctx.shadowBlur = 8;
         ctx.fillStyle = guardGrad;
-        roundRect(-8, 7, 16, 4, 2.2); ctx.fill();
+        roundRect(-7, 5.5, 14, 4, 2.2); ctx.fill();
         ctx.fillStyle = shade(gear.weaponColor, -18);
-        roundRect(-2.8, 10, 5.6, 10, 3.0); ctx.fill();
+        roundRect(-2.4, 8.5, 4.8, 9.2, 2.6); ctx.fill();
         const plus = gear.weaponPlus || 0;
         const spark = 0.35 + 0.45 * Math.sin(performance.now()/170);
         for (let i = 0; i < Math.max(2, plus); i++) {
@@ -3600,68 +3602,132 @@
       if (m.key === "colossus") {
         const s = m.scale;
         const bob = Math.sin(t * 1.6 + m.wobble) * 6;
+        const wingFlap = Math.sin(t * 2.4 + m.wobble) * 0.12;
         ctx.save();
         ctx.translate(m.x, m.y + bob);
-        ctx.globalAlpha = 0.22;
-        ctx.fillStyle = "rgba(10,14,24,0.78)";
+        ctx.globalAlpha = 0.18;
+        ctx.fillStyle = "rgba(10,14,24,0.82)";
         ctx.beginPath();
-        ctx.ellipse(0, s * 1.25, s * 1.15, s * 0.26, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, s * 1.3, s * 1.26, s * 0.28, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalAlpha = 1;
-        const grad = ctx.createLinearGradient(0, -s * 1.8, 0, s * 1.1);
-        grad.addColorStop(0, m.hitFlash > 0 ? "#f8fafc" : "#7f1d1d");
-        grad.addColorStop(0.4, m.hitFlash > 0 ? "#fca5a5" : "#b91c1c");
-        grad.addColorStop(1, "#111827");
-        ctx.fillStyle = grad;
+        ctx.shadowColor = m.hitFlash > 0 ? "rgba(255,245,245,0.95)" : "rgba(239,68,68,0.48)";
+        ctx.shadowBlur = 22;
+        const bodyGrad = ctx.createLinearGradient(0, -s * 1.85, 0, s * 1.15);
+        bodyGrad.addColorStop(0, m.hitFlash > 0 ? "#fff1f2" : "#7f1d1d");
+        bodyGrad.addColorStop(0.28, m.hitFlash > 0 ? "#fecdd3" : "#b91c1c");
+        bodyGrad.addColorStop(0.7, "#3f0b12");
+        bodyGrad.addColorStop(1, "#111827");
+        ctx.fillStyle = bodyGrad;
+
         // wings
+        ctx.save();
+        ctx.rotate(-0.08 + wingFlap);
         ctx.beginPath();
-        ctx.moveTo(-s * 0.15, -s * 0.45);
-        ctx.quadraticCurveTo(-s * 1.55, -s * 1.2, -s * 1.95, -s * 0.1);
-        ctx.quadraticCurveTo(-s * 1.2, -s * 0.05, -s * 0.65, s * 0.28);
+        ctx.moveTo(-s * 0.1, -s * 0.52);
+        ctx.quadraticCurveTo(-s * 1.35, -s * 1.55, -s * 2.05, -s * 0.22);
+        ctx.quadraticCurveTo(-s * 1.5, -s * 0.1, -s * 0.88, s * 0.26);
+        ctx.quadraticCurveTo(-s * 0.54, s * 0.02, -s * 0.1, -s * 0.32);
         ctx.closePath();
         ctx.fill();
+        ctx.restore();
+        ctx.save();
+        ctx.rotate(0.08 - wingFlap);
         ctx.beginPath();
-        ctx.moveTo(s * 0.15, -s * 0.45);
-        ctx.quadraticCurveTo(s * 1.55, -s * 1.2, s * 1.95, -s * 0.1);
-        ctx.quadraticCurveTo(s * 1.2, -s * 0.05, s * 0.65, s * 0.28);
+        ctx.moveTo(s * 0.1, -s * 0.52);
+        ctx.quadraticCurveTo(s * 1.35, -s * 1.55, s * 2.05, -s * 0.22);
+        ctx.quadraticCurveTo(s * 1.5, -s * 0.1, s * 0.88, s * 0.26);
+        ctx.quadraticCurveTo(s * 0.54, s * 0.02, s * 0.1, -s * 0.32);
         ctx.closePath();
         ctx.fill();
+        ctx.restore();
+
         // tail
-        ctx.strokeStyle = "rgba(127,29,29,0.9)";
+        ctx.strokeStyle = "rgba(127,29,29,0.96)";
         ctx.lineWidth = Math.max(10, s * 0.12);
+        ctx.lineCap = "round";
         ctx.beginPath();
-        ctx.moveTo(0, s * 0.65);
-        ctx.quadraticCurveTo(s * 0.8, s * 1.0, s * 1.45, s * 1.35);
+        ctx.moveTo(-s * 0.1, s * 0.58);
+        ctx.quadraticCurveTo(s * 0.82, s * 0.98, s * 1.48, s * 1.32);
+        ctx.quadraticCurveTo(s * 1.72, s * 1.44, s * 1.58, s * 1.62);
         ctx.stroke();
-        // body
-        roundRect(-s * 0.58, -s * 0.92, s * 1.16, s * 1.45, s * 0.22); ctx.fill();
+
+        // body / chest
+        roundRect(-s * 0.6, -s * 0.96, s * 1.2, s * 1.5, s * 0.24); ctx.fill();
+        ctx.fillStyle = "rgba(255,245,245,0.16)";
+        roundRect(-s * 0.28, -s * 0.18, s * 0.56, s * 0.44, s * 0.12); ctx.fill();
+        ctx.fillStyle = "rgba(248,113,113,0.95)";
+        roundRect(-s * 0.2, -s * 0.44, s * 0.4, s * 0.12, s * 0.06); ctx.fill();
+        ctx.fillStyle = bodyGrad;
+
         // neck/head
-        roundRect(-s * 0.22, -s * 1.42, s * 0.44, s * 0.62, s * 0.16); ctx.fill();
+        roundRect(-s * 0.24, -s * 1.44, s * 0.48, s * 0.64, s * 0.16); ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(-s * 0.28, -s * 1.24);
-        ctx.lineTo(-s * 0.12, -s * 1.62);
-        ctx.lineTo(-s * 0.02, -s * 1.18);
+        ctx.moveTo(-s * 0.28, -s * 1.22);
+        ctx.lineTo(-s * 0.16, -s * 1.68);
+        ctx.lineTo(-s * 0.04, -s * 1.18);
         ctx.closePath(); ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(s * 0.28, -s * 1.24);
-        ctx.lineTo(s * 0.12, -s * 1.62);
-        ctx.lineTo(s * 0.02, -s * 1.18);
+        ctx.moveTo(s * 0.28, -s * 1.22);
+        ctx.lineTo(s * 0.16, -s * 1.68);
+        ctx.lineTo(s * 0.04, -s * 1.18);
         ctx.closePath(); ctx.fill();
-        // legs
-        roundRect(-s * 0.44, s * 0.4, s * 0.20, s * 0.70, s * 0.08); ctx.fill();
-        roundRect(s * 0.24, s * 0.4, s * 0.20, s * 0.70, s * 0.08); ctx.fill();
-        // glow accents
-        ctx.fillStyle = "rgba(251,191,36,0.96)";
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.14, -s * 0.82);
+        ctx.lineTo(0, -s * 0.62);
+        ctx.lineTo(s * 0.14, -s * 0.82);
+        ctx.closePath(); ctx.fill();
+
+        // jaw / snout
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.18, -s * 0.92);
+        ctx.quadraticCurveTo(0, -s * 0.7, s * 0.18, -s * 0.92);
+        ctx.lineTo(s * 0.12, -s * 0.68);
+        ctx.lineTo(-s * 0.12, -s * 0.68);
+        ctx.closePath(); ctx.fill();
+
+        // limbs
+        roundRect(-s * 0.5, s * 0.36, s * 0.22, s * 0.78, s * 0.08); ctx.fill();
+        roundRect(s * 0.28, s * 0.36, s * 0.22, s * 0.78, s * 0.08); ctx.fill();
+        roundRect(-s * 1.0, -s * 0.24, s * 0.18, s * 0.86, s * 0.06); ctx.fill();
+        roundRect(s * 0.82, -s * 0.24, s * 0.18, s * 0.86, s * 0.06); ctx.fill();
+
+        // claws
+        ctx.fillStyle = "rgba(255,233,233,0.94)";
+        [[-s * 0.45, s * 1.1], [-s * 0.34, s * 1.12], [s * 0.35, s * 1.1], [s * 0.46, s * 1.12]].forEach(([cx, cy]) => {
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + (cx < 0 ? -s * 0.06 : s * 0.06), cy + s * 0.1);
+          ctx.lineTo(cx + (cx < 0 ? s * 0.02 : -s * 0.02), cy + s * 0.02);
+          ctx.closePath();
+          ctx.fill();
+        });
+
+        // eyes / core
+        ctx.fillStyle = "rgba(251,191,36,0.98)";
         ctx.beginPath(); ctx.arc(-s * 0.11, -s * 1.12, s * 0.06, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.arc(s * 0.11, -s * 1.12, s * 0.06, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = "rgba(248,113,113,0.95)";
-        ctx.fillRect(-s * 0.18, -s * 0.44, s * 0.36, s * 0.12);
+        ctx.fillStyle = "rgba(255,255,255,0.95)";
+        ctx.beginPath(); ctx.arc(-s * 0.095, -s * 1.14, s * 0.02, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(s * 0.095, -s * 1.14, s * 0.02, 0, Math.PI * 2); ctx.fill();
+
+        // flame breath particles
+        const flamePulse = 0.55 + 0.45 * Math.sin(t * 8);
+        for (let i = 0; i < 6; i++) {
+          const fx = -s * 0.04 + i * s * 0.06;
+          const fy = -s * 0.62 - i * s * 0.045;
+          ctx.fillStyle = i % 2 ? "rgba(255,255,255,0.88)" : `rgba(251,146,60,${0.28 + flamePulse * 0.34})`;
+          ctx.beginPath();
+          ctx.arc(fx, fy, s * (0.03 + i * 0.005), 0, Math.PI * 2);
+          ctx.fill();
+        }
+
         ctx.fillStyle = "rgba(255,255,255,0.95)";
         ctx.font = `900 ${Math.max(14, s * 0.12)}px system-ui`;
         ctx.textAlign = "center";
-        ctx.fillText("ANCIENT DRAGON", 0, -s * 1.82);
+        ctx.fillText("ANCIENT DRAGON", 0, -s * 1.84);
         ctx.restore();
-        drawMonsterHpBar(m, s * 1.6);
+        drawMonsterHpBar(m, s * 1.72);
         return;
       }
       if (m.dead) return;
@@ -3764,8 +3830,14 @@
     let lastMobileZoneKey = "";
     let touchTapAt = 0;
     let portalSuppressUntil = 0;
+    let startupOverlayOpen = true;
 
     function update(dt, t, rng) {
+      if (startupOverlayOpen) {
+        const overlayCheck = document.getElementById("startup_overlay");
+        if (overlayCheck) return [];
+        startupOverlayOpen = false;
+      }
       let ax = 0, ay = 0;
 
       if (!dragging && !modalState.open && !entering) {
@@ -4123,19 +4195,19 @@
         ctx.rotate(rot);
         const fxCol = fx.color || 'rgba(147,197,253,0.92)';
         ctx.strokeStyle = 'rgba(255,255,255,0.98)';
-        ctx.lineWidth = 8;
+        ctx.lineWidth = 10;
         ctx.beginPath();
-        ctx.arc(0, 0, 30 + (fx.combo||1)*3, -1.16, 0.40);
+        ctx.arc(0, 0, 24 + (fx.combo||1)*2, -1.24, 0.24);
         ctx.stroke();
         ctx.strokeStyle = fxCol;
-        ctx.lineWidth = 5;
+        ctx.lineWidth = 6;
         ctx.beginPath();
-        ctx.arc(0, 0, 38 + (fx.combo||1)*4, -1.20, 0.32);
+        ctx.arc(0, 0, 31 + (fx.combo||1)*3, -1.28, 0.18);
         ctx.stroke();
-        ctx.strokeStyle = 'rgba(255,255,255,0.65)';
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(255,255,255,0.72)';
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
-        ctx.arc(0, 0, 34 + (fx.combo||1)*2, -1.04, 0.18);
+        ctx.arc(0, 0, 27 + (fx.combo||1)*2, -1.18, 0.12);
         ctx.stroke();
         ctx.restore();
       }
@@ -4176,6 +4248,7 @@
     }, { passive: true });
 
     resize();
+    try { openStartupOverlay(); } catch (_) { startupOverlayOpen = false; }
     for (const b of birds) {
       b.x = Math.random() * WORLD.w;
       b.y = 50 + Math.random() * 200;
