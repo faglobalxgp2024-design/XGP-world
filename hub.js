@@ -319,15 +319,15 @@
 
     const mobileBtns = ensureEl("mobile_hud_buttons", "div");
     mobileBtns.style.position = "fixed";
-    mobileBtns.style.left = "12px";
-    mobileBtns.style.top = "8px";
+    mobileBtns.style.left = "14px";
+    mobileBtns.style.top = "44px";
     mobileBtns.style.bottom = "auto";
     mobileBtns.style.right = "auto";
     mobileBtns.style.zIndex = "10002";
     mobileBtns.style.display = isTouchDevice() ? "flex" : "none";
     mobileBtns.style.flexDirection = "column";
     mobileBtns.style.alignItems = "flex-start";
-    mobileBtns.style.gap = "6px";
+    mobileBtns.style.gap = "8px";
 
     const invBtn = ensureEl("btn_inventory", "button", mobileBtns);
     const eqBtn = ensureEl("btn_equipment", "button", mobileBtns);
@@ -346,20 +346,17 @@
     [invBtn, eqBtn, saveBtn, enterBtn, atkBtn, fireBtn, hasteBtn].forEach((b) => {
       b.style.minWidth = "96px";
       b.style.cursor = "pointer";
-      b.style.border = "1px solid rgba(255,255,255,0.16)";
+      b.style.border = "1px solid rgba(0,0,0,0.10)";
       b.style.background = "rgba(255,255,255,0.92)";
       b.style.color = "#0a0e18";
       b.style.font = "900 12px system-ui";
-      b.style.padding = "11px 14px";
-      b.style.borderRadius = "16px";
+      b.style.padding = "12px 14px";
+      b.style.borderRadius = "14px";
       b.style.boxShadow = "0 12px 28px rgba(0,0,0,0.12)";
-      b.style.transition = "transform 120ms ease, filter 120ms ease, opacity 120ms ease";
     });
     saveBtn.style.background = "linear-gradient(180deg,#38bdf8,#1d4ed8)";
     saveBtn.style.color = "#fff";
     saveBtn.style.fontWeight = "1000";
-    saveBtn.style.minWidth = "auto";
-    saveBtn.style.padding = "10px 14px";
     enterBtn.style.background = "linear-gradient(180deg,#22c55e,#15803d)";
     enterBtn.style.color = "#fff";
     enterBtn.style.fontWeight = "1000";
@@ -381,8 +378,8 @@
     const desktopFireBtn = ensureEl("btn_fireball_desktop", "button");
     const desktopHasteBtn = ensureEl("btn_haste_desktop", "button");
     desktopSaveBtn.textContent = "저장";
-    desktopFireBtn.textContent = "FIRE";
-    desktopHasteBtn.textContent = "SPEED";
+    desktopFireBtn.textContent = "파이어볼";
+    desktopHasteBtn.textContent = "가속";
     desktopSaveBtn.style.position = "fixed";
     desktopSaveBtn.style.left = "14px";
     desktopSaveBtn.style.top = "14px";
@@ -1399,12 +1396,6 @@
     UI.eqBtn.addEventListener("click", () => toggleEquipment());
     UI.saveBtn.addEventListener("click", () => saveNowToast());
     UI.desktopSaveBtn.addEventListener("click", () => saveNowToast());
-    const mobileSkillButtons = [UI.atkBtn, UI.fireBtn, UI.hasteBtn, UI.enterBtn, UI.saveBtn];
-    mobileSkillButtons.forEach((btn) => {
-      btn.addEventListener('pointerdown', () => { btn.dataset.pressed = '1'; btn.style.transform = 'scale(0.92)'; });
-      const clear = () => { btn.dataset.pressed = '0'; btn.style.transform = 'scale(1)'; };
-      btn.addEventListener('pointerup', clear); btn.addEventListener('pointercancel', clear); btn.addEventListener('pointerleave', clear);
-    });
     UI.fireBtn.addEventListener("click", () => triggerFireball());
     UI.hasteBtn.addEventListener("click", () => triggerHaste());
     UI.desktopFireBtn.addEventListener("click", () => triggerFireball());
@@ -1481,10 +1472,10 @@
     }
 
     function getAttackAnchor() {
-      if (player.dir === "left") return { x: player.x - 26, y: player.y - 10, vx: -1, vy: -0.32 };
-      if (player.dir === "up") return { x: player.x + 14, y: player.y - 30, vx: 0.34, vy: -1 };
-      if (player.dir === "down") return { x: player.x + 16, y: player.y + 10, vx: 0.30, vy: 1 };
-      return { x: player.x + 26, y: player.y - 10, vx: 1, vy: -0.32 };
+      if (player.dir === "left") return { x: player.x - 18, y: player.y - 3, vx: -1, vy: -0.12 };
+      if (player.dir === "up") return { x: player.x + 8, y: player.y - 24, vx: 0.18, vy: -1 };
+      if (player.dir === "down") return { x: player.x + 10, y: player.y + 4, vx: 0.16, vy: 1 };
+      return { x: player.x + 18, y: player.y - 3, vx: 1, vy: -0.12 };
     }
 
     function applyMonsterHit(m, damage, crit = false) {
@@ -1506,23 +1497,10 @@
       if (combatState.fireballCd > now) return;
       const anchor = getAttackAnchor();
       const base = playerAttackPower();
-      const targets = [...combatState.slimes, ...combatState.titans].filter(m => !m.dead);
-      let target = null;
-      let best = Infinity;
-      for (const m of targets) {
-        const d = Math.hypot(m.x - player.x, m.y - player.y);
-        if (d < best) { best = d; target = m; }
-      }
-      let vx = anchor.vx * 420, vy = anchor.vy * 420;
-      if (target) {
-        const dx = target.x - anchor.x, dy = target.y - anchor.y;
-        const len = Math.max(1, Math.hypot(dx, dy));
-        vx = dx / len * 520; vy = dy / len * 520;
-      }
       combatState.fireballCd = now + 3000;
       combatState.fireballs.push({
-        x: anchor.x, y: anchor.y, vx, vy,
-        life: 1.6, radius: 14, damage: Math.max(2, Math.round(base * 2)), burn: 2.8, homing: true
+        x: anchor.x, y: anchor.y, vx: anchor.vx * 420, vy: anchor.vy * 420,
+        life: 1.25, radius: 14, damage: Math.max(2, Math.round(base * 2)), burn: 2.8
       });
       player.gearFlashT = 0.35;
     }
@@ -1532,7 +1510,6 @@
       if (combatState.hasteCd > now) return;
       combatState.hasteCd = now + 12000;
       combatState.hasteUntil = now + 5000;
-      player.speedBoost = 4;
       player.gearFlashT = 0.45;
       spawnDamageText(player.x, player.y - 42, "SPEED UP", "#86efac", 1.0);
     }
@@ -3307,7 +3284,7 @@
     }
 
     function drawMiniMap() {
-      const mw = isTouchDevice() ? 147 : 220, mh = isTouchDevice() ? 103 : 154;
+      const mw = 220, mh = 154;
       const x = W - mw - 18, y = 18;
       ctx.save();
       ctx.fillStyle = "rgba(255,255,255,0.84)";
@@ -3530,7 +3507,7 @@
 
       ctx.save();
       ctx.translate(18, -5);
-      ctx.rotate(0.22 - armSwing * 0.22 + (attackPose ? (-0.92 - 0.72 * attackEase) : -0.48));
+      ctx.rotate(0.22 - armSwing * 0.38 + (attackPose ? (0.55 + 1.05 * attackEase) : 0));
       ctx.fillStyle = armorBase;
       roundRect(-5, 0, 10, 22, 5);
       ctx.fill();
@@ -3540,10 +3517,10 @@
 
       if (isHero && gear && gear.weaponColor) {
         ctx.save();
-        ctx.translate(1.2, 16.0);
-        ctx.rotate(-0.38 + (attackPose ? (-1.12 * attackEase) : -0.28));
+        ctx.translate(7.2, 6.4);
+        ctx.rotate(0.42 + (attackPose ? (-0.20 - 0.72 * attackEase) : -0.02));
         const weaponGlow = gear.weaponTier ? gear.weaponTier.glow : gear.weaponColor;
-        const bladeGrad = ctx.createLinearGradient(0, -34, 0, 12);
+        const bladeGrad = ctx.createLinearGradient(0, -40, 0, 14);
         bladeGrad.addColorStop(0, "#ffffff");
         bladeGrad.addColorStop(0.22, weaponGlow);
         bladeGrad.addColorStop(0.60, gear.weaponColor);
@@ -3552,19 +3529,19 @@
         ctx.shadowBlur = 18 + ((gear.weaponTier && gear.weaponTier.label==="MYTHIC") ? 12 : (gear.weaponTier && gear.weaponTier.label==="LEGEND") ? 7 : 0);
         ctx.fillStyle = bladeGrad;
         ctx.beginPath();
-        ctx.moveTo(-2.2, -4);
-        ctx.lineTo(-3.7, -14);
-        ctx.lineTo(-2.0, -28);
-        ctx.lineTo(0, -36);
-        ctx.lineTo(2.0, -28);
-        ctx.lineTo(3.7, -14);
-        ctx.lineTo(2.2, -4);
+        ctx.moveTo(-2.7, 9);
+        ctx.lineTo(-4.0, 0);
+        ctx.lineTo(-2.2, -18);
+        ctx.lineTo(0, -26);
+        ctx.lineTo(2.2, -18);
+        ctx.lineTo(4.0, 0);
+        ctx.lineTo(2.7, 9);
         ctx.closePath();
         ctx.fill();
-        ctx.lineWidth = 1.0;
+        ctx.lineWidth = 1.2;
         ctx.strokeStyle = "rgba(255,255,255,0.95)";
         ctx.beginPath();
-        ctx.moveTo(0, -34); ctx.lineTo(0, -5);
+        ctx.moveTo(0, -30); ctx.lineTo(0, 5);
         ctx.stroke();
         const guardGrad = ctx.createLinearGradient(-9, 0, 9, 0);
         guardGrad.addColorStop(0, shade(gear.weaponColor, -28));
@@ -3572,9 +3549,9 @@
         guardGrad.addColorStop(1, shade(gear.weaponColor, -28));
         ctx.shadowBlur = 8;
         ctx.fillStyle = guardGrad;
-        roundRect(-7, -3.4, 14, 4, 2.2); ctx.fill();
+        roundRect(-7, 5.5, 14, 4, 2.2); ctx.fill();
         ctx.fillStyle = shade(gear.weaponColor, -18);
-        roundRect(-2.4, -0.6, 4.8, 11.5, 2.6); ctx.fill();
+        roundRect(-2.4, 8.5, 4.8, 9.2, 2.6); ctx.fill();
         const plus = gear.weaponPlus || 0;
         const spark = 0.35 + 0.45 * Math.sin(performance.now()/170);
         for (let i = 0; i < Math.max(2, plus); i++) {
@@ -3585,9 +3562,9 @@
           ctx.beginPath(); ctx.arc(px, py, 1.4 + (plus>6?0.8:0), 0, Math.PI*2); ctx.fill();
         }
         ctx.fillStyle = "rgba(255,255,255,0.98)";
-        ctx.beginPath(); ctx.arc(0, -34, 1.6 + spark, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(2.6, -22, 0.9 + spark*0.5, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(-2.0, -12, 0.8 + spark*0.35, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, -27, 1.8 + spark, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(2.8, -15, 1.0 + spark*0.5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-2.2, -7, 0.9 + spark*0.35, 0, Math.PI*2); ctx.fill();
         ctx.restore();
       }
       ctx.restore();
@@ -4063,9 +4040,8 @@
 
         if (moving) {
           const len = Math.hypot(ax, ay) || 1;
-          const speedMul = performance.now() < combatState.hasteUntil ? 4 : 1;
-          const vx = (ax / len) * player.speed * speedMul * dt;
-          const vy = (ay / len) * player.speed * speedMul * dt;
+          const vx = (ax / len) * player.speed * dt;
+          const vy = (ay / len) * player.speed * dt;
           player.x += vx;
           player.y += vy;
           clampPlayerToWorld();
@@ -4256,21 +4232,6 @@
       for (let i = combatState.fireballs.length - 1; i >= 0; i--) {
         const f = combatState.fireballs[i];
         f.life -= dt;
-        if (f.homing) {
-          let target = null;
-          let best = Infinity;
-          for (const m of [...combatState.slimes, ...combatState.titans]) {
-            if (m.dead) continue;
-            const d = Math.hypot(m.x - f.x, m.y - f.y);
-            if (d < best) { best = d; target = m; }
-          }
-          if (target) {
-            const dx = target.x - f.x, dy = target.y - f.y;
-            const len = Math.max(1, Math.hypot(dx, dy));
-            f.vx += (dx / len * 620 - f.vx) * Math.min(1, dt * 5.4);
-            f.vy += (dy / len * 620 - f.vy) * Math.min(1, dt * 5.4);
-          }
-        }
         f.x += f.vx * dt;
         f.y += f.vy * dt;
         let hit = false;
@@ -4371,10 +4332,8 @@
         if (!activePortal) lastMobileZoneKey = "";
       }
 
-      updateSkillButtons();
       updateCamera(dt);
 
-      hideLegacyHints();
       UI.coord.textContent = `x:${Math.round(player.x)} y:${Math.round(player.y)}`;
       acc += dt;
       framesCount++;
@@ -4519,8 +4478,7 @@
       const rng = mulberry32(((now * 1000) | 0) ^ 0xa53c9e1);
       const roamerPalette = update(dt, t, rng);
       draw(t, roamerPalette);
-      setInterval(hideLegacyHints, 800);
-    requestAnimationFrame(loop);
+      requestAnimationFrame(loop);
     }
 
     canvas.addEventListener("pointerdown", () => {
@@ -4535,7 +4493,6 @@
       b.x = Math.random() * WORLD.w;
       b.y = 50 + Math.random() * 200;
     }
-    setInterval(hideLegacyHints, 800);
     requestAnimationFrame(loop);
   });
 })();
