@@ -2125,14 +2125,13 @@
     function layoutAdBuildings() {
       adBuildings.length = 0;
       const items = [
-        { key: "bbq", label: "BBQ", color: "#d62828", accent: "#ff9f1c" },
-        { key: "baskin", label: "BASKIN", color: "#ff4fa3", accent: "#ffd1e8" },
-        { key: "kfc", label: "KFC", color: "#ef4444", accent: "#ffffff" },
-        { key: "apple", label: "APPLE", color: "#111827", accent: "#d1d5db" }
+        { key: "youtube", label: "YOUTUBE", color: "#e11d48", accent: "#ffffff" },
+        { key: "tiktok", label: "TIKTOK", color: "#111827", accent: "#f472b6" },
+        { key: "instagram", label: "INSTAGRAM", color: "#8b5cf6", accent: "#f59e0b" }
       ];
-      const startX = ZONES.ads.x + 80;
-      const gap = 150;
-      const w = 300, h = 228;
+      const startX = ZONES.ads.x + 210;
+      const gap = 210;
+      const w = 340, h = 228;
       const y = ZONES.ads.y + 56;
       for (let i = 0; i < items.length; i++) {
         adBuildings.push({ ...items[i], x: startX + i * (w + gap), y, w, h });
@@ -2873,7 +2872,7 @@
     }
 
     function drawAdBuilding(b, t) {
-      const c = legoStyleForType(b.key === "bbq" ? "bbq" : b.key === "baskin" ? "baskin" : b.key === "apple" ? "social" : "mcd");
+      const c = legoStyleForType(b.key === "youtube" ? "bbq" : b.key === "tiktok" ? "baskin" : b.key === "instagram" ? "social" : "mcd");
       const x = b.x, y = b.y, w = b.w, h = b.h;
       groundAO(x + 12, y + h - 18, w - 24, 42, 0.14);
       softShadow(x + 22, y + h - 12, w - 44, 18, 0.06);
@@ -2917,68 +2916,73 @@
       roundRect(signX, signY, signW, signH, 22);
       ctx.fill();
       ctx.lineWidth = 6;
-      ctx.strokeStyle = b.key === "apple" ? "rgba(255,255,255,0.35)" : "rgba(255,230,180,0.35)";
+      ctx.strokeStyle = b.key === "instagram" ? "rgba(255,255,255,0.35)" : "rgba(255,230,180,0.35)";
       roundRect(signX, signY, signW, signH, 22);
       ctx.stroke();
-      ctx.fillStyle = b.key === "apple" ? "#f8fafc" : "#fff7d6";
-      ctx.font = `1000 ${b.key === "apple" ? 28 : 26}px system-ui`;
+      ctx.fillStyle = b.key === "instagram" ? "#f8fafc" : "#fff7d6";
+      ctx.font = `1000 ${b.key === "instagram" ? 25 : 24}px system-ui`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(b.label, x + w * 0.5, signY + signH * 0.54);
 
-      if (b.key === "apple") {
-        ctx.fillStyle = "#f8fafc";
-        ctx.beginPath();
-        ctx.arc(x + w * 0.5, y + 102, 18, 0, Math.PI * 2);
+      if (b.key === "instagram") {
+        const ig = ctx.createLinearGradient(x + 26, y + 88, x + 96, y + 158);
+        ig.addColorStop(0, "#f59e0b");
+        ig.addColorStop(0.5, "#ec4899");
+        ig.addColorStop(1, "#8b5cf6");
+        ctx.fillStyle = ig;
+        roundRect(x + 26, y + 88, 70, 70, 18);
         ctx.fill();
-        ctx.clearRect(x + w * 0.5 + 4, y + 90, 14, 20);
-        ctx.fillStyle = "#f8fafc";
-        ctx.beginPath();
-        ctx.ellipse(x + w * 0.5 + 13, y + 81, 8, 4, -0.5, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (b.key === "kfc") {
-        ctx.fillStyle = "#ffffff";
-        roundRect(x + 24, y + 88, 60, 72, 12);
-        ctx.fill();
-        ctx.fillStyle = "#111827";
-        roundRect(x + 42, y + 100, 24, 18, 8);
-        ctx.fill();
-        ctx.strokeStyle = "#ef4444";
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.moveTo(x + 36, y + 92);
-        ctx.lineTo(x + 36, y + 156);
-        ctx.moveTo(x + 72, y + 92);
-        ctx.lineTo(x + 72, y + 156);
+        ctx.strokeStyle = "rgba(255,255,255,0.95)";
+        ctx.lineWidth = 5;
+        roundRect(x + 40, y + 102, 42, 42, 12);
         ctx.stroke();
-      } else if (b.key === "bbq") {
-        ctx.fillStyle = "#3f3f46";
-        roundRect(x + 34, y + 92, 66, 42, 10);
-        ctx.fill();
-        ctx.fillStyle = "#fb923c";
         ctx.beginPath();
-        ctx.arc(x + 66, y + 116, 10, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "rgba(255,255,255,0.6)";
-        roundRect(x + 50, y + 88, 8, 8, 4);
-        roundRect(x + 64, y + 84, 8, 8, 4);
-        roundRect(x + 78, y + 88, 8, 8, 4);
-        ctx.fill();
-      } else if (b.key === "baskin") {
-        ctx.fillStyle = "#fdf2f8";
-        for (let i=0;i<3;i++) {
-          ctx.beginPath();
-          ctx.arc(x + 50 + i*26, y + 110 - (i===1?8:0), 14, 0, Math.PI*2);
-          ctx.fill();
-        }
-        ctx.fillStyle = "#f59e0b";
+        ctx.arc(x + 61, y + 123, 9, 0, Math.PI*2);
+        ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(x + 64, y + 118);
-        ctx.lineTo(x + 90, y + 160);
-        ctx.lineTo(x + 38, y + 160);
+        ctx.arc(x + 77, y + 107, 3.5, 0, Math.PI*2);
+        ctx.fillStyle = "rgba(255,255,255,0.95)";
+        ctx.fill();
+      } else if (b.key === "tiktok") {
+        ctx.strokeStyle = "#22d3ee";
+        ctx.lineWidth = 9;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(x + 54, y + 92);
+        ctx.lineTo(x + 54, y + 146);
+        ctx.quadraticCurveTo(x + 54, y + 160, x + 38, y + 160);
+        ctx.stroke();
+        ctx.strokeStyle = "#f472b6";
+        ctx.beginPath();
+        ctx.moveTo(x + 64, y + 88);
+        ctx.lineTo(x + 64, y + 142);
+        ctx.quadraticCurveTo(x + 64, y + 156, x + 48, y + 156);
+        ctx.stroke();
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(x + 45, y + 155, 12, 0, Math.PI*2);
+        ctx.fill();
+      } else if (b.key === "youtube") {
+        ctx.fillStyle = "#ef4444";
+        roundRect(x + 24, y + 96, 80, 52, 16);
+        ctx.fill();
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.moveTo(x + 56, y + 109);
+        ctx.lineTo(x + 56, y + 135);
+        ctx.lineTo(x + 78, y + 122);
         ctx.closePath();
         ctx.fill();
       }
+
+
+      ctx.fillStyle = "rgba(10,14,24,0.76)";
+      roundRect(x + w*0.5 - 62, y + h - 48, 124, 26, 12);
+      ctx.fill();
+      ctx.fillStyle = "#f8fafc";
+      ctx.font = "900 14px system-ui";
+      ctx.fillText("COMING SOON", x + w*0.5, y + h - 35);
 
       ctx.fillStyle = "rgba(188,232,255,0.90)";
       roundRect(x + 24, y + h * 0.58, w * 0.28, h * 0.20, 12);
@@ -3573,8 +3577,8 @@
 
       if (isHero && gear && gear.weaponColor) {
         ctx.save();
-        ctx.translate(1.8, 13.6);
-        ctx.rotate(-0.88 + (attackPose ? (-0.54 - 0.66 * attackEase) : -0.18));
+        ctx.translate(9.8, 13.2);
+        ctx.rotate(0.88 + (attackPose ? (0.36 + 0.92 * attackEase) : 0.14));
         const weaponGlow = gear.weaponTier ? gear.weaponTier.glow : gear.weaponColor;
         const bladeGrad = ctx.createLinearGradient(0, -40, 0, 14);
         bladeGrad.addColorStop(0, "#ffffff");
@@ -4300,8 +4304,8 @@
           const len = Math.hypot(dx, dy) || 1;
           const targetVx = (dx / len) * 520;
           const targetVy = (dy / len) * 520;
-          f.vx += (targetVx - f.vx) * Math.min(1, dt * 4.5);
-          f.vy += (targetVy - f.vy) * Math.min(1, dt * 4.5);
+          f.vx += (targetVx - f.vx) * Math.min(1, dt * 9.0);
+          f.vy += (targetVy - f.vy) * Math.min(1, dt * 9.0);
         }
         f.x += f.vx * dt;
         f.y += f.vy * dt;
@@ -4378,16 +4382,9 @@
             }
           }
         } else if (performance.now() >= portalSuppressUntil) {
-          UI.toast.hidden = false;
-          UI.toast.style.display = "block";
-          UI.toast.innerHTML = blockSpan(
-            activePortal.key === "blacksmith"
-              ? `⚒ <b>${activePortal.label}</b><br/>상점을 열려면 <b>E</b> 또는 <b>Enter</b>`
-              : activePortal.status === "open"
-              ? `🧱 <b>${activePortal.label}</b><br/>입장하시겠습니까? <b>E</b> 또는 <b>Enter</b>`
-              : `🧱 <b>${activePortal.label}</b><br/>게임 준비중입니다.`,
-            { bg: "linear-gradient(180deg, rgba(10,14,24,0.96), rgba(18,25,40,0.94))", fg:"#f8fafc", bd:"rgba(148,163,184,0.16)", shadow:"0 14px 36px rgba(0,0,0,0.24)" }
-          );
+          UI.toast.hidden = true;
+          UI.toast.style.display = "none";
+          UI.toast.innerHTML = "";
         }
       } else if (!modalState.open) {
         if (performance.now() >= mobileToastUntil) { UI.toast.hidden = true; UI.toast.style.display = "none"; UI.toast.innerHTML = ""; }
@@ -4408,7 +4405,17 @@
       const cdSpeed = Math.max(0, (combatState.hasteCd - nowCd) / 1000);
       const applyCd = (btn, secs, base) => {
         if (!btn) return;
+        const total = base === "FIRE" ? 3 : 12;
+        const ratio = Math.max(0, Math.min(1, secs / total));
         btn.classList.toggle("cooling", secs > 0.01);
+        if (!btn.dataset.basebg) btn.dataset.basebg = btn.style.background || "linear-gradient(180deg,#1d4ed8,#1e3a8a)";
+        btn.style.background = secs > 0.01
+          ? `linear-gradient(180deg, rgba(255,255,255,${0.08 + (1-ratio)*0.10}), rgba(255,255,255,0.02)), linear-gradient(180deg, rgba(2,6,23,${0.62 + ratio*0.22}), rgba(2,6,23,${0.28 + ratio*0.22}))`
+          : btn.dataset.basebg;
+        btn.style.boxShadow = secs > 0.01
+          ? `inset 0 ${Math.round(42 * ratio)}px 0 rgba(255,255,255,0.10), 0 10px 20px rgba(0,0,0,0.24)`
+          : "0 12px 28px rgba(0,0,0,0.18)";
+        btn.style.opacity = secs > 0.01 ? String(0.68 + (1-ratio)*0.22) : "1";
         btn.innerHTML = secs > 0.01 ? `<span>${base}</span><span class="skill-cd">${secs.toFixed(secs > 9 ? 0 : 1)}</span>` : `<span>${base}</span>`;
       };
       applyCd(UI.fireBtn, cdFire, "FIRE");
@@ -4521,17 +4528,17 @@
         ctx.strokeStyle = 'rgba(255,255,255,0.98)';
         ctx.lineWidth = 10;
         ctx.beginPath();
-        ctx.arc(0, 0, 24 + (fx.combo||1)*2, -2.86, -1.38);
+        ctx.arc(0, 0, 24 + (fx.combo||1)*2, -1.72, -0.24);
         ctx.stroke();
         ctx.strokeStyle = fxCol;
         ctx.lineWidth = 6;
         ctx.beginPath();
-        ctx.arc(0, 0, 31 + (fx.combo||1)*3, -2.92, -1.46);
+        ctx.arc(0, 0, 31 + (fx.combo||1)*3, -1.78, -0.18);
         ctx.stroke();
         ctx.strokeStyle = 'rgba(255,255,255,0.72)';
         ctx.lineWidth = 2.5;
         ctx.beginPath();
-        ctx.arc(0, 0, 27 + (fx.combo||1)*2, -2.82, -1.52);
+        ctx.arc(0, 0, 27 + (fx.combo||1)*2, -1.68, -0.28);
         ctx.stroke();
         ctx.restore();
       }
