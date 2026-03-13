@@ -1856,7 +1856,7 @@
       const boxW = (a.w - sideGap) * 0.5;
       const topH = a.h * 0.40;
       const adW = a.w * 0.94;
-      const adH = a.h * 0.18 + 220;
+      const adH = a.h * 0.18 + 220 - (isTouchDevice() ? 70 : 0);
       ZONES = {
         game: {
           x: a.x,
@@ -2136,10 +2136,11 @@
         { key: "tiktok", label: "TIKTOK", color: "#111827", accent: "#f472b6" },
         { key: "instagram", label: "INSTAGRAM", color: "#8b5cf6", accent: "#f59e0b" }
       ];
-      const startX = ZONES.ads.x + 228;
-      const gap = 24;
-      const w = 522, h = 342;
-      const y = ZONES.ads.y + 74;
+      const mobileAds = isTouchDevice();
+      const startX = ZONES.ads.x + (mobileAds ? 132 : 228);
+      const gap = mobileAds ? 14 : 24;
+      const w = mobileAds ? 536 : 522, h = mobileAds ? 350 : 342;
+      const y = ZONES.ads.y + (mobileAds ? 88 : 74);
       for (let i = 0; i < items.length; i++) {
         adBuildings.push({ ...items[i], x: startX + i * (w + gap), y, w, h });
       }
@@ -2919,11 +2920,6 @@
         const ih = adImg.naturalHeight * scale;
         const ix = x + (w - iw) * 0.5;
         const iy = y + Math.max(0, (h - ih) * 0.32);
-        if (b.key === "youtube") {
-          ctx.fillStyle = "#ffffff";
-          roundRect(ix + iw * 0.21, iy + ih * 0.03, iw * 0.58, ih * 0.12, 18);
-          ctx.fill();
-        }
         ctx.drawImage(adImg, ix, iy, iw, ih);
         ctx.fillStyle = "rgba(10,14,24,0.82)";
         roundRect(x + w*0.5 - 66, y + h - 42, 132, 24, 12);
@@ -3637,9 +3633,9 @@
 
       if (isHero && gear && gear.weaponColor) {
         ctx.save();
-        const swingBase = dir === "up" ? -0.96 : dir === "down" ? 2.18 : dir === "left" ? Math.PI + 0.98 : 0.18;
-        const swingArc = attackPose ? (0.68 - 1.52 * attackEase) : 0.18;
-        ctx.translate(7.2, 13.6);
+        const swingBase = dir === "up" ? -0.96 : dir === "down" ? 2.18 : -0.34;
+        const swingArc = attackPose ? (0.42 - 1.18 * attackEase) : 0.06;
+        ctx.translate(5.8, 13.8);
         ctx.rotate(swingBase + swingArc);
         const weaponGlow = gear.weaponTier ? gear.weaponTier.glow : gear.weaponColor;
         const bladeGrad = ctx.createLinearGradient(0, -40, 0, 14);
