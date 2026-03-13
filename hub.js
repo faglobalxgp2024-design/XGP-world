@@ -334,12 +334,16 @@
     const saveBtn = ensureEl("btn_save", "button", mobileBtns);
     const enterBtn = ensureEl("btn_enter", "button", mobileBtns);
     const atkBtn = ensureEl("btn_attack", "button", mobileBtns);
+    const fireBtn = ensureEl("btn_fireball", "button", mobileBtns);
+    const hasteBtn = ensureEl("btn_haste", "button", mobileBtns);
     invBtn.textContent = "인벤";
     eqBtn.textContent = "장착";
     saveBtn.textContent = "저장";
     enterBtn.textContent = "입장";
     atkBtn.textContent = "ATTACK";
-    [invBtn, eqBtn, saveBtn, enterBtn, atkBtn].forEach((b) => {
+    fireBtn.textContent = "FIRE";
+    hasteBtn.textContent = "SPEED";
+    [invBtn, eqBtn, saveBtn, enterBtn, atkBtn, fireBtn, hasteBtn].forEach((b) => {
       b.style.minWidth = "96px";
       b.style.cursor = "pointer";
       b.style.border = "1px solid rgba(0,0,0,0.10)";
@@ -362,8 +366,20 @@
     atkBtn.style.color = "#fff";
     atkBtn.style.fontWeight = "1000";
     atkBtn.style.minWidth = "110px";
+    fireBtn.style.background = "linear-gradient(180deg,#fb923c,#ea580c)";
+    fireBtn.style.color = "#fff";
+    fireBtn.style.fontWeight = "1000";
+    fireBtn.style.minWidth = "110px";
+    hasteBtn.style.background = "linear-gradient(180deg,#22c55e,#0f766e)";
+    hasteBtn.style.color = "#fff";
+    hasteBtn.style.fontWeight = "1000";
+    hasteBtn.style.minWidth = "110px";
     const desktopSaveBtn = ensureEl("btn_save_desktop", "button");
+    const desktopFireBtn = ensureEl("btn_fireball_desktop", "button");
+    const desktopHasteBtn = ensureEl("btn_haste_desktop", "button");
     desktopSaveBtn.textContent = "저장";
+    desktopFireBtn.textContent = "파이어볼";
+    desktopHasteBtn.textContent = "가속";
     desktopSaveBtn.style.position = "fixed";
     desktopSaveBtn.style.left = "14px";
     desktopSaveBtn.style.top = "14px";
@@ -377,6 +393,22 @@
     desktopSaveBtn.style.borderRadius = "14px";
     desktopSaveBtn.style.boxShadow = "0 12px 28px rgba(0,0,0,0.12)";
     desktopSaveBtn.style.display = isTouchDevice() ? "none" : "block";
+    [desktopFireBtn, desktopHasteBtn].forEach((b, i) => {
+      b.style.position = "fixed";
+      b.style.right = "14px";
+      b.style.top = `${14 + i * 46}px`;
+      b.style.zIndex = "10002";
+      b.style.cursor = "pointer";
+      b.style.border = "1px solid rgba(0,0,0,0.10)";
+      b.style.color = "#fff";
+      b.style.font = "900 12px system-ui";
+      b.style.padding = "10px 14px";
+      b.style.borderRadius = "14px";
+      b.style.boxShadow = "0 12px 28px rgba(0,0,0,0.12)";
+      b.style.display = isTouchDevice() ? "none" : "block";
+    });
+    desktopFireBtn.style.background = "linear-gradient(180deg,#fb923c,#ea580c)";
+    desktopHasteBtn.style.background = "linear-gradient(180deg,#22c55e,#0f766e)";
 
     if (isTouchDevice()) {
       atkBtn.style.position = "fixed";
@@ -387,10 +419,22 @@
       atkBtn.style.zIndex = "10003";
       enterBtn.style.position = "fixed";
       enterBtn.style.right = "18px";
-      enterBtn.style.bottom = "96px";
+      enterBtn.style.bottom = "160px";
       enterBtn.style.left = "auto";
       enterBtn.style.top = "auto";
       enterBtn.style.zIndex = "10003";
+      fireBtn.style.position = "fixed";
+      fireBtn.style.right = "18px";
+      fireBtn.style.bottom = "96px";
+      fireBtn.style.left = "auto";
+      fireBtn.style.top = "auto";
+      fireBtn.style.zIndex = "10003";
+      hasteBtn.style.position = "fixed";
+      hasteBtn.style.right = "18px";
+      hasteBtn.style.bottom = "224px";
+      hasteBtn.style.left = "auto";
+      hasteBtn.style.top = "auto";
+      hasteBtn.style.zIndex = "10003";
     }
 
     const style = ensureEl("lego_style_injected", "style", document.head);
@@ -609,7 +653,7 @@
     return {
       canvas, toast, coord, fps, fade, modal, modalTitle, modalBody, modalHint,
       shopModal, shopCard, shopTitle, shopBody, shopHint,
-      inventoryPanel, equipmentPanel, invBtn, eqBtn, saveBtn, desktopSaveBtn, enterBtn, atkBtn, joyState
+      inventoryPanel, equipmentPanel, invBtn, eqBtn, saveBtn, desktopSaveBtn, enterBtn, atkBtn, fireBtn, hasteBtn, desktopFireBtn, desktopHasteBtn, joyState
     };
   }
 
@@ -782,8 +826,14 @@
       slimes: [],
       titans: [],
       damageTexts: [],
+      fireballs: [],
       stars: 10000,
-      canAttack: true
+      canAttack: true,
+      combo: 0,
+      comboT: 0,
+      fireballCd: 0,
+      hasteCd: 0,
+      hasteUntil: 0
     };
 
     /* ----------------------- Inventory / Equipment ----------------------- */
@@ -873,7 +923,7 @@
       try {
         UI.toast.hidden = false;
         UI.toast.style.display = "block";
-        UI.toast.innerHTML = blockSpan(`💾 저장 완료<br/><b>${activeProfileId}</b>`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
+        UI.toast.innerHTML = blockSpan(`💾 저장되었습니다<br/><b>${activeProfileId}</b>`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
         clearTimeout(saveNowToast._tid);
         saveNowToast._tid = setTimeout(() => {
           if (!shopState.open) {
@@ -1344,6 +1394,12 @@
     }
     UI.invBtn.addEventListener("click", () => toggleInventory());
     UI.eqBtn.addEventListener("click", () => toggleEquipment());
+    UI.saveBtn.addEventListener("click", () => saveNowToast());
+    UI.desktopSaveBtn.addEventListener("click", () => saveNowToast());
+    UI.fireBtn.addEventListener("click", () => triggerFireball());
+    UI.hasteBtn.addEventListener("click", () => triggerHaste());
+    UI.desktopFireBtn.addEventListener("click", () => triggerFireball());
+    UI.desktopHasteBtn.addEventListener("click", () => triggerHaste());
     function onMobilePortalAction() {
       if (!activePortal) return;
       if (activePortal.key === "blacksmith") {
@@ -1415,6 +1471,49 @@
       }
     }
 
+    function getAttackAnchor() {
+      if (player.dir === "left") return { x: player.x - 18, y: player.y - 3, vx: -1, vy: -0.12 };
+      if (player.dir === "up") return { x: player.x + 8, y: player.y - 24, vx: 0.18, vy: -1 };
+      if (player.dir === "down") return { x: player.x + 10, y: player.y + 4, vx: 0.16, vy: 1 };
+      return { x: player.x + 18, y: player.y - 3, vx: 1, vy: -0.12 };
+    }
+
+    function applyMonsterHit(m, damage, crit = false) {
+      m.hp -= damage;
+      m.hitFlash = Math.max(m.hitFlash || 0, 0.8);
+      spawnDamageText(m.x, m.y - (m.scale ? m.scale * 1.6 : 18), `${crit ? "CRIT " : ""}-${damage}`, crit ? "#facc15" : "#fca5a5", crit ? 1.28 : 1.1);
+      if (m.hp <= 0) {
+        m.dead = true;
+        m.respawn = m.key === "slime" ? 7 : 18;
+        const reward = m.reward || 1;
+        combatState.stars += reward;
+        spawnDamageText(m.x, m.y - (m.scale ? m.scale * 1.9 : 30), `+${reward} STAR`, "#fde68a", 1.0);
+        renderPanels();
+      }
+    }
+
+    function triggerFireball() {
+      const now = performance.now();
+      if (combatState.fireballCd > now) return;
+      const anchor = getAttackAnchor();
+      const base = playerAttackPower();
+      combatState.fireballCd = now + 3000;
+      combatState.fireballs.push({
+        x: anchor.x, y: anchor.y, vx: anchor.vx * 420, vy: anchor.vy * 420,
+        life: 1.25, radius: 14, damage: Math.max(2, Math.round(base * 2)), burn: 2.8
+      });
+      player.gearFlashT = 0.35;
+    }
+
+    function triggerHaste() {
+      const now = performance.now();
+      if (combatState.hasteCd > now) return;
+      combatState.hasteCd = now + 12000;
+      combatState.hasteUntil = now + 5000;
+      player.gearFlashT = 0.45;
+      spawnDamageText(player.x, player.y - 42, "SPEED UP", "#86efac", 1.0);
+    }
+
     window.addEventListener("keydown", (e) => {
       const k = e.key.toLowerCase();
       if (k === "tab") {
@@ -1431,6 +1530,14 @@
       if (k === " ") {
         e.preventDefault();
         triggerAttack();
+      }
+      if (k === "q") {
+        e.preventDefault();
+        triggerFireball();
+      }
+      if (k === "r") {
+        e.preventDefault();
+        triggerHaste();
       }
       if (k === "enter" || k === "e") {
         const portalTarget = activePortal || getNearestPortalCandidate(isTouchDevice() ? 240 : 260);
@@ -3773,6 +3880,15 @@
         ctx.font = `900 ${Math.max(14, s * 0.12)}px system-ui`;
         ctx.textAlign = "center";
         ctx.fillText("ANCIENT DRAGON", 0, -s * 1.84);
+        if (m.burnT > 0) {
+          for (let i = 0; i < 6; i++) {
+            const fy = -s * 1.2 + i * s * 0.16;
+            ctx.fillStyle = i % 2 ? "rgba(255,245,245,0.72)" : `rgba(249,115,22,${0.22 + i * 0.08})`;
+            ctx.beginPath();
+            ctx.ellipse((i % 2 ? -1 : 1) * s * 0.12, fy, s * 0.10, s * 0.18, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
         ctx.restore();
         drawMonsterHpBar(m, s * 1.72);
         return;
@@ -3815,6 +3931,15 @@
       ctx.font = `900 ${Math.max(10, s * 0.16)}px system-ui`;
       ctx.textAlign = "center";
       ctx.fillText(m.label, 0, -s * 2.12);
+      if (m.burnT > 0) {
+        for (let i = 0; i < 5; i++) {
+          const fy = -s * 1.25 + i * s * 0.22;
+          ctx.fillStyle = i % 2 ? "rgba(255,245,245,0.72)" : `rgba(249,115,22,${0.18 + i * 0.08})`;
+          ctx.beginPath();
+          ctx.ellipse((i % 2 ? -1 : 1) * s * 0.10, fy, s * 0.08, s * 0.14, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
       ctx.restore();
       drawMonsterHpBar(m, s * 1.4);
     }
@@ -4104,6 +4229,47 @@
         d.y += d.vy * dt;
         if (d.life <= 0) combatState.damageTexts.splice(i, 1);
       }
+      for (let i = combatState.fireballs.length - 1; i >= 0; i--) {
+        const f = combatState.fireballs[i];
+        f.life -= dt;
+        f.x += f.vx * dt;
+        f.y += f.vy * dt;
+        let hit = false;
+        for (const m of [...combatState.slimes, ...combatState.titans]) {
+          if (m.dead) continue;
+          const hr = (m.scale ? m.scale * 1.1 : 22) + f.radius;
+          if (Math.hypot(m.x - f.x, m.y - f.y) <= hr) {
+            const crit = Math.random() < 0.2;
+            const dmg = Math.round(f.damage * (crit ? 1.6 : 1));
+            applyMonsterHit(m, dmg, crit);
+            m.burnT = Math.max(m.burnT || 0, f.burn);
+            m.burnTick = 0.33;
+            hit = true;
+            break;
+          }
+        }
+        if (hit || f.life <= 0) combatState.fireballs.splice(i, 1);
+      }
+      for (const m of [...combatState.slimes, ...combatState.titans]) {
+        if (m.dead || !m.burnT) continue;
+        m.burnT = Math.max(0, m.burnT - dt);
+        m.burnTick = (m.burnTick || 0) - dt;
+        if (m.burnTick <= 0) {
+          m.burnTick = 0.33;
+          const burnDamage = Math.max(1, Math.round(playerAttackPower() * 0.22));
+          m.hp -= burnDamage;
+          m.hitFlash = Math.max(m.hitFlash || 0, 0.45);
+          spawnDamageText(m.x, m.y - (m.scale ? m.scale * 1.45 : 16), `-${burnDamage}`, "#fb923c", 0.9);
+          if (m.hp <= 0) {
+            m.dead = true;
+            m.respawn = m.key === "slime" ? 7 : 18;
+            const reward = m.reward || 1;
+            combatState.stars += reward;
+            spawnDamageText(m.x, m.y - (m.scale ? m.scale * 1.9 : 30), `+${reward} STAR`, "#fde68a", 1.0);
+            renderPanels();
+          }
+        }
+      }
 
       activePortal = null;
       let activePortalDist = Infinity;
@@ -4240,6 +4406,26 @@
             break;
         }
       }
+      for (const f of combatState.fireballs) {
+        ctx.save();
+        ctx.translate(f.x, f.y);
+        ctx.shadowColor = "rgba(251,146,60,0.95)";
+        ctx.shadowBlur = 24;
+        const g = ctx.createRadialGradient(0, 0, 2, 0, 0, f.radius + 6);
+        g.addColorStop(0, "rgba(255,255,255,0.98)");
+        g.addColorStop(0.28, "rgba(254,215,170,0.98)");
+        g.addColorStop(0.65, "rgba(249,115,22,0.96)");
+        g.addColorStop(1, "rgba(153,27,27,0.0)");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(0, 0, f.radius + 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.95)";
+        ctx.beginPath();
+        ctx.arc(-2, -2, f.radius * 0.32, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
       for (const fx of combatState.slashFx) {
         ctx.save();
         const a = Math.max(0, fx.life / 0.20);
@@ -4251,17 +4437,17 @@
         ctx.strokeStyle = 'rgba(255,255,255,0.98)';
         ctx.lineWidth = 10;
         ctx.beginPath();
-        ctx.arc(0, 0, 24 + (fx.combo||1)*2, -1.24, 0.24);
+        ctx.arc(0, 0, 24 + (fx.combo||1)*2, -2.86, -1.38);
         ctx.stroke();
         ctx.strokeStyle = fxCol;
         ctx.lineWidth = 6;
         ctx.beginPath();
-        ctx.arc(0, 0, 31 + (fx.combo||1)*3, -1.28, 0.18);
+        ctx.arc(0, 0, 31 + (fx.combo||1)*3, -2.92, -1.46);
         ctx.stroke();
         ctx.strokeStyle = 'rgba(255,255,255,0.72)';
         ctx.lineWidth = 2.5;
         ctx.beginPath();
-        ctx.arc(0, 0, 27 + (fx.combo||1)*2, -1.18, 0.12);
+        ctx.arc(0, 0, 27 + (fx.combo||1)*2, -2.82, -1.52);
         ctx.stroke();
         ctx.restore();
       }
