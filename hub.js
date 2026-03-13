@@ -1445,6 +1445,10 @@
     UI.desktopSaveBtn.addEventListener("click", () => saveNowToast());
     UI.fireBtn.addEventListener("click", () => triggerFireball());
     UI.hasteBtn.addEventListener("click", () => triggerHaste());
+    [UI.fireBtn, UI.hasteBtn].forEach((btn, idx) => {
+      btn.addEventListener("pointerdown", (e) => { e.preventDefault(); e.stopPropagation(); idx===0 ? triggerFireball() : triggerHaste(); }, { passive: false });
+      btn.addEventListener("touchstart", (e) => { e.preventDefault(); e.stopPropagation(); idx===0 ? triggerFireball() : triggerHaste(); }, { passive: false });
+    });
     UI.desktopFireBtn.addEventListener("click", () => triggerFireball());
     UI.desktopHasteBtn.addEventListener("click", () => triggerHaste());
     function onMobilePortalAction() {
@@ -1602,8 +1606,7 @@
           confirmEnter(modalState.portal);
         } else if (portalTarget) {
           activePortal = portalTarget;
-          if (isTouchDevice()) openPortalUI(portalTarget);
-          else confirmEnter(portalTarget);
+          openPortalUI(portalTarget);
         }
       }
       if (k === "escape") {
@@ -2130,10 +2133,10 @@
         { key: "tiktok", label: "TIKTOK", color: "#111827", accent: "#f472b6" },
         { key: "instagram", label: "INSTAGRAM", color: "#8b5cf6", accent: "#f59e0b" }
       ];
-      const startX = ZONES.ads.x + 210;
-      const gap = 210;
-      const w = 340, h = 228;
-      const y = ZONES.ads.y + 56;
+      const startX = ZONES.ads.x + 260;
+      const gap = 120;
+      const w = 380, h = 248;
+      const y = ZONES.ads.y + 36;
       for (let i = 0; i < items.length; i++) {
         adBuildings.push({ ...items[i], x: startX + i * (w + gap), y, w, h });
       }
@@ -2314,10 +2317,15 @@
 
     const modalState = { open: false, portal: null };
 
+    function getInteractiveTargets() {
+      const adTargets = adBuildings.map((b) => ({ ...b, status: "soon", url: "", type: "ad", size: "M", message: "게임 준비중입니다." }));
+      return portals.concat(adTargets);
+    }
+
     function getNearestPortalCandidate(maxDist = 220) {
       let best = null;
       let bestDist = maxDist;
-      for (const p of portals) {
+      for (const p of getInteractiveTargets()) {
         const cx = p.x + p.w * 0.5;
         const cy = p.y + p.h * 0.72;
         const dist = Math.hypot(player.x - cx, player.y - cy);
@@ -3620,9 +3628,9 @@
 
       if (isHero && gear && gear.weaponColor) {
         ctx.save();
-        const swingBase = dir === "up" ? -0.42 : dir === "down" ? 1.92 : dir === "left" ? Math.PI - 1.05 : 1.05;
-        const swingArc = attackPose ? (-1.05 + 1.95 * attackEase) : -0.16;
-        ctx.translate(13.2, 11.8);
+        const swingBase = dir === "up" ? -0.96 : dir === "down" ? 2.18 : dir === "left" ? Math.PI + 0.98 : 0.18;
+        const swingArc = attackPose ? (0.68 - 1.52 * attackEase) : 0.18;
+        ctx.translate(7.2, 13.6);
         ctx.rotate(swingBase + swingArc);
         const weaponGlow = gear.weaponTier ? gear.weaponTier.glow : gear.weaponColor;
         const bladeGrad = ctx.createLinearGradient(0, -40, 0, 14);
@@ -4412,7 +4420,7 @@
 
       activePortal = null;
       let activePortalDist = Infinity;
-      for (const p of portals) {
+      for (const p of getInteractiveTargets()) {
         if (circleRectHit(player.x, player.y, player.r + 8, portalEnterZone(p))) {
           const cx = p.x + p.w * 0.5;
           const cy = p.y + p.h * 0.5;
@@ -4446,9 +4454,14 @@
             }
           }
         } else if (performance.now() >= portalSuppressUntil) {
-          UI.toast.hidden = true;
-          UI.toast.style.display = "none";
-          UI.toast.innerHTML = "";
+          const msg = activePortal.key === "blacksmith"
+            ? `⚒ <b>${activePortal.label}</b><br/>상점에 입장하시겠습니까?<br/><span style="font-size:12px;opacity:0.78">Enter / E</span>`
+            : (activePortal.status === "open" && activePortal.url
+              ? `🧱 <b>${activePortal.label}</b><br/>입장하시겠습니까?<br/><span style="font-size:12px;opacity:0.78">Enter / E</span>`
+              : `🧱 <b>${activePortal.label}</b><br/>${activePortal.message || "게임 준비중입니다."}<br/><span style="font-size:12px;opacity:0.78">Enter / E</span>`);
+          UI.toast.hidden = false;
+          UI.toast.style.display = "block";
+          UI.toast.innerHTML = blockSpan(msg, { bg: "linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.95))", fg: "#f8fafc", pad: "12px 18px", radius: "18px", border: "1px solid rgba(148,163,184,0.16)", shadow: "0 14px 30px rgba(2,6,23,0.22)" });
         }
       } else if (!modalState.open) {
         if (performance.now() >= mobileToastUntil) { UI.toast.hidden = true; UI.toast.style.display = "none"; UI.toast.innerHTML = ""; }
@@ -4721,4 +4734,34 @@
   window.AD_INSTAGRAM_SRC="https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EA%B4%91%EA%B3%A0%20%EC%9D%B8%EC%8A%A4%ED%83%80%EA%B7%B8%EB%9E%A8.png";
   window.AD_TIKTOK_SRC="https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EA%B4%91%EA%B3%A0%20%ED%8B%B1%ED%86%A1.png";
 
+})();
+
+// ===== v90 PATCH (pc portal, mobile skills, zoom, hint hide, ads) =====
+(function(){
+  try {
+    let meta=document.querySelector('meta[name="viewport"]');
+    if(!meta){ meta=document.createElement('meta'); meta.name='viewport'; document.head.appendChild(meta); }
+    meta.setAttribute('content','width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
+    const stop=(e)=>{ if(e.touches && e.touches.length>1) e.preventDefault(); };
+    document.addEventListener('touchmove', stop, {passive:false});
+    let lastTouchEnd=0;
+    document.addEventListener('touchend', function(e){ const now=Date.now(); if(now-lastTouchEnd<=350) e.preventDefault(); lastTouchEnd=now; }, {passive:false});
+    document.documentElement.style.touchAction='manipulation';
+    document.body.style.touchAction='manipulation';
+    const hideHint=(root=document)=>{
+      const all=[...root.querySelectorAll('*')];
+      for(const el of all){
+        const t=(el.innerText||el.textContent||'').replace(/\s+/g,' ').trim();
+        if(!t) continue;
+        const cs=getComputedStyle(el);
+        const top=parseFloat(cs.top||'999'); const left=parseFloat(cs.left||'999');
+        const fixed=(cs.position==='fixed'||cs.position==='sticky'||cs.position==='absolute');
+        if(fixed && top<90 && left<520 && ((t.includes('Enter')||t.includes('/E')||t.includes('손 떼면')) && t.includes('입장'))){
+          el.style.display='none'; el.style.visibility='hidden'; el.style.opacity='0'; el.style.pointerEvents='none';
+        }
+      }
+    };
+    hideHint();
+    new MutationObserver(()=>hideHint()).observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true});
+  } catch(e){}
 })();
