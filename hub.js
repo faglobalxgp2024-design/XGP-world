@@ -967,10 +967,10 @@
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <div style="padding:10px 12px;border-radius:999px;background:linear-gradient(180deg,rgba(245,158,11,0.22),rgba(251,191,36,0.10));border:1px solid rgba(251,191,36,0.25);font:1000 14px system-ui;color:#fde68a">★ ${combatState.stars} STAR</div>
-            <button id="shop_enhance_btn" style="border:none;border-radius:12px;padding:10px 12px;background:linear-gradient(180deg,#f59e0b,#ea580c);color:#fff;font:900 12px system-ui;cursor:pointer">무기 강화</button><button id="shop_close_btn" style="border:none;border-radius:12px;padding:10px 12px;background:linear-gradient(180deg,#334155,#0f172a);color:#fff;font:900 12px system-ui;cursor:pointer">닫기</button>
+            <button id="shop_close_btn" style="border:none;border-radius:12px;padding:10px 12px;background:linear-gradient(180deg,#334155,#0f172a);color:#fff;font:900 12px system-ui;cursor:pointer">닫기</button>
           </div>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">${filters.map((f) => `<button class="shop_filter_btn" data-filter="${f.key}" style="border:none;border-radius:999px;padding:9px 12px;cursor:pointer;background:${filter===f.key ? "linear-gradient(180deg,#38bdf8,#2563eb)" : "linear-gradient(180deg,#1e293b,#0f172a)"};color:#fff;font:900 11px system-ui">${f.label}</button>`).join("")}<div style="margin-left:auto;padding:9px 12px;border-radius:999px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.22);color:#fde68a;font:900 11px system-ui">현재 무기 강화 +${getEnhanceLevel("weapon")} · 비용 ${enhanceCost("weapon")} STAR</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">${filters.map((f) => `<button class="shop_filter_btn" data-filter="${f.key}" style="border:none;border-radius:999px;padding:9px 12px;cursor:pointer;background:${filter===f.key ? "linear-gradient(180deg,#38bdf8,#2563eb)" : "linear-gradient(180deg,#1e293b,#0f172a)"};color:#fff;font:900 11px system-ui">${f.label}</button>`).join("")}<div style="margin-left:auto;padding:9px 12px;border-radius:999px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.22);color:#fde68a;font:900 11px system-ui">강화는 장비창에서 진행</div></div>
       `;
       if (!items.length) {
         UI.shopBody.innerHTML = `<div style="margin-top:18px;padding:24px;border-radius:20px;background:linear-gradient(180deg,rgba(15,23,42,0.96),rgba(30,41,59,0.92));border:1px solid rgba(148,163,184,0.18);font:900 14px system-ui;color:rgba(226,232,240,0.82)">모든 상품을 구매했습니다.</div>`;
@@ -997,8 +997,6 @@
 
       const closeBtn = document.getElementById("shop_close_btn");
       if (closeBtn) closeBtn.onclick = () => closeShop();
-      const enhanceBtn = document.getElementById("shop_enhance_btn");
-      if (enhanceBtn) enhanceBtn.onclick = () => tryEnhance("weapon");
       document.querySelectorAll(".shop_filter_btn").forEach((btn) => {
         btn.onclick = () => renderShop(btn.dataset.filter || "all");
       });
@@ -1152,7 +1150,7 @@
       UI.equipmentPanel.innerHTML = `
         <div class="panel-title">
           <b style="color:#f8fafc">EQUIPMENT</b>
-          <span style="color:rgba(226,232,240,0.65)">Tab 키</span>
+          <span style="color:rgba(226,232,240,0.65)">Tab 키 · 장비별 강화 가능</span>
         </div>
       `;
       [["hat","헬멧"],["armor","갑옷"],["weapon","무기"],["shield","방패"]].forEach(([slot, label]) => {
@@ -1167,12 +1165,32 @@
             <span>${item ? `${item.name} (${statLine(item)})` : "비어 있음"}</span>
           </div>
         `;
+        const actionWrap = document.createElement("div");
+        actionWrap.style.display = "flex";
+        actionWrap.style.gap = "8px";
+        actionWrap.style.alignItems = "center";
         const btn = document.createElement("button");
         btn.textContent = item ? "빼기" : "없음";
         btn.disabled = !item;
         btn.style.opacity = item ? "1" : "0.45";
         if (item) btn.addEventListener("click", () => equipItem(item.id));
-        row.appendChild(btn);
+        actionWrap.appendChild(btn);
+        if (item) {
+          const enhanceBtn = document.createElement("button");
+          const plus = getEnhanceLevel(slot);
+          enhanceBtn.textContent = plus >= 10 ? `+10 완료` : `강화 +${plus}`;
+          enhanceBtn.style.background = plus >= 10 ? "linear-gradient(180deg,#475569,#1e293b)" : "linear-gradient(180deg,#f59e0b,#ea580c)";
+          enhanceBtn.style.minWidth = "86px";
+          enhanceBtn.title = plus >= 10 ? "최대 강화 완료" : `${enhanceCost(slot)} STAR 소모`;
+          if (plus >= 10) {
+            enhanceBtn.disabled = true;
+            enhanceBtn.style.opacity = "0.72";
+          } else {
+            enhanceBtn.addEventListener("click", () => tryEnhance(slot));
+          }
+          actionWrap.appendChild(enhanceBtn);
+        }
+        row.appendChild(actionWrap);
         UI.equipmentPanel.appendChild(row);
       });
     }
@@ -3237,8 +3255,8 @@
 
       if (isHero && gear && gear.weaponColor) {
         ctx.save();
-        ctx.translate(13, 10);
-        ctx.rotate(0.10 + (attackPose ? -1.18 * atk : -0.04));
+        ctx.translate(8, 7);
+        ctx.rotate(0.06 + (attackPose ? -1.08 * atk : -0.02));
         const weaponGlow = gear.weaponTier ? gear.weaponTier.glow : gear.weaponColor;
         const bladeGrad = ctx.createLinearGradient(0, -40, 0, 14);
         bladeGrad.addColorStop(0, "#ffffff");
@@ -3251,9 +3269,9 @@
         ctx.beginPath();
         ctx.moveTo(-3.2, 12);
         ctx.lineTo(-5.4, -2);
-        ctx.lineTo(-3.4, -30);
-        ctx.lineTo(0, -40);
-        ctx.lineTo(3.4, -30);
+        ctx.lineTo(-3.0, -25);
+        ctx.lineTo(0, -34);
+        ctx.lineTo(3.0, -25);
         ctx.lineTo(5.4, -2);
         ctx.lineTo(3.2, 12);
         ctx.closePath();
@@ -3269,9 +3287,9 @@
         guardGrad.addColorStop(1, shade(gear.weaponColor, -28));
         ctx.shadowBlur = 8;
         ctx.fillStyle = guardGrad;
-        roundRect(-10, 8, 20, 4.5, 2.4); ctx.fill();
+        roundRect(-8, 7, 16, 4, 2.2); ctx.fill();
         ctx.fillStyle = shade(gear.weaponColor, -18);
-        roundRect(-3.2, 11, 6.4, 12, 3.2); ctx.fill();
+        roundRect(-2.8, 10, 5.6, 10, 3.0); ctx.fill();
         const plus = gear.weaponPlus || 0;
         const spark = 0.35 + 0.45 * Math.sin(performance.now()/170);
         for (let i = 0; i < Math.max(2, plus); i++) {
@@ -3743,12 +3761,12 @@
             const crit = Math.random() < critChance;
             const damage = Math.max(1, Math.round(baseDamage * comboBonus * (crit ? 1.85 : 1)));
             m.hp -= damage;
-            spawnDamageText(m.x, m.y - 18, `${crit ? "CRIT " : ""}-${damage}`, crit ? "#facc15" : "#fca5a5", crit ? 3.2 : 2.7);
+            spawnDamageText(m.x, m.y - 18, `${crit ? "CRIT " : ""}-${damage}`, crit ? "#facc15" : "#fca5a5", crit ? 1.6 : 1.35);
             if (m.hp <= 0) {
               m.dead = true;
               m.respawn = 7;
               combatState.stars += 1;
-              spawnDamageText(m.x, m.y - 34, "+1 STAR", "#fde68a", 2.4);
+              spawnDamageText(m.x, m.y - 34, "+1 STAR", "#fde68a", 1.2);
               renderPanels();
             }
           }
@@ -3763,12 +3781,12 @@
             m.hitFlash = 0.8;
             m.vx += (m.x - player.x) * 0.08;
             m.vy += (m.y - player.y) * 0.05;
-            spawnDamageText(m.x, m.y - m.scale * 1.9, `${crit ? "CRIT " : ""}-${bossDamage}`, crit ? "#facc15" : "#fda4af", crit ? 3.4 : 2.9);
+            spawnDamageText(m.x, m.y - m.scale * 1.9, `${crit ? "CRIT " : ""}-${bossDamage}`, crit ? "#facc15" : "#fda4af", crit ? 1.7 : 1.45);
             if (m.hp <= 0) {
               m.dead = true;
               m.respawn = 18;
               combatState.stars += m.reward;
-              spawnDamageText(m.x, m.y - m.scale * 2.1, `+${m.reward} STAR`, "#fde68a", 2.7);
+              spawnDamageText(m.x, m.y - m.scale * 2.1, `+${m.reward} STAR`, "#fde68a", 1.35);
               renderPanels();
             }
           }
