@@ -331,13 +331,15 @@
 
     const invBtn = ensureEl("btn_inventory", "button", mobileBtns);
     const eqBtn = ensureEl("btn_equipment", "button", mobileBtns);
+    const saveBtn = ensureEl("btn_save", "button", mobileBtns);
     const enterBtn = ensureEl("btn_enter", "button", mobileBtns);
     const atkBtn = ensureEl("btn_attack", "button", mobileBtns);
     invBtn.textContent = "인벤";
     eqBtn.textContent = "장착";
+    saveBtn.textContent = "저장";
     enterBtn.textContent = "입장";
     atkBtn.textContent = "ATTACK";
-    [invBtn, eqBtn, enterBtn, atkBtn].forEach((b) => {
+    [invBtn, eqBtn, saveBtn, enterBtn, atkBtn].forEach((b) => {
       b.style.minWidth = "96px";
       b.style.cursor = "pointer";
       b.style.border = "1px solid rgba(0,0,0,0.10)";
@@ -348,6 +350,9 @@
       b.style.borderRadius = "14px";
       b.style.boxShadow = "0 12px 28px rgba(0,0,0,0.12)";
     });
+    saveBtn.style.background = "linear-gradient(180deg,#38bdf8,#1d4ed8)";
+    saveBtn.style.color = "#fff";
+    saveBtn.style.fontWeight = "1000";
     enterBtn.style.background = "linear-gradient(180deg,#22c55e,#15803d)";
     enterBtn.style.color = "#fff";
     enterBtn.style.fontWeight = "1000";
@@ -357,6 +362,22 @@
     atkBtn.style.color = "#fff";
     atkBtn.style.fontWeight = "1000";
     atkBtn.style.minWidth = "110px";
+    const desktopSaveBtn = ensureEl("btn_save_desktop", "button");
+    desktopSaveBtn.textContent = "저장";
+    desktopSaveBtn.style.position = "fixed";
+    desktopSaveBtn.style.left = "14px";
+    desktopSaveBtn.style.top = "14px";
+    desktopSaveBtn.style.zIndex = "10002";
+    desktopSaveBtn.style.cursor = "pointer";
+    desktopSaveBtn.style.border = "1px solid rgba(0,0,0,0.10)";
+    desktopSaveBtn.style.background = "linear-gradient(180deg,#38bdf8,#1d4ed8)";
+    desktopSaveBtn.style.color = "#fff";
+    desktopSaveBtn.style.font = "900 12px system-ui";
+    desktopSaveBtn.style.padding = "10px 14px";
+    desktopSaveBtn.style.borderRadius = "14px";
+    desktopSaveBtn.style.boxShadow = "0 12px 28px rgba(0,0,0,0.12)";
+    desktopSaveBtn.style.display = isTouchDevice() ? "none" : "block";
+
     if (isTouchDevice()) {
       atkBtn.style.position = "fixed";
       atkBtn.style.right = "18px";
@@ -588,7 +609,7 @@
     return {
       canvas, toast, coord, fps, fade, modal, modalTitle, modalBody, modalHint,
       shopModal, shopCard, shopTitle, shopBody, shopHint,
-      inventoryPanel, equipmentPanel, invBtn, eqBtn, enterBtn, atkBtn, joyState
+      inventoryPanel, equipmentPanel, invBtn, eqBtn, saveBtn, desktopSaveBtn, enterBtn, atkBtn, joyState
     };
   }
 
@@ -837,11 +858,30 @@
       }
     }
 
+    let lastSavedAt = 0;
     function persistGame(force = false) {
       if (!activeProfileId) return;
       try {
         localStorage.setItem(PROFILE_KEY, activeProfileId);
         localStorage.setItem(SAVE_KEY_PREFIX + activeProfileId, JSON.stringify(snapshotSave()));
+        lastSavedAt = performance.now();
+      } catch (_) {}
+    }
+
+    function saveNowToast() {
+      persistGame(true);
+      try {
+        UI.toast.hidden = false;
+        UI.toast.style.display = "block";
+        UI.toast.innerHTML = blockSpan(`💾 저장 완료<br/><b>${activeProfileId}</b>`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
+        clearTimeout(saveNowToast._tid);
+        saveNowToast._tid = setTimeout(() => {
+          if (!shopState.open) {
+            UI.toast.hidden = true;
+            UI.toast.style.display = "none";
+            UI.toast.innerHTML = "";
+          }
+        }, 1400);
       } catch (_) {}
     }
 
@@ -871,6 +911,7 @@
             <button id="startup_begin_btn" style="flex:1;min-width:120px;border:none;border-radius:14px;padding:13px 14px;background:linear-gradient(180deg,#38bdf8,#2563eb);color:#fff;font:1000 14px system-ui;cursor:pointer">시작 / 불러오기</button>
             <button id="startup_new_btn" style="flex:1;min-width:120px;border:none;border-radius:14px;padding:13px 14px;background:linear-gradient(180deg,#334155,#0f172a);color:#fff;font:1000 14px system-ui;cursor:pointer">새 ID 생성</button>
           </div>
+          <div style="margin-top:10px;color:rgba(226,232,240,.6);font:800 12px system-ui">게임 중에는 좌측 상단의 저장 버튼으로 수동 저장할 수 있습니다.</div>
         </div>`;
       document.body.appendChild(overlay);
       const input = overlay.querySelector('#startup_profile_id');
@@ -1429,7 +1470,13 @@
     window.addEventListener("focus", resetPortalResumeState);
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) resetPortalResumeState();
+      else persistGame(true);
     });
+    window.addEventListener("pagehide", () => persistGame(true));
+    window.addEventListener("beforeunload", () => persistGame(true));
+    setInterval(() => {
+      if (activeProfileId && performance.now() - lastSavedAt > 8000) persistGame(true);
+    }, 4000);
 
 
     canvas.addEventListener("pointerdown", (e) => {
@@ -3353,7 +3400,7 @@
 
       ctx.save();
       ctx.translate(18, -5);
-      ctx.rotate(0.26 - armSwing * 0.38 + (attackPose ? (0.35 + 1.18 * attackEase) : 0));
+      ctx.rotate(0.22 - armSwing * 0.38 + (attackPose ? (0.55 + 1.05 * attackEase) : 0));
       ctx.fillStyle = armorBase;
       roundRect(-5, 0, 10, 22, 5);
       ctx.fill();
@@ -3363,8 +3410,8 @@
 
       if (isHero && gear && gear.weaponColor) {
         ctx.save();
-        ctx.translate(4.8, 9.6);
-        ctx.rotate(-0.18 + (attackPose ? (-0.46 - 0.92 * attackEase) : -0.08));
+        ctx.translate(7.2, 6.4);
+        ctx.rotate(0.42 + (attackPose ? (-0.20 - 0.72 * attackEase) : -0.02));
         const weaponGlow = gear.weaponTier ? gear.weaponTier.glow : gear.weaponColor;
         const bladeGrad = ctx.createLinearGradient(0, -40, 0, 14);
         bladeGrad.addColorStop(0, "#ffffff");
@@ -3375,13 +3422,13 @@
         ctx.shadowBlur = 18 + ((gear.weaponTier && gear.weaponTier.label==="MYTHIC") ? 12 : (gear.weaponTier && gear.weaponTier.label==="LEGEND") ? 7 : 0);
         ctx.fillStyle = bladeGrad;
         ctx.beginPath();
-        ctx.moveTo(-3.0, 10);
-        ctx.lineTo(-4.6, -1);
-        ctx.lineTo(-2.7, -22);
-        ctx.lineTo(0, -30);
-        ctx.lineTo(2.7, -22);
-        ctx.lineTo(4.6, -1);
-        ctx.lineTo(3.0, 10);
+        ctx.moveTo(-2.7, 9);
+        ctx.lineTo(-4.0, 0);
+        ctx.lineTo(-2.2, -18);
+        ctx.lineTo(0, -26);
+        ctx.lineTo(2.2, -18);
+        ctx.lineTo(4.0, 0);
+        ctx.lineTo(2.7, 9);
         ctx.closePath();
         ctx.fill();
         ctx.lineWidth = 1.2;
@@ -3408,9 +3455,9 @@
           ctx.beginPath(); ctx.arc(px, py, 1.4 + (plus>6?0.8:0), 0, Math.PI*2); ctx.fill();
         }
         ctx.fillStyle = "rgba(255,255,255,0.98)";
-        ctx.beginPath(); ctx.arc(0, -31, 1.8 + spark, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(3.2, -18, 1.0 + spark*0.5, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(-2.6, -9, 0.9 + spark*0.35, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, -27, 1.8 + spark, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(2.8, -15, 1.0 + spark*0.5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-2.2, -7, 0.9 + spark*0.35, 0, Math.PI*2); ctx.fill();
         ctx.restore();
       }
       ctx.restore();
@@ -3831,6 +3878,13 @@
     let touchTapAt = 0;
     let portalSuppressUntil = 0;
     let startupOverlayOpen = true;
+
+    window.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === "s") {
+        e.preventDefault();
+        saveNowToast();
+      }
+    });
 
     function update(dt, t, rng) {
       if (startupOverlayOpen) {
