@@ -325,9 +325,11 @@
     mobileBtns.style.right = "auto";
     mobileBtns.style.zIndex = "10002";
     mobileBtns.style.display = isTouchDevice() ? "flex" : "none";
-    mobileBtns.style.flexDirection = "column";
-    mobileBtns.style.alignItems = "flex-start";
+    mobileBtns.style.flexDirection = "row";
+    mobileBtns.style.flexWrap = "wrap";
+    mobileBtns.style.alignItems = "center";
     mobileBtns.style.gap = "8px";
+    mobileBtns.style.width = "220px";
 
     const invBtn = ensureEl("btn_inventory", "button", mobileBtns);
     const eqBtn = ensureEl("btn_equipment", "button", mobileBtns);
@@ -346,13 +348,19 @@
     [invBtn, eqBtn, saveBtn, enterBtn, atkBtn, fireBtn, hasteBtn].forEach((b) => {
       b.style.minWidth = "96px";
       b.style.cursor = "pointer";
-      b.style.border = "1px solid rgba(0,0,0,0.10)";
+      b.style.border = "1px solid rgba(255,255,255,0.12)";
       b.style.background = "rgba(255,255,255,0.92)";
       b.style.color = "#0a0e18";
       b.style.font = "900 12px system-ui";
       b.style.padding = "12px 14px";
       b.style.borderRadius = "14px";
       b.style.boxShadow = "0 12px 28px rgba(0,0,0,0.12)";
+      b.style.transition = "transform 90ms ease, filter 90ms ease, opacity 90ms ease";
+    });
+    [invBtn, eqBtn, saveBtn, enterBtn, atkBtn, fireBtn, hasteBtn].forEach((b)=>{
+      b.addEventListener("pointerdown", ()=>{ b.style.transform = "scale(0.94)"; b.style.filter = "brightness(0.92)"; });
+      const up=()=>{ b.style.transform = "scale(1)"; b.style.filter = "brightness(1)"; };
+      b.addEventListener("pointerup", up); b.addEventListener("pointercancel", up); b.addEventListener("pointerleave", up);
     });
     saveBtn.style.background = "linear-gradient(180deg,#38bdf8,#1d4ed8)";
     saveBtn.style.color = "#fff";
@@ -378,8 +386,8 @@
     const desktopFireBtn = ensureEl("btn_fireball_desktop", "button");
     const desktopHasteBtn = ensureEl("btn_haste_desktop", "button");
     desktopSaveBtn.textContent = "저장";
-    desktopFireBtn.textContent = "파이어볼";
-    desktopHasteBtn.textContent = "가속";
+    desktopFireBtn.textContent = "FIRE";
+    desktopHasteBtn.textContent = "SPEED";
     desktopSaveBtn.style.position = "fixed";
     desktopSaveBtn.style.left = "14px";
     desktopSaveBtn.style.top = "14px";
@@ -411,30 +419,63 @@
     desktopHasteBtn.style.background = "linear-gradient(180deg,#22c55e,#0f766e)";
 
     if (isTouchDevice()) {
+      saveBtn.style.position = "fixed";
+      saveBtn.style.left = "10px";
+      saveBtn.style.top = "10px";
+      saveBtn.style.zIndex = "10004";
+      saveBtn.style.minWidth = "0";
+      saveBtn.style.padding = "10px 12px";
+      invBtn.style.position = "fixed";
+      invBtn.style.left = "10px";
+      invBtn.style.top = "54px";
+      invBtn.style.zIndex = "10004";
+      invBtn.style.minWidth = "72px";
+      eqBtn.style.position = "fixed";
+      eqBtn.style.left = "88px";
+      eqBtn.style.top = "54px";
+      eqBtn.style.zIndex = "10004";
+      eqBtn.style.minWidth = "72px";
       atkBtn.style.position = "fixed";
       atkBtn.style.right = "18px";
-      atkBtn.style.bottom = "32px";
+      atkBtn.style.bottom = "26px";
       atkBtn.style.left = "auto";
       atkBtn.style.top = "auto";
       atkBtn.style.zIndex = "10003";
+      atkBtn.style.width = "78px";
+      atkBtn.style.height = "78px";
+      atkBtn.style.minWidth = "78px";
+      atkBtn.style.padding = "0";
+      atkBtn.style.borderRadius = "999px";
       enterBtn.style.position = "fixed";
       enterBtn.style.right = "18px";
-      enterBtn.style.bottom = "160px";
+      enterBtn.style.bottom = "188px";
       enterBtn.style.left = "auto";
       enterBtn.style.top = "auto";
       enterBtn.style.zIndex = "10003";
       fireBtn.style.position = "fixed";
-      fireBtn.style.right = "18px";
-      fireBtn.style.bottom = "96px";
+      fireBtn.style.right = "106px";
+      fireBtn.style.bottom = "40px";
       fireBtn.style.left = "auto";
       fireBtn.style.top = "auto";
       fireBtn.style.zIndex = "10003";
+      fireBtn.style.width = "64px";
+      fireBtn.style.height = "64px";
+      fireBtn.style.minWidth = "64px";
+      fireBtn.style.padding = "0";
+      fireBtn.style.borderRadius = "999px";
       hasteBtn.style.position = "fixed";
-      hasteBtn.style.right = "18px";
-      hasteBtn.style.bottom = "224px";
+      hasteBtn.style.right = "28px";
+      hasteBtn.style.bottom = "114px";
       hasteBtn.style.left = "auto";
       hasteBtn.style.top = "auto";
       hasteBtn.style.zIndex = "10003";
+      hasteBtn.style.width = "64px";
+      hasteBtn.style.height = "64px";
+      hasteBtn.style.minWidth = "64px";
+      hasteBtn.style.padding = "0";
+      hasteBtn.style.borderRadius = "999px";
+      mobileBtns.style.pointerEvents = "none";
+      [saveBtn, invBtn, eqBtn, atkBtn, enterBtn, fireBtn, hasteBtn].forEach((b)=> b.style.pointerEvents = "auto");
     }
 
     const style = ensureEl("lego_style_injected", "style", document.head);
@@ -468,6 +509,9 @@
       .item-icon {
         width:52px; height:52px; border-radius:14px; flex:0 0 52px;
         border:1px solid rgba(255,255,255,0.10);
+      .skill-cd { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; border-radius:inherit; background:rgba(2,6,23,0.42); color:#fff; font:900 14px system-ui; letter-spacing:0.02em; }
+      .cooling { filter:saturate(0.82) brightness(0.92); }
+
         box-shadow:inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 20px rgba(2,6,23,0.28);
         position:relative; overflow:hidden;
       }
@@ -921,12 +965,14 @@
     function saveNowToast() {
       persistGame(true);
       try {
+        mobileToastUntil = performance.now() + 1600;
         UI.toast.hidden = false;
         UI.toast.style.display = "block";
+        UI.toast.style.top = isTouchDevice() ? "84px" : "92px";
         UI.toast.innerHTML = blockSpan(`💾 저장되었습니다<br/><b>${activeProfileId}</b>`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
         clearTimeout(saveNowToast._tid);
         saveNowToast._tid = setTimeout(() => {
-          if (!shopState.open) {
+          if (!shopState.open && performance.now() >= mobileToastUntil) {
             UI.toast.hidden = true;
             UI.toast.style.display = "none";
             UI.toast.innerHTML = "";
@@ -1497,10 +1543,20 @@
       if (combatState.fireballCd > now) return;
       const anchor = getAttackAnchor();
       const base = playerAttackPower();
+      const targets = [...combatState.slimes, ...combatState.titans].filter((m) => !m.dead);
+      let target = null;
+      let best = Infinity;
+      for (const m of targets) {
+        const d = Math.hypot(m.x - player.x, m.y - player.y);
+        if (d < best) { best = d; target = m; }
+      }
+      const aimX = target ? target.x - anchor.x : anchor.vx * 120 + anchor.x;
+      const aimY = target ? target.y - anchor.y : anchor.vy * 120 + anchor.y;
+      const len = Math.hypot(aimX, aimY) || 1;
       combatState.fireballCd = now + 3000;
       combatState.fireballs.push({
-        x: anchor.x, y: anchor.y, vx: anchor.vx * 420, vy: anchor.vy * 420,
-        life: 1.25, radius: 14, damage: Math.max(2, Math.round(base * 2)), burn: 2.8
+        x: anchor.x, y: anchor.y, vx: (aimX / len) * 520, vy: (aimY / len) * 520,
+        life: 1.4, radius: 14, damage: Math.max(2, Math.round(base * 2)), burn: 2.8, targetId: target ? target.id : null
       });
       player.gearFlashT = 0.35;
     }
@@ -3284,7 +3340,7 @@
     }
 
     function drawMiniMap() {
-      const mw = 220, mh = 154;
+      const mw = isTouchDevice() ? 146 : 220, mh = isTouchDevice() ? 104 : 154;
       const x = W - mw - 18, y = 18;
       ctx.save();
       ctx.fillStyle = "rgba(255,255,255,0.84)";
@@ -3507,7 +3563,7 @@
 
       ctx.save();
       ctx.translate(18, -5);
-      ctx.rotate(0.22 - armSwing * 0.38 + (attackPose ? (0.55 + 1.05 * attackEase) : 0));
+      ctx.rotate(0.18 - armSwing * 0.26 + (attackPose ? (-0.72 - 0.95 * attackEase) : -0.42));
       ctx.fillStyle = armorBase;
       roundRect(-5, 0, 10, 22, 5);
       ctx.fill();
@@ -3517,8 +3573,8 @@
 
       if (isHero && gear && gear.weaponColor) {
         ctx.save();
-        ctx.translate(7.2, 6.4);
-        ctx.rotate(0.42 + (attackPose ? (-0.20 - 0.72 * attackEase) : -0.02));
+        ctx.translate(1.8, 13.6);
+        ctx.rotate(-0.88 + (attackPose ? (-0.54 - 0.66 * attackEase) : -0.18));
         const weaponGlow = gear.weaponTier ? gear.weaponTier.glow : gear.weaponColor;
         const bladeGrad = ctx.createLinearGradient(0, -40, 0, 14);
         bladeGrad.addColorStop(0, "#ffffff");
@@ -4040,8 +4096,9 @@
 
         if (moving) {
           const len = Math.hypot(ax, ay) || 1;
-          const vx = (ax / len) * player.speed * dt;
-          const vy = (ay / len) * player.speed * dt;
+          const hasteMul = performance.now() < combatState.hasteUntil ? 4 : 1;
+          const vx = (ax / len) * player.speed * hasteMul * dt;
+          const vy = (ay / len) * player.speed * hasteMul * dt;
           player.x += vx;
           player.y += vy;
           clampPlayerToWorld();
@@ -4232,6 +4289,20 @@
       for (let i = combatState.fireballs.length - 1; i >= 0; i--) {
         const f = combatState.fireballs[i];
         f.life -= dt;
+        const liveTargets = [...combatState.slimes, ...combatState.titans].filter((m) => !m.dead);
+        let lock = liveTargets.find((m) => m.id === f.targetId) || null;
+        if (!lock && liveTargets.length) {
+          lock = liveTargets.reduce((best, m) => (!best || Math.hypot(m.x - f.x, m.y - f.y) < Math.hypot(best.x - f.x, best.y - f.y)) ? m : best, null);
+          if (lock) f.targetId = lock.id;
+        }
+        if (lock) {
+          const dx = lock.x - f.x, dy = lock.y - f.y;
+          const len = Math.hypot(dx, dy) || 1;
+          const targetVx = (dx / len) * 520;
+          const targetVy = (dy / len) * 520;
+          f.vx += (targetVx - f.vx) * Math.min(1, dt * 4.5);
+          f.vy += (targetVy - f.vy) * Math.min(1, dt * 4.5);
+        }
         f.x += f.vx * dt;
         f.y += f.vy * dt;
         let hit = false;
@@ -4331,6 +4402,19 @@
       if (isTouchDevice()) {
         if (!activePortal) lastMobileZoneKey = "";
       }
+
+      const nowCd = performance.now();
+      const cdFire = Math.max(0, (combatState.fireballCd - nowCd) / 1000);
+      const cdSpeed = Math.max(0, (combatState.hasteCd - nowCd) / 1000);
+      const applyCd = (btn, secs, base) => {
+        if (!btn) return;
+        btn.classList.toggle("cooling", secs > 0.01);
+        btn.innerHTML = secs > 0.01 ? `<span>${base}</span><span class="skill-cd">${secs.toFixed(secs > 9 ? 0 : 1)}</span>` : `<span>${base}</span>`;
+      };
+      applyCd(UI.fireBtn, cdFire, "FIRE");
+      applyCd(UI.hasteBtn, cdSpeed, "SPEED");
+      applyCd(UI.desktopFireBtn, cdFire, "FIRE");
+      applyCd(UI.desktopHasteBtn, cdSpeed, "SPEED");
 
       updateCamera(dt);
 
