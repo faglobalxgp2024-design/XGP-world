@@ -167,7 +167,9 @@
     toast.style.position = "fixed";
     toast.style.left = "50%";
     toast.style.top = "92px";
-    toast.style.transform = "translateX(-50%)";
+    toast.style.transform = "translate(-50%, 0)";
+    toast.style.right = "auto";
+    toast.style.width = "max-content";
     toast.style.zIndex = "9999";
     toast.style.maxWidth = "min(720px, calc(100vw - 28px))";
     toast.style.textAlign = "center";
@@ -386,8 +388,8 @@
     const desktopFireBtn = ensureEl("btn_fireball_desktop", "button");
     const desktopHasteBtn = ensureEl("btn_haste_desktop", "button");
     desktopSaveBtn.textContent = "저장";
-    desktopFireBtn.textContent = "FIRE";
-    desktopHasteBtn.textContent = "SPEED";
+    desktopFireBtn.textContent = "Q  FIRE";
+    desktopHasteBtn.textContent = "R  SPEED";
     desktopSaveBtn.style.position = "fixed";
     desktopSaveBtn.style.left = "14px";
     desktopSaveBtn.style.top = "14px";
@@ -403,8 +405,8 @@
     desktopSaveBtn.style.display = isTouchDevice() ? "none" : "block";
     [desktopFireBtn, desktopHasteBtn].forEach((b, i) => {
       b.style.position = "fixed";
-      b.style.right = "14px";
-      b.style.top = `${14 + i * 46}px`;
+      b.style.right = `${14 + i * 98}px`;
+      b.style.top = "182px";
       b.style.zIndex = "10002";
       b.style.cursor = "pointer";
       b.style.border = "1px solid rgba(0,0,0,0.10)";
@@ -1853,7 +1855,7 @@
       const boxW = (a.w - sideGap) * 0.5;
       const topH = a.h * 0.40;
       const adW = a.w * 0.94;
-      const adH = a.h * 0.18;
+      const adH = a.h * 0.18 + 220;
       ZONES = {
         game: {
           x: a.x,
@@ -2133,10 +2135,10 @@
         { key: "tiktok", label: "TIKTOK", color: "#111827", accent: "#f472b6" },
         { key: "instagram", label: "INSTAGRAM", color: "#8b5cf6", accent: "#f59e0b" }
       ];
-      const startX = ZONES.ads.x + 260;
-      const gap = 120;
-      const w = 380, h = 248;
-      const y = ZONES.ads.y + 36;
+      const startX = ZONES.ads.x + 210;
+      const gap = 82;
+      const w = 428, h = 274;
+      const y = ZONES.ads.y + 44;
       for (let i = 0; i < items.length; i++) {
         adBuildings.push({ ...items[i], x: startX + i * (w + gap), y, w, h });
       }
@@ -2270,7 +2272,7 @@
 
       for (const n of roamers) {
         n.t += dt;
-        if (Math.hypot(n.tx - n.x, n.ty - n.y) < 14 || rng() < 0.004) {
+        if (Math.hypot(n.tx - n.x, n.ty - n.y) < 26 || rng() < 0.002) {
           let nx = n.x, ny = n.y;
           for (let k = 0; k < 64; k++) {
             nx = ART_BOUNDS.village.x + rng() * ART_BOUNDS.village.w;
@@ -2282,8 +2284,9 @@
         }
         const dx = n.tx - n.x, dy = n.ty - n.y;
         const len = Math.hypot(dx, dy) || 1;
-        n.x += (dx / len) * n.speed * dt;
-        n.y += (dy / len) * n.speed * dt;
+        const step = Math.min(len, n.speed * dt);
+        n.x += (dx / len) * step;
+        n.y += (dy / len) * step;
         if (!isInVillage(n.x, n.y, 6) || isOnRoadLike(n.x, n.y)) {
           n.x = clamp(n.x, ART_BOUNDS.village.x + 6, ART_BOUNDS.village.x + ART_BOUNDS.village.w - 6);
           n.y = clamp(n.y, ART_BOUNDS.village.y + 6, ART_BOUNDS.village.y + ART_BOUNDS.village.h - 6);
@@ -3479,11 +3482,11 @@
       const shield = getItemById(inventoryState.equipped.shield);
       return {
         hatColor: hat ? hat.color : null,
-        armorColor: armor ? armor.color : null,
+        armorColor: null,
         weaponColor: weapon ? weapon.color : null,
         shieldColor: shield ? shield.color : null,
         hatTier: hat ? rarityStyle(hat.price) : null,
-        armorTier: armor ? rarityStyle(armor.price) : null,
+        armorTier: null,
         weaponTier: weapon ? rarityStyle(weapon.price) : null,
         shieldTier: shield ? rarityStyle(shield.price) : null,
         weaponPlus: getEnhanceLevel("weapon"),
@@ -3552,7 +3555,7 @@
       ctx.globalAlpha = 1;
 
       const armorBase = gear && gear.armorColor ? gear.armorColor : '#111827';
-      const accentGlow = gear?.weaponTier?.color || gear?.armorTier?.color || '#60a5fa';
+      const accentGlow = '#374151';
 
       ctx.save();
       ctx.translate(0, 10);
@@ -4455,12 +4458,16 @@
           }
         } else if (performance.now() >= portalSuppressUntil) {
           const msg = activePortal.key === "blacksmith"
-            ? `⚒ <b>${activePortal.label}</b><br/>상점에 입장하시겠습니까?<br/><span style="font-size:12px;opacity:0.78">Enter / E</span>`
+            ? `⚒ <b>${activePortal.label}</b><br/>포털로 입장하시겠습니까?<br/><span style="font-size:12px;opacity:0.78">Enter / E</span>`
             : (activePortal.status === "open" && activePortal.url
-              ? `🧱 <b>${activePortal.label}</b><br/>입장하시겠습니까?<br/><span style="font-size:12px;opacity:0.78">Enter / E</span>`
+              ? `🧱 <b>${activePortal.label}</b><br/>포털로 입장하시겠습니까?<br/><span style="font-size:12px;opacity:0.78">Enter / E</span>`
               : `🧱 <b>${activePortal.label}</b><br/>${activePortal.message || "게임 준비중입니다."}<br/><span style="font-size:12px;opacity:0.78">Enter / E</span>`);
           UI.toast.hidden = false;
           UI.toast.style.display = "block";
+          UI.toast.style.left = "50%";
+          UI.toast.style.right = "auto";
+          UI.toast.style.top = "86px";
+          UI.toast.style.transform = "translate(-50%, 0)";
           UI.toast.innerHTML = blockSpan(msg, { bg: "linear-gradient(180deg, rgba(8,12,22,0.98), rgba(15,23,42,0.95))", fg: "#f8fafc", pad: "12px 18px", radius: "18px", border: "1px solid rgba(148,163,184,0.16)", shadow: "0 14px 30px rgba(2,6,23,0.22)" });
         }
       } else if (!modalState.open) {
@@ -4756,6 +4763,7 @@
         const cs=getComputedStyle(el);
         const top=parseFloat(cs.top||'999'); const left=parseFloat(cs.left||'999');
         const fixed=(cs.position==='fixed'||cs.position==='sticky'||cs.position==='absolute');
+        if(el.id==='toast' || el.id==='lego_modal' || el.id==='lego_modal_inner') continue;
         if(fixed && top<90 && left<520 && ((t.includes('Enter')||t.includes('/E')||t.includes('손 떼면')) && t.includes('입장'))){
           el.style.display='none'; el.style.visibility='hidden'; el.style.opacity='0'; el.style.pointerEvents='none';
         }
