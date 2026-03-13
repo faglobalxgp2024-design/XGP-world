@@ -183,6 +183,7 @@
     coord.style.font = "900 12px system-ui";
     coord.style.color = "rgba(10,18,30,0.80)";
     stylePanel(coord, { radius: "12px", shadow: "0 10px 24px rgba(0,0,0,0.12)" });
+    coord.style.display = "none";
 
     const fps = ensureEl("fps", "div");
     fps.style.position = "fixed";
@@ -193,6 +194,7 @@
     fps.style.font = "900 12px system-ui";
     fps.style.color = "rgba(10,18,30,0.80)";
     stylePanel(fps, { radius: "12px", shadow: "0 10px 24px rgba(0,0,0,0.12)" });
+    fps.style.display = "none";
 
     const fade = ensureEl("fade", "div");
     fade.style.position = "fixed";
@@ -778,7 +780,8 @@
         armor: "armor_shadow",
         weapon: "weapon_blade",
         shield: "shield_guard"
-      }
+      },
+      enhance: { weapon: 0, shield: 0, hat: 0, armor: 0 }
     };
 
     function rarityStyle(price = 0) {
@@ -851,17 +854,23 @@
       return inventoryState.items.find((it) => it.id === id) || null;
     }
 
+    function getEnhanceLevel(slot) {
+      return inventoryState.enhance?.[slot] || 0;
+    }
+
     function statLine(item) {
       if (!item) return "";
       const parts = [];
-      if (item.atk) parts.push(`ATK +${item.atk}`);
-      if (item.def) parts.push(`DEF +${item.def}`);
+      const plus = getEnhanceLevel(item.slot);
+      if (item.atk) parts.push(`ATK +${item.atk + plus * 2}` + (plus ? `  (+${plus})` : ""));
+      if (item.def) parts.push(`DEF +${item.def + plus * 2}` + (plus ? `  (+${plus})` : ""));
       return parts.join(" · ");
     }
 
     function playerAttackPower() {
       const weapon = getItemById(inventoryState.equipped.weapon);
-      return 1 + (weapon?.atk || 6);
+      const plus = getEnhanceLevel("weapon");
+      return 1 + (weapon?.atk || 6) + plus * 2;
     }
 
     function spawnDamageText(x, y, text, color = "#ffffff", scale = 1) {
@@ -899,6 +908,45 @@
       renderShop();
     }
 
+    function enhanceCost(slot) {
+      const lv = getEnhanceLevel(slot);
+      return 120 + lv * 80;
+    }
+
+    function tryEnhance(slot = "weapon") {
+      const item = getItemById(inventoryState.equipped[slot]);
+      if (!item) return;
+      const lv = getEnhanceLevel(slot);
+      if (lv >= 10) {
+        UI.toast.hidden = false;
+        UI.toast.style.display = "block";
+        UI.toast.innerHTML = blockSpan(`✨ <b>${item.name}</b> 는 이미 <b>+10</b> 입니다.`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
+        return;
+      }
+      const cost = enhanceCost(slot);
+      if (combatState.stars < cost) {
+        UI.toast.hidden = false;
+        UI.toast.style.display = "block";
+        UI.toast.innerHTML = blockSpan(`⭐ 강화 비용 부족<br/><b>${cost}</b> STAR 필요`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
+        return;
+      }
+      combatState.stars -= cost;
+      const successRate = Math.max(0.45, 0.92 - lv * 0.05);
+      if (Math.random() <= successRate) {
+        inventoryState.enhance[slot] = lv + 1;
+        player.gearFlashT = 0.9;
+        UI.toast.hidden = false;
+        UI.toast.style.display = "block";
+        UI.toast.innerHTML = blockSpan(`✨ <b>${item.name}</b> 강화 성공 <b>+${lv + 1}</b>`, { bg: "rgba(15,23,42,0.94)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
+      } else {
+        UI.toast.hidden = false;
+        UI.toast.style.display = "block";
+        UI.toast.innerHTML = blockSpan(`💥 <b>${item.name}</b> 강화 실패`, { bg: "rgba(15,23,42,0.94)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
+      }
+      renderPanels();
+      if (shopState.open) renderShop(shopState.filter || "all");
+    }
+
     function renderShop(filter = shopState.filter || "all") {
       shopState.filter = filter;
       shopState.open = true;
@@ -919,10 +967,10 @@
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <div style="padding:10px 12px;border-radius:999px;background:linear-gradient(180deg,rgba(245,158,11,0.22),rgba(251,191,36,0.10));border:1px solid rgba(251,191,36,0.25);font:1000 14px system-ui;color:#fde68a">★ ${combatState.stars} STAR</div>
-            <button id="shop_close_btn" style="border:none;border-radius:12px;padding:10px 12px;background:linear-gradient(180deg,#334155,#0f172a);color:#fff;font:900 12px system-ui;cursor:pointer">닫기</button>
+            <button id="shop_enhance_btn" style="border:none;border-radius:12px;padding:10px 12px;background:linear-gradient(180deg,#f59e0b,#ea580c);color:#fff;font:900 12px system-ui;cursor:pointer">무기 강화</button><button id="shop_close_btn" style="border:none;border-radius:12px;padding:10px 12px;background:linear-gradient(180deg,#334155,#0f172a);color:#fff;font:900 12px system-ui;cursor:pointer">닫기</button>
           </div>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">${filters.map((f) => `<button class="shop_filter_btn" data-filter="${f.key}" style="border:none;border-radius:999px;padding:9px 12px;cursor:pointer;background:${filter===f.key ? "linear-gradient(180deg,#38bdf8,#2563eb)" : "linear-gradient(180deg,#1e293b,#0f172a)"};color:#fff;font:900 11px system-ui">${f.label}</button>`).join("")}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">${filters.map((f) => `<button class="shop_filter_btn" data-filter="${f.key}" style="border:none;border-radius:999px;padding:9px 12px;cursor:pointer;background:${filter===f.key ? "linear-gradient(180deg,#38bdf8,#2563eb)" : "linear-gradient(180deg,#1e293b,#0f172a)"};color:#fff;font:900 11px system-ui">${f.label}</button>`).join("")}<div style="margin-left:auto;padding:9px 12px;border-radius:999px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.22);color:#fde68a;font:900 11px system-ui">현재 무기 강화 +${getEnhanceLevel("weapon")} · 비용 ${enhanceCost("weapon")} STAR</div></div>
       `;
       if (!items.length) {
         UI.shopBody.innerHTML = `<div style="margin-top:18px;padding:24px;border-radius:20px;background:linear-gradient(180deg,rgba(15,23,42,0.96),rgba(30,41,59,0.92));border:1px solid rgba(148,163,184,0.18);font:900 14px system-ui;color:rgba(226,232,240,0.82)">모든 상품을 구매했습니다.</div>`;
@@ -949,6 +997,8 @@
 
       const closeBtn = document.getElementById("shop_close_btn");
       if (closeBtn) closeBtn.onclick = () => closeShop();
+      const enhanceBtn = document.getElementById("shop_enhance_btn");
+      if (enhanceBtn) enhanceBtn.onclick = () => tryEnhance("weapon");
       document.querySelectorAll(".shop_filter_btn").forEach((btn) => {
         btn.onclick = () => renderShop(btn.dataset.filter || "all");
       });
@@ -1761,11 +1811,15 @@
       portalEmblems = [];
       layoutAdBuildings();
 
+      function nearAnyEntrance(x, y, pad = 220) {
+        return [ZONES.game, ZONES.community, ZONES.ads].some((z) => z.entrance && x >= z.entrance.x - pad && x <= z.entrance.x + z.entrance.w + pad && y >= z.entrance.y - pad && y <= z.entrance.y + z.entrance.h + pad);
+      }
       const okNature = (x, y) =>
         isInVillage(x, y, 10) &&
         !isOnRoadLike(x, y) &&
         !isInsideBuildingBuffer(x, y) &&
-        !isInsideZonesBuffer(x, y);
+        !isInsideZonesBuffer(x, y) &&
+        !nearAnyEntrance(x, y);
 
       const treePts = scatterPoints(rng, 24, 104, 7000, okNature);
       for (const p of treePts) props.push({ kind: "tree", x: p.x, y: p.y, s: 0.82 + rng() * 1.00 });
@@ -2636,14 +2690,14 @@
           forgeWall.addColorStop(0, "#5b3a28");
           forgeWall.addColorStop(1, "#241711");
           ctx.fillStyle = forgeWall;
-          roundRect(x + w * 0.02, wallY, w * 0.96, wallH, 26);
+          roundRect(x, wallY, w, wallH, 26);
           ctx.fill();
           ctx.fillStyle = "#6b1d1d";
           ctx.beginPath();
-          ctx.moveTo(x + w * 0.08, wallY + 10);
-          ctx.lineTo(x + w * 0.92, wallY + 10);
-          ctx.lineTo(x + w * 0.80, y + 12);
-          ctx.lineTo(x + w * 0.20, y + 12);
+          ctx.moveTo(x + w * 0.05, wallY + 10);
+          ctx.lineTo(x + w * 0.95, wallY + 10);
+          ctx.lineTo(x + w * 0.78, y + 14);
+          ctx.lineTo(x + w * 0.22, y + 14);
           ctx.closePath();
           ctx.fill();
           ctx.fillStyle = "#111827";
@@ -3041,7 +3095,11 @@
         hatTier: hat ? rarityStyle(hat.price) : null,
         armorTier: armor ? rarityStyle(armor.price) : null,
         weaponTier: weapon ? rarityStyle(weapon.price) : null,
-        shieldTier: shield ? rarityStyle(shield.price) : null
+        shieldTier: shield ? rarityStyle(shield.price) : null,
+        weaponPlus: getEnhanceLevel("weapon"),
+        shieldPlus: getEnhanceLevel("shield"),
+        hatPlus: getEnhanceLevel("hat"),
+        armorPlus: getEnhanceLevel("armor")
       };
     }
 
@@ -3214,7 +3272,15 @@
         roundRect(-10, 8, 20, 4.5, 2.4); ctx.fill();
         ctx.fillStyle = shade(gear.weaponColor, -18);
         roundRect(-3.2, 11, 6.4, 12, 3.2); ctx.fill();
+        const plus = gear.weaponPlus || 0;
         const spark = 0.35 + 0.45 * Math.sin(performance.now()/170);
+        for (let i = 0; i < Math.max(2, plus); i++) {
+          const ang = performance.now()/240 + i * (Math.PI*2/Math.max(2, plus));
+          const px = Math.cos(ang) * (8 + plus * 0.9);
+          const py = Math.sin(ang) * (15 + plus * 0.6) - 12;
+          ctx.fillStyle = (gear.weaponTier?.flame || weaponGlow) + "cc";
+          ctx.beginPath(); ctx.arc(px, py, 1.4 + (plus>6?0.8:0), 0, Math.PI*2); ctx.fill();
+        }
         ctx.fillStyle = "rgba(255,255,255,0.98)";
         ctx.beginPath(); ctx.arc(0, -31, 1.8 + spark, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(3.2, -18, 1.0 + spark*0.5, 0, Math.PI*2); ctx.fill();
@@ -3352,21 +3418,20 @@
 
     function seedTitans(rng) {
       combatState.titans.length = 0;
-      const titanSpots = [
-        { x: ZONES.game.x + ZONES.game.w * 0.52, y: ZONES.game.y + ZONES.game.h + 260 },
-        { x: ZONES.community.x + ZONES.community.w * 0.62, y: ZONES.community.y + ZONES.community.h + 240 },
-        { x: ZONES.ads.x + ZONES.ads.w * 0.42, y: ZONES.ads.y + ZONES.ads.h + 250 },
-        { x: ZONES.community.x + ZONES.community.w * 0.30, y: ZONES.community.y + ZONES.community.h + 300 }
+      const spawnBands = [
+        { x0: ART_BOUNDS.village.x + 420, x1: ART_BOUNDS.village.x + ART_BOUNDS.village.w * 0.45, y0: ART_BOUNDS.village.y + 420, y1: ART_BOUNDS.village.y + ART_BOUNDS.village.h * 0.58 },
+        { x0: ART_BOUNDS.village.x + ART_BOUNDS.village.w * 0.52, x1: ART_BOUNDS.village.x + ART_BOUNDS.village.w - 460, y0: ART_BOUNDS.village.y + 420, y1: ART_BOUNDS.village.y + ART_BOUNDS.village.h * 0.70 },
+        { x0: ART_BOUNDS.village.x + 480, x1: ART_BOUNDS.village.x + ART_BOUNDS.village.w - 520, y0: ART_BOUNDS.village.y + ART_BOUNDS.village.h * 0.46, y1: ART_BOUNDS.village.y + ART_BOUNDS.village.h - 420 }
       ];
       const pickSpot = (i) => {
-        const s = titanSpots[i % titanSpots.length];
-        return { x: s.x + (rng() - 0.5) * 120, y: s.y + (rng() - 0.5) * 90 };
+        const s = spawnBands[i % spawnBands.length];
+        return { x: s.x0 + rng() * (s.x1 - s.x0), y: s.y0 + rng() * (s.y1 - s.y0) };
       };
       const bruteSpot = pickSpot(0);
       const colossusSpot = pickSpot(2);
       const defs = [
-        { key: "brute", label: "MECHA BRUTE", scale: 20, maxHp: 420, reward: 10, x: bruteSpot.x, y: bruteSpot.y, speed: 18 },
-        { key: "colossus", label: "VOID COLOSSUS", scale: 60, maxHp: 2600, reward: 50, x: colossusSpot.x, y: colossusSpot.y, speed: 8 }
+        { key: "brute", label: "MECHA BRUTE", scale: 40, maxHp: 900, reward: 15, x: bruteSpot.x, y: bruteSpot.y, speed: 18 },
+        { key: "colossus", label: "VOID COLOSSUS", scale: 120, maxHp: 4200, reward: 60, x: colossusSpot.x, y: colossusSpot.y, speed: 8 }
       ];
       for (const d of defs) {
         combatState.titans.push({
@@ -3664,18 +3729,26 @@
         else if (player.dir === 'right') fxX += 36;
         else if (player.dir === 'up') fxY -= 32;
         else fxY += 18;
-        const damage = playerAttackPower();
-        combatState.slashFx.push({ x: fxX, y: fxY, dir: player.dir, life: 0.20 });
+        combatState.combo = combatState.combo || 0;
+        combatState.comboT = combatState.comboT || 0;
+        combatState.combo = Math.min(3, combatState.combo + 1);
+        combatState.comboT = 1.1;
+        const baseDamage = playerAttackPower();
+        const comboBonus = 1 + (combatState.combo - 1) * 0.22;
+        const critChance = 0.14 + getEnhanceLevel("weapon") * 0.015;
+        combatState.slashFx.push({ x: fxX, y: fxY, dir: player.dir, life: 0.28, combo: combatState.combo, color: getEquippedVisuals().weaponTier?.glow || getEquippedVisuals().weaponColor || "#ffffff" });
         for (const m of combatState.slimes) {
           if (m.dead) continue;
           if (Math.hypot(m.x - fxX, m.y - fxY) < range) {
+            const crit = Math.random() < critChance;
+            const damage = Math.max(1, Math.round(baseDamage * comboBonus * (crit ? 1.85 : 1)));
             m.hp -= damage;
-            spawnDamageText(m.x, m.y - 18, `-${damage}`, "#fca5a5", 0.9);
+            spawnDamageText(m.x, m.y - 18, `${crit ? "CRIT " : ""}-${damage}`, crit ? "#facc15" : "#fca5a5", crit ? 3.2 : 2.7);
             if (m.hp <= 0) {
               m.dead = true;
               m.respawn = 7;
               combatState.stars += 1;
-              spawnDamageText(m.x, m.y - 34, "+1 STAR", "#fde68a", 0.95);
+              spawnDamageText(m.x, m.y - 34, "+1 STAR", "#fde68a", 2.4);
               renderPanels();
             }
           }
@@ -3684,23 +3757,25 @@
           if (m.dead) continue;
           const hitR = m.scale * 1.2;
           if (Math.hypot(m.x - fxX, m.y - fxY) < range + hitR) {
-            const bossDamage = Math.max(2, Math.round(damage * 0.85));
+            const crit = Math.random() < critChance * 0.85;
+            const bossDamage = Math.max(2, Math.round(baseDamage * 0.9 * comboBonus * (crit ? 1.7 : 1)));
             m.hp -= bossDamage;
             m.hitFlash = 0.8;
             m.vx += (m.x - player.x) * 0.08;
             m.vy += (m.y - player.y) * 0.05;
-            spawnDamageText(m.x, m.y - m.scale * 1.9, `-${bossDamage}`, "#fda4af", 1.15);
+            spawnDamageText(m.x, m.y - m.scale * 1.9, `${crit ? "CRIT " : ""}-${bossDamage}`, crit ? "#facc15" : "#fda4af", crit ? 3.4 : 2.9);
             if (m.hp <= 0) {
               m.dead = true;
               m.respawn = 18;
               combatState.stars += m.reward;
-              spawnDamageText(m.x, m.y - m.scale * 2.1, `+${m.reward} STAR`, "#fde68a", 1.2);
+              spawnDamageText(m.x, m.y - m.scale * 2.1, `+${m.reward} STAR`, "#fde68a", 2.7);
               renderPanels();
             }
           }
         }
       }
       if (combatState.attackT <= 0) combatState.canAttack = true;
+      if (combatState.comboT) { combatState.comboT = Math.max(0, combatState.comboT - dt); if (combatState.comboT <= 0) combatState.combo = 0; }
       for (let i = combatState.slashFx.length - 1; i >= 0; i--) {
         combatState.slashFx[i].life -= dt;
         if (combatState.slashFx[i].life <= 0) combatState.slashFx.splice(i, 1);
@@ -3854,20 +3929,21 @@
         ctx.translate(fx.x, fx.y);
         const rot = fx.dir === 'left' ? Math.PI : fx.dir === 'up' ? -Math.PI/2 : fx.dir === 'down' ? Math.PI/2 : 0;
         ctx.rotate(rot);
+        const fxCol = fx.color || 'rgba(147,197,253,0.92)';
         ctx.strokeStyle = 'rgba(255,255,255,0.98)';
+        ctx.lineWidth = 8;
+        ctx.beginPath();
+        ctx.arc(0, 0, 30 + (fx.combo||1)*3, -1.16, 0.40);
+        ctx.stroke();
+        ctx.strokeStyle = fxCol;
         ctx.lineWidth = 5;
         ctx.beginPath();
-        ctx.arc(0, 0, 24, -1.10, 0.34);
+        ctx.arc(0, 0, 38 + (fx.combo||1)*4, -1.20, 0.32);
         ctx.stroke();
-        ctx.strokeStyle = 'rgba(147,197,253,0.92)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.65)';
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.arc(0, 0, 30, -1.12, 0.26);
-        ctx.stroke();
-        ctx.strokeStyle = 'rgba(255,255,255,0.45)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(0, 0, 28, -1.04, 0.14);
+        ctx.arc(0, 0, 34 + (fx.combo||1)*2, -1.04, 0.18);
         ctx.stroke();
         ctx.restore();
       }
@@ -3879,7 +3955,7 @@
         ctx.fillStyle = d.color || "#fff";
         ctx.strokeStyle = "rgba(2,6,23,0.82)";
         ctx.lineWidth = 3;
-        ctx.font = "1000 16px system-ui";
+        ctx.font = `1000 ${Math.round(48 * (d.scale || 1) / Math.max(1, (d.scale || 1)))}px system-ui`;
         ctx.textAlign = "center";
         ctx.strokeText(d.text, 0, 0);
         ctx.fillText(d.text, 0, 0);
