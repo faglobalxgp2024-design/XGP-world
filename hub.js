@@ -906,6 +906,7 @@
       player.gearFlashT = 0.8;
       renderPanels();
       renderShop();
+      persistGame();
     }
 
     function enhanceCost(slot) {
@@ -931,10 +932,12 @@
         return;
       }
       combatState.stars -= cost;
+      persistGame();
       const successRate = Math.max(0.45, 0.92 - lv * 0.05);
       if (Math.random() <= successRate) {
         inventoryState.enhance[slot] = lv + 1;
         player.gearFlashT = 0.9;
+        persistGame();
         UI.toast.hidden = false;
         UI.toast.style.display = "block";
         UI.toast.innerHTML = blockSpan(`✨ <b>${item.name}</b> 강화 성공 <b>+${lv + 1}</b>`, { bg: "rgba(15,23,42,0.94)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
@@ -1024,6 +1027,7 @@
       inventoryState.equipped[item.slot] = cur === item.id ? null : item.id;
       player.gearFlashT = 0.65;
       renderPanels();
+      persistGame();
     }
 
     function iconMarkup(item, equipped = false) {
@@ -2048,6 +2052,7 @@
         return;
       }
       if (p.status === "open" && p.url) {
+        persistGame(true);
         if (isTouchDevice()) {
           entering = false;
           try {
@@ -3670,7 +3675,7 @@
         if (b.x > WORLD.w + 120) b.x = -120;
       }
 
-      const roamerPalette = stepRoamers(dt, rng);
+      roamerPalette = stepRoamers(dt, rng);
 
       for (const m of combatState.slimes) {
         if (m.dead) {
@@ -4006,6 +4011,9 @@
       b.x = Math.random() * WORLD.w;
       b.y = 50 + Math.random() * 200;
     }
+    window.addEventListener("beforeunload", () => persistGame(true));
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState !== "visible") persistGame(true); });
+    openStartupOverlay();
     requestAnimationFrame(loop);
   });
 })();
