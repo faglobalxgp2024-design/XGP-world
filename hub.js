@@ -871,6 +871,7 @@
       titans: [],
       damageTexts: [],
       fireballs: [],
+      fireExplosions: [],
       stars: 10000,
       canAttack: true,
       combo: 0,
@@ -2871,11 +2872,53 @@
       ctx.restore();
     }
 
+    const adImageCache = {};
+    function getAdImageForKey(key) {
+      const map = {
+        youtube: window.AD_YOUTUBE_SRC,
+        tiktok: window.AD_TIKTOK_SRC,
+        instagram: window.AD_INSTAGRAM_SRC
+      };
+      const src = map[key];
+      if (!src) return null;
+      if (!adImageCache[key]) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = src;
+        adImageCache[key] = img;
+      }
+      return adImageCache[key];
+    }
+
     function drawAdBuilding(b, t) {
       const c = legoStyleForType(b.key === "youtube" ? "bbq" : b.key === "tiktok" ? "baskin" : b.key === "instagram" ? "social" : "mcd");
       const x = b.x, y = b.y, w = b.w, h = b.h;
       groundAO(x + 12, y + h - 18, w - 24, 42, 0.14);
       softShadow(x + 22, y + h - 12, w - 44, 18, 0.06);
+
+      const adImg = getAdImageForKey(b.key);
+      if (adImg && adImg.complete && adImg.naturalWidth > 0) {
+        ctx.save();
+        const pad = 8;
+        const availW = w - pad * 2;
+        const availH = h - 34;
+        const scale = Math.min(availW / adImg.naturalWidth, availH / adImg.naturalHeight);
+        const iw = adImg.naturalWidth * scale;
+        const ih = adImg.naturalHeight * scale;
+        const ix = x + (w - iw) * 0.5;
+        const iy = y + Math.max(0, (h - ih) * 0.32);
+        ctx.drawImage(adImg, ix, iy, iw, ih);
+        ctx.fillStyle = "rgba(10,14,24,0.82)";
+        roundRect(x + w*0.5 - 66, y + h - 42, 132, 24, 12);
+        ctx.fill();
+        ctx.fillStyle = "#f8fafc";
+        ctx.font = "900 13px system-ui";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("COMING SOON", x + w*0.5, y + h - 30);
+        ctx.restore();
+        return;
+      }
 
       ctx.save();
       const wall = ctx.createLinearGradient(x, y, x, y + h);
@@ -3577,8 +3620,10 @@
 
       if (isHero && gear && gear.weaponColor) {
         ctx.save();
-        ctx.translate(9.8, 13.2);
-        ctx.rotate(0.88 + (attackPose ? (0.36 + 0.92 * attackEase) : 0.14));
+        const swingBase = dir === "up" ? -0.42 : dir === "down" ? 1.92 : dir === "left" ? Math.PI - 1.05 : 1.05;
+        const swingArc = attackPose ? (-1.05 + 1.95 * attackEase) : -0.16;
+        ctx.translate(13.2, 11.8);
+        ctx.rotate(swingBase + swingArc);
         const weaponGlow = gear.weaponTier ? gear.weaponTier.glow : gear.weaponColor;
         const bladeGrad = ctx.createLinearGradient(0, -40, 0, 14);
         bladeGrad.addColorStop(0, "#ffffff");
@@ -3589,13 +3634,13 @@
         ctx.shadowBlur = 18 + ((gear.weaponTier && gear.weaponTier.label==="MYTHIC") ? 12 : (gear.weaponTier && gear.weaponTier.label==="LEGEND") ? 7 : 0);
         ctx.fillStyle = bladeGrad;
         ctx.beginPath();
-        ctx.moveTo(-2.7, 9);
-        ctx.lineTo(-4.0, 0);
-        ctx.lineTo(-2.2, -18);
-        ctx.lineTo(0, -26);
-        ctx.lineTo(2.2, -18);
-        ctx.lineTo(4.0, 0);
-        ctx.lineTo(2.7, 9);
+        ctx.moveTo(-2.3, 10.5);
+        ctx.lineTo(-3.2, 3.5);
+        ctx.lineTo(-2.4, -8);
+        ctx.lineTo(0, -28);
+        ctx.lineTo(2.4, -8);
+        ctx.lineTo(3.2, 3.5);
+        ctx.lineTo(2.3, 10.5);
         ctx.closePath();
         ctx.fill();
         ctx.lineWidth = 1.2;
@@ -3739,20 +3784,31 @@
         { x: ZONES.community.x + ZONES.community.w - 420, y: ZONES.community.y + ZONES.community.h + 250 },
         { x: ZONES.ads.x + 520, y: ZONES.ads.y + ZONES.ads.h + 210 }
       ];
+      const variants = [
+        { key:"green", colors:["#93f5b0","#22c55e"], reward:1 },
+        { key:"yellow", colors:["#fde68a","#f59e0b"], reward:2 },
+        { key:"purple", colors:["#d8b4fe","#8b5cf6"], reward:2 }
+      ];
       for (let i = 0; i < spots.length; i++) {
         const s = spots[i];
-        combatState.slimes.push({
-          x: s.x + (rng() - 0.5) * 40,
-          y: s.y + (rng() - 0.5) * 30,
-          hp: 2,
-          maxHp: 2,
-          dead: false,
-          wobble: rng() * 10,
-          respawn: 0,
-          vx: (rng() < 0.5 ? -1 : 1) * (32 + rng() * 26),
-          vy: (rng() < 0.5 ? -1 : 1) * (18 + rng() * 20),
-          turnT: 1.3 + rng() * 2.2
-        });
+        for (let v = 0; v < variants.length; v++) {
+          const vv = variants[v];
+          combatState.slimes.push({
+            x: s.x + (rng() - 0.5) * 40 + (v - 1) * 28,
+            y: s.y + (rng() - 0.5) * 30 + (v - 1) * 14,
+            hp: 2 + v,
+            maxHp: 2 + v,
+            reward: vv.reward,
+            variant: vv.key,
+            colors: vv.colors,
+            dead: false,
+            wobble: rng() * 10,
+            respawn: 0,
+            vx: (rng() < 0.5 ? -1 : 1) * (32 + rng() * 26),
+            vy: (rng() < 0.5 ? -1 : 1) * (18 + rng() * 20),
+            turnT: 1.3 + rng() * 2.2
+          });
+        }
       }
     }
 
@@ -4014,7 +4070,9 @@
       ctx.beginPath(); ctx.ellipse(0, 18, 18, 6, 0, 0, Math.PI * 2); ctx.fill();
       ctx.globalAlpha = 1;
       const g = ctx.createLinearGradient(0, -18, 0, 18);
-      g.addColorStop(0, '#93f5b0'); g.addColorStop(1, '#22c55e');
+      const slimeTop = (m.colors && m.colors[0]) || '#93f5b0';
+      const slimeBot = (m.colors && m.colors[1]) || '#22c55e';
+      g.addColorStop(0, slimeTop); g.addColorStop(1, slimeBot);
       ctx.fillStyle = g;
       ctx.beginPath();
       ctx.moveTo(-18, 12);
@@ -4304,8 +4362,8 @@
           const len = Math.hypot(dx, dy) || 1;
           const targetVx = (dx / len) * 520;
           const targetVy = (dy / len) * 520;
-          f.vx += (targetVx - f.vx) * Math.min(1, dt * 9.0);
-          f.vy += (targetVy - f.vy) * Math.min(1, dt * 9.0);
+          f.vx += (targetVx - f.vx) * Math.min(1, dt * 15.0);
+          f.vy += (targetVy - f.vy) * Math.min(1, dt * 15.0);
         }
         f.x += f.vx * dt;
         f.y += f.vy * dt;
@@ -4319,11 +4377,17 @@
             applyMonsterHit(m, dmg, crit);
             m.burnT = Math.max(m.burnT || 0, f.burn);
             m.burnTick = 0.33;
+            combatState.fireExplosions.push({ x: f.x, y: f.y, life: 0.36, r: 18 });
             hit = true;
             break;
           }
         }
+        if (!hit && f.life <= 0) combatState.fireExplosions.push({ x: f.x, y: f.y, life: 0.24, r: 14 });
         if (hit || f.life <= 0) combatState.fireballs.splice(i, 1);
+      }
+      for (let i = combatState.fireExplosions.length - 1; i >= 0; i--) {
+        combatState.fireExplosions[i].life -= dt;
+        if (combatState.fireExplosions[i].life <= 0) combatState.fireExplosions.splice(i, 1);
       }
       for (const m of [...combatState.slimes, ...combatState.titans]) {
         if (m.dead || !m.burnT) continue;
@@ -4517,6 +4581,24 @@
         ctx.fill();
         ctx.restore();
       }
+      for (const ex of combatState.fireExplosions) {
+        ctx.save();
+        const a = Math.max(0, ex.life / 0.36);
+        ctx.globalAlpha = a;
+        ctx.translate(ex.x, ex.y);
+        const rr = ex.r * (1 + (1-a) * 1.8);
+        const eg = ctx.createRadialGradient(0, 0, 2, 0, 0, rr);
+        eg.addColorStop(0, "rgba(255,255,255,0.95)");
+        eg.addColorStop(0.18, "rgba(254,215,170,0.95)");
+        eg.addColorStop(0.55, "rgba(249,115,22,0.78)");
+        eg.addColorStop(1, "rgba(127,29,29,0)");
+        ctx.fillStyle = eg;
+        ctx.beginPath(); ctx.arc(0, 0, rr, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = "rgba(255,245,245,0.82)";
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(0, 0, rr * 0.68, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+      }
       for (const fx of combatState.slashFx) {
         ctx.save();
         const a = Math.max(0, fx.life / 0.20);
@@ -4528,12 +4610,12 @@
         ctx.strokeStyle = 'rgba(255,255,255,0.98)';
         ctx.lineWidth = 10;
         ctx.beginPath();
-        ctx.arc(0, 0, 24 + (fx.combo||1)*2, -1.72, -0.24);
+        ctx.arc(0, 0, 24 + (fx.combo||1)*2, 0.18, 1.66);
         ctx.stroke();
         ctx.strokeStyle = fxCol;
         ctx.lineWidth = 6;
         ctx.beginPath();
-        ctx.arc(0, 0, 31 + (fx.combo||1)*3, -1.78, -0.18);
+        ctx.arc(0, 0, 31 + (fx.combo||1)*3, 0.10, 1.74);
         ctx.stroke();
         ctx.strokeStyle = 'rgba(255,255,255,0.72)';
         ctx.lineWidth = 2.5;
@@ -4604,13 +4686,16 @@
 
   // Remove persistent top hint
   const hideHint=()=>{
-    document.querySelectorAll('div,span').forEach(el=>{
-      const t=(el.textContent||'').toLowerCase();
-      if(t.includes('enter')&&t.includes('입장')) el.style.display='none';
-      if(t.includes('손')&&t.includes('입장')) el.style.display='none';
+    document.querySelectorAll('div,span,p').forEach(el=>{
+      const t=(el.textContent||'').toLowerCase().replace(/\s+/g,' ');
+      if((t.includes('enter') || t.includes('/e')) && t.includes('입장')) { el.style.display='none'; el.style.visibility='hidden'; }
+      if(t.includes('손') && t.includes('입장')) { el.style.display='none'; el.style.visibility='hidden'; }
+      if(t.includes('안내') && t.includes('입장')) { el.style.display='none'; el.style.visibility='hidden'; }
     });
   };
-  setInterval(hideHint,1000);
+  hideHint();
+  setInterval(hideHint,400);
+  try{ new MutationObserver(hideHint).observe(document.body,{childList:true,subtree:true,characterData:true}); }catch(e){}
 
   // Fireball smarter targeting (nearest monster)
   const getNearestMonster=(x,y)=>{
