@@ -824,9 +824,9 @@
     const portals = [
       { key: "avoid", label: "AIRPLANE", status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "shooting", label: "SHOOTING", status: "open", url: "https://faglobalxgp2024-design.github.io/-/", message: "슈팅게임에 입장하시겠습니까?", type: "tower", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "archery", label: "ARCHERY", status: "soon", url: "", message: "게임 준비중입니다.", type: "tower", size: "L", x: 0, y: 0, w: 0, h: 0 },
+      { key: "archery", label: "ARCHERY", status: "soon", url: "", message: "COMING SOON", type: "tower", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "janggi", label: "JANGGI", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "omok", label: "OMOK", status: "soon", url: "", message: "게임 준비중입니다.", type: "cafe", size: "L", x: 0, y: 0, w: 0, h: 0 },
+      { key: "omok", label: "OMOK", status: "soon", url: "", message: "COMING SOON", type: "cafe", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "twitter", label: "TWITTER", status: "open", url: "https://x.com/FAGLOBAL_", type: "social", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "telegram", label: "TELEGRAM", status: "open", url: "https://t.me/faglobalgp", type: "social", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "wallet", label: "WALLET", status: "open", url: "https://faglobal.site/", type: "wallet", size: "L", x: 0, y: 0, w: 0, h: 0 },
@@ -1484,7 +1484,7 @@
       UI.toast.hidden = false;
       UI.toast.style.display = "block";
       UI.toast.innerHTML = blockSpan(
-        `🧱 <b>${activePortal.label}</b><br/>${activePortal.message || "게임 준비중입니다."}`,
+        `🧱 <b>${activePortal.label}</b><br/>${activePortal.message || "COMING SOON"}`,
         { bg: "linear-gradient(180deg, rgba(10,14,24,0.96), rgba(18,25,40,0.94))", fg:"#f8fafc", bd:"rgba(148,163,184,0.16)", shadow:"0 14px 36px rgba(0,0,0,0.24)" }
       );
       setTimeout(() => {
@@ -2136,10 +2136,10 @@
         { key: "tiktok", label: "TIKTOK", color: "#111827", accent: "#f472b6" },
         { key: "instagram", label: "INSTAGRAM", color: "#8b5cf6", accent: "#f59e0b" }
       ];
-      const startX = ZONES.ads.x + 230;
-      const gap = 42;
-      const w = 472, h = 304;
-      const y = ZONES.ads.y + 28;
+      const startX = ZONES.ads.x + 228;
+      const gap = 28;
+      const w = 496, h = 326;
+      const y = ZONES.ads.y + 52;
       for (let i = 0; i < items.length; i++) {
         adBuildings.push({ ...items[i], x: startX + i * (w + gap), y, w, h });
       }
@@ -2322,7 +2322,7 @@
     const modalState = { open: false, portal: null };
 
     function getInteractiveTargets() {
-      const adTargets = adBuildings.map((b) => ({ ...b, status: "soon", url: "", type: "ad", size: "M", message: "게임 준비중입니다." }));
+      const adTargets = adBuildings.map((b) => ({ ...b, status: "soon", url: "", type: "ad", size: "M", message: "COMING SOON" }));
       return portals.concat(adTargets);
     }
 
@@ -2392,7 +2392,7 @@
         mobileToastUntil = performance.now() + 1600;
         UI.toast.hidden = false;
         UI.toast.style.display = "block";
-        UI.toast.innerHTML = blockSpan(`🧱 <b>${p.label}</b><br/>${p.message || "게임 준비중입니다."}`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
+        UI.toast.innerHTML = blockSpan(`🧱 <b>${p.label}</b><br/>${p.message || "COMING SOON"}`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
         setTimeout(() => {
           if (!modalState.open && !shopState.open && performance.now() >= mobileToastUntil) { UI.toast.hidden = true; UI.toast.style.display = "none"; }
         }, 1500);
@@ -2418,7 +2418,7 @@
         ? `⚒ <b>${p.label}</b><br/>상점에 입장하시겠습니까?`
         : (p.status === "open" && (!!p.url || !!p.message)
             ? `🧱 <b>${p.label}</b><br/>입장하시겠습니까?`
-            : `🧱 <b>${p.label}</b><br/>${p.message || "게임 준비중입니다."}`);
+            : `🧱 <b>${p.label}</b><br/>${p.message || "COMING SOON"}`);
       if (isTouchDevice()) {
         UI.toast.hidden = true;
         UI.toast.style.display = "none";
@@ -4458,11 +4458,12 @@
             }
           }
         } else if (performance.now() >= portalSuppressUntil) {
+          const hasLink = !!(activePortal && activePortal.url);
           const msg = activePortal.key === "blacksmith"
-            ? `⚒ <b>${activePortal.label}</b><br/>포털로 입장하시겠습니까?<br/><span style="font-size:12px;opacity:0.78">Enter / E</span>`
-            : (activePortal.status === "open" && activePortal.url
-              ? `🧱 <b>${activePortal.label}</b><br/>포털로 입장하시겠습니까?<br/><span style="font-size:12px;opacity:0.78">Enter / E</span>`
-              : `🧱 <b>${activePortal.label}</b><br/>${activePortal.message || "게임 준비중입니다."}<br/><span style="font-size:12px;opacity:0.78">Enter / E</span>`);
+            ? `⚒ <b>${activePortal.label}</b><br/>Enter Shop?<br/><span style="font-size:12px;opacity:0.82">Enter / E</span>`
+            : (hasLink
+              ? `🧱 <b>${activePortal.label}</b><br/>Enter Portal?<br/><span style="font-size:12px;opacity:0.82">Enter / E</span>`
+              : `🧱 <b>${activePortal.label}</b><br/>${activePortal.message || "COMING SOON"}<br/><span style="font-size:12px;opacity:0.82">Enter / E</span>`);
           UI.toast.hidden = false;
           UI.toast.style.display = "block";
           UI.toast.style.visibility = "visible";
@@ -4746,6 +4747,26 @@
   window.AD_INSTAGRAM_SRC="https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EA%B4%91%EA%B3%A0%20%EC%9D%B8%EC%8A%A4%ED%83%80%EA%B7%B8%EB%9E%A8.png";
   window.AD_TIKTOK_SRC="https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EA%B4%91%EA%B3%A0%20%ED%8B%B1%ED%86%A1.png";
 
+})();
+
+
+// ===== v95 PATCH (portal prompt text + ad visuals) =====
+(function(){
+  try {
+    const forcePortalPrompt = () => {
+      try {
+        const t = document.getElementById('toast');
+        if (!t) return;
+        const html = t.innerHTML || '';
+        if (html.includes('포털로 입장하시겠습니까?')) {
+          t.innerHTML = html.replace(/포털로 입장하시겠습니까\?/g, 'Enter Portal?').replace(/게임 준비중입니다\./g, 'COMING SOON').replace(/게임 준비중입니다/g, 'COMING SOON');
+        } else if (html.includes('게임 준비중입니다')) {
+          t.innerHTML = html.replace(/게임 준비중입니다\./g, 'COMING SOON').replace(/게임 준비중입니다/g, 'COMING SOON');
+        }
+      } catch(e){}
+    };
+    setInterval(forcePortalPrompt, 120);
+  } catch(e) {}
 })();
 
 // ===== v90 PATCH (pc portal, mobile skills, zoom, hint hide, ads) =====
