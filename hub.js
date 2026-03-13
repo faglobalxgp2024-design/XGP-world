@@ -4744,9 +4744,9 @@
   window.disableArmorVisual=true;
 
   // Ad image sources (raw github)
-  window.AD_YOUTUBE_SRC="https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EA%B4%91%EA%B3%A0%20%EC%9C%A0%ED%8A%9C%EB%B8%8C.png";
-  window.AD_INSTAGRAM_SRC="https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EA%B4%91%EA%B3%A0%20%EC%9D%B8%EC%8A%A4%ED%83%80%EA%B7%B8%EB%9E%A8.png";
-  window.AD_TIKTOK_SRC="https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EA%B4%91%EA%B3%A0%20%ED%8B%B1%ED%86%A1.png";
+  window.AD_YOUTUBE_SRC="https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EA%B4%91%EA%B3%A0%20%EC%9C%A0%ED%8A%9C%EB%B8%8C%203.png";
+  window.AD_INSTAGRAM_SRC="https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EA%B4%91%EA%B3%A0%20%EC%9D%B8%EC%8A%A4%ED%83%80%202.png";
+  window.AD_TIKTOK_SRC="https://raw.githubusercontent.com/faglobalxgp2024-design/XGP-world/main/%EA%B4%91%EA%B3%A0%20%ED%8B%B1%ED%86%A1%202.png";
 
 })();
 
@@ -4800,3 +4800,30 @@
     new MutationObserver(()=>hideHint()).observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true});
   } catch(e){}
 })();
+
+
+// ===== v98 PATCH (mobile AD zone alignment fix) =====
+(function(){
+  function isMobile(){ return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent); }
+  if(!isMobile()) return;
+
+  const applyFix = ()=>{
+    try{
+      if(!window.adBuildings) return;
+      // shift ads left and tighten spacing
+      const baseX = window.adBuildings[0]?.x || 0;
+      for(let i=0;i<window.adBuildings.length;i++){
+        const b = window.adBuildings[i];
+        b.x = baseX + i*120 - 80;   // tighter spacing + move left
+        b.scale = (b.scale||1)*1.05; // slightly bigger
+      }
+    }catch(e){}
+  };
+
+  const loop=()=>{
+    applyFix();
+    requestAnimationFrame(loop);
+  };
+  loop();
+})();
+
