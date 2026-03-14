@@ -4980,3 +4980,78 @@
   }
   tick();
 })();
+
+
+
+/* ===== v105 final english + save feedback fix ===== */
+(function(){
+
+function fixText(){
+  const map = [
+    ["건물에 닿으면 안내가떠요", ""],
+    ["엔터", "ENTER"],
+    ["모바일은", ""],
+    ["헬멧", "HELM"],
+    ["보관중", "STORED"],
+    ["입장하시겠습니까", "GO IN ?"],
+    ["GO IN 하시겠습니까", "GO IN ?"],
+    ["하시겠습니까", "?"],
+  ];
+
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  let n;
+  while(n = walker.nextNode()){
+    let v = n.nodeValue;
+    map.forEach(([k,r])=>{
+      if(v.includes(k)) v = v.replaceAll(k,r);
+    });
+    n.nodeValue = v;
+  }
+}
+
+function removeTopGuide(){
+  document.querySelectorAll("div,span").forEach(el=>{
+    const t=(el.textContent||"").trim();
+    if(t.includes("건물에 닿으면") || t.includes("Enter/E")){
+      el.remove();
+    }
+  });
+}
+
+function saveFeedback(){
+  const btn=document.querySelector("button,div");
+  const saveBtn=[...document.querySelectorAll("button,div")].find(e=>(e.textContent||"").trim()=="SAVE");
+  if(!saveBtn) return;
+
+  if(saveBtn.__patched) return;
+  saveBtn.__patched=true;
+
+  saveBtn.addEventListener("click",()=>{
+    let toast=document.createElement("div");
+    toast.innerText="Saved";
+    toast.style.position="fixed";
+    toast.style.top="60px";
+    toast.style.left="20px";
+    toast.style.padding="8px 14px";
+    toast.style.background="rgba(0,0,0,0.6)";
+    toast.style.color="#fff";
+    toast.style.borderRadius="8px";
+    toast.style.zIndex="9999";
+    document.body.appendChild(toast);
+    setTimeout(()=>toast.remove(),1500);
+  });
+}
+
+function loop(){
+  try{
+    fixText();
+    removeTopGuide();
+    saveFeedback();
+  }catch(e){}
+  requestAnimationFrame(loop);
+}
+
+loop();
+
+})();
+
