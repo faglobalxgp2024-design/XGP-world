@@ -1211,7 +1211,7 @@
         <div class="shop-head">
           <div>
             <div style="font:1000 22px system-ui;color:#f8fafc">⚒ BLACKSMITH</div>
-            <div style="font:800 12px system-ui;color:rgba(226,232,240,0.70);margin-top:4px">GO IN하시겠습니까? → Shop Open. WEAPON / SHIELD / HELM / ARMOR BUY.</div>
+            <div style="font:800 12px system-ui;color:rgba(226,232,240,0.70);margin-top:4px">GO IN하시겠습니까? → Shop Open. WEAPON / SHIELD / HELM / ARMOR을 BUY하세요.</div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <div style="padding:10px 12px;border-radius:999px;background:linear-gradient(180deg,rgba(245,158,11,0.22),rgba(251,191,36,0.10));border:1px solid rgba(251,191,36,0.25);font:1000 14px system-ui;color:#fde68a">★ ${combatState.stars} STAR</div>
@@ -1355,7 +1355,7 @@
       UI.inventoryPanel.innerHTML = `
         <div class="panel-title">
           <b style="color:#f8fafc">INVENTORY</b>
-          <span style="color:rgba(226,232,240,0.65)">I Key</span>
+          <span style="color:rgba(226,232,240,0.65)">I key</span>
         </div>
         <div style="margin-top:8px;margin-bottom:12px;padding:10px 12px;border-radius:12px;background:linear-gradient(180deg,rgba(245,158,11,0.22),rgba(251,191,36,0.10));border:1px solid rgba(251,191,36,0.25);color:#fde68a;font:900 13px system-ui;display:flex;justify-content:space-between;align-items:center;">
           <span>STAR</span><span style="font-size:16px">★ ${combatState.stars}</span>
@@ -1398,7 +1398,7 @@
       UI.equipmentPanel.innerHTML = `
         <div class="panel-title">
           <b style="color:#f8fafc">EQUIPMENT</b>
-          <span style="color:rgba(226,232,240,0.65)">Tab KEY · gear Upgrade Ready</span>
+          <span style="color:rgba(226,232,240,0.65)">Tab 키 · gear Upgrade Ready</span>
         </div>
       `;
       [["hat","헬멧"],["armor","ARMOR"],["weapon","WEAPON"],["shield","SHIELD"]].forEach(([slot, label]) => {
@@ -5092,7 +5092,7 @@ loop();
     document.querySelectorAll("div,span,b,button").forEach(el=>{
       const t = (el.textContent || "").trim();
       if(t === "저장되었습니다") el.textContent = "Saved";
-      if(t.includes("buy")) el.textContent = t.replaceAll("buy","BUY");
+      if(t.includes("buy하세요")) el.textContent = t.replaceAll("buy하세요","BUY");
       if(t.includes("Tab키") || t.includes("tab키") || t.includes("탭키") || t.includes("장비별")){
         el.textContent = "TAB - upgrade each gear";
       }
@@ -5150,7 +5150,7 @@ loop();
 (function(){
 
 const fixes = [
-  [/I KEY/g, "I"],
+  [/I키/g, "I"],
   [/Tab 키/g, "TAB"],
   [/tab 키/g, "TAB"],
   [/goin/gi, "GO IN"],
@@ -5177,12 +5177,12 @@ function cleanUI(){
   document.querySelectorAll("div,span,b,button").forEach(el=>{
     const t=(el.textContent||"").trim();
 
-    if(t.includes("I")) el.textContent = t.replace("I","I");
+    if(t.includes("I키")) el.textContent = t.replace("I키","I");
     if(t.includes("Tab 키")) el.textContent = "TAB - upgrade each gear";
     if(t.toLowerCase().includes("goin")) el.textContent = t.replace(/goin/gi,"GO IN");
     if(t.includes("armor")) el.textContent = t.replace("armor","ARMOR");
-    if(t.includes("buy")) el.textContent = t.replace("buy","BUY");
-    if(t.includes("inventory")) el.textContent = t.replace("inventory","INVENTORY");
+    if(t.includes("buy ")) el.textContent = t.replace("buy ","BUY");
+    if(t.includes("inven토리")) el.textContent = t.replace("inven토리","INVENTORY");
   });
 }
 
