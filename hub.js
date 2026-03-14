@@ -891,7 +891,7 @@
       items: [
         { id: "hat_royal", slot: "hat", name: "Royal Helm", desc: "기본 투구", color: "#dc2626", owned: true, icon: "helm", price: 0, tier: "starter", def: 4 },
         { id: "armor_shadow", slot: "armor", name: "Shadow Armor", desc: "기본 갑옷", color: "#111827", owned: true, icon: "armor", price: 0, tier: "starter", def: 8 },
-        { id: "weapon_blade", slot: "weapon", name: "Crimson Blade", desc: "기본 검", color: "#ef4444", owned: true, icon: "sword", price: 0, tier: "starter", atk: 8 },
+        { id: "weapon_blade", slot: "weapon", name: "Crimson Blade", desc: "기본 검", color: "#94a3b8", owned: true, icon: "sword", price: 0, tier: "starter", atk: 8 },
         { id: "shield_guard", slot: "shield", name: "Aegis Guard", desc: "기본 방패", color: "#94a3b8", owned: true, icon: "shield", price: 0, tier: "starter", def: 6 },
       ],
       equipped: {
