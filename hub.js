@@ -5092,7 +5092,7 @@ loop();
     document.querySelectorAll("div,span,b,button").forEach(el=>{
       const t = (el.textContent || "").trim();
       if(t === "저장되었습니다") el.textContent = "Saved";
-      if(t.includes("buy하세요")) el.textContent = t.replaceAll("buy하세요","BUY");
+      if(t.includes("buy")) el.textContent = t.replaceAll("buy","BUY");
       if(t.includes("Tab키") || t.includes("tab키") || t.includes("탭키") || t.includes("장비별")){
         el.textContent = "TAB - upgrade each gear";
       }
@@ -5150,12 +5150,12 @@ loop();
 (function(){
 
 const fixes = [
-  [/I키/g, "I"],
+  [/I KEY/g, "I"],
   [/Tab 키/g, "TAB"],
   [/tab 키/g, "TAB"],
   [/goin/gi, "GO IN"],
-  [/armor을/g, "ARMOR"],
-  [/buy 하세요/g, "BUY"],
+  [/armor/g, "ARMOR"],
+  [/buy /g, "BUY"],
   [/inven토리/gi, "INVENTORY"],
   [/인벤토리/g, "INVENTORY"]
 ];
@@ -5177,12 +5177,12 @@ function cleanUI(){
   document.querySelectorAll("div,span,b,button").forEach(el=>{
     const t=(el.textContent||"").trim();
 
-    if(t.includes("I키")) el.textContent = t.replace("I키","I");
+    if(t.includes("I")) el.textContent = t.replace("I","I");
     if(t.includes("Tab 키")) el.textContent = "TAB - upgrade each gear";
     if(t.toLowerCase().includes("goin")) el.textContent = t.replace(/goin/gi,"GO IN");
-    if(t.includes("armor을")) el.textContent = t.replace("armor을","ARMOR");
-    if(t.includes("buy 하세요")) el.textContent = t.replace("buy 하세요","BUY");
-    if(t.includes("inven토리")) el.textContent = t.replace("inven토리","INVENTORY");
+    if(t.includes("armor")) el.textContent = t.replace("armor","ARMOR");
+    if(t.includes("buy")) el.textContent = t.replace("buy","BUY");
+    if(t.includes("inventory")) el.textContent = t.replace("inventory","INVENTORY");
   });
 }
 
