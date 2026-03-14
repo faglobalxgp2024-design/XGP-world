@@ -1,13 +1,13 @@
 /* HUN.JS - LEGO PREMIUM (single-file) v2.7
  * 요청 반영:
- * 1) 배경/상점 크기 축소 + 포탈/상점 위치 정렬 개선
+ * 1) 배경/SHOP 크기 축소 + 포탈/SHOP 위치 정렬 개선
  * 2) 커스텀 월드아트와 존/포탈 배치 좌표 동기화
  * 3) 캐릭터 공중에 뜨는 현상 완화 + 걷기 애니메이션 강화
- * 4) I 인벤토리 / Tab 장착창 + 모자/옷/무기 장착/해제 + 외형 반영
+ * 4) I INVEN토리 / Tab EQUIP창 + 모자/옷/WEAPON EQUIP/해제 + 외형 반영
  * 5) 상단 하늘 라인 아래만 마을 활동 영역으로 제한 (NPC/차량 동선 안정화)
  *
  * 사용법:
- * 이 파일 전체를 hub.js 에 그대로 붙여넣기
+ * 이 파일 ALL를 hub.js 에 그대로 붙여넣기
  */
 (() => {
   "use strict";
@@ -341,10 +341,10 @@
     const atkBtn = ensureEl("btn_attack", "button", mobileBtns);
     const fireBtn = ensureEl("btn_fireball", "button", mobileBtns);
     const hasteBtn = ensureEl("btn_haste", "button", mobileBtns);
-    invBtn.textContent = "인벤";
-    eqBtn.textContent = "장착";
-    saveBtn.textContent = "저장";
-    enterBtn.textContent = "입장";
+    invBtn.textContent = "INVEN";
+    eqBtn.textContent = "EQUIP";
+    saveBtn.textContent = "SAVE";
+    enterBtn.textContent = "GO IN";
     atkBtn.textContent = "ATTACK";
     fireBtn.textContent = "FIRE";
     hasteBtn.textContent = "SPEED";
@@ -388,7 +388,7 @@
     const desktopSaveBtn = ensureEl("btn_save_desktop", "button");
     const desktopFireBtn = ensureEl("btn_fireball_desktop", "button");
     const desktopHasteBtn = ensureEl("btn_haste_desktop", "button");
-    desktopSaveBtn.textContent = "저장";
+    desktopSaveBtn.textContent = "SAVE";
     desktopFireBtn.textContent = "Q FIRE";
     desktopHasteBtn.textContent = "R SPEED";
     desktopSaveBtn.style.position = "fixed";
@@ -823,7 +823,7 @@
 
     const portals = [
       { key: "avoid", label: "AIRPLANE", status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "shooting", label: "SHOOTING", status: "open", url: "https://faglobalxgp2024-design.github.io/-/", message: "슈팅게임에 입장하시겠습니까?", type: "tower", size: "L", x: 0, y: 0, w: 0, h: 0 },
+      { key: "shooting", label: "SHOOTING", status: "open", url: "https://faglobalxgp2024-design.github.io/-/", message: "슈팅게임에 GO IN하시겠습니까?", type: "tower", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "archery", label: "ARCHERY", status: "soon", url: "", message: "COMING SOON", type: "tower", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "janggi", label: "JANGGI", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "omok", label: "OMOK", status: "soon", url: "", message: "COMING SOON", type: "cafe", size: "L", x: 0, y: 0, w: 0, h: 0 },
@@ -831,7 +831,7 @@
       { key: "telegram", label: "TELEGRAM", status: "open", url: "https://t.me/faglobalgp", type: "social", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "wallet", label: "WALLET", status: "open", url: "https://faglobal.site/", type: "wallet", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "market", label: "MARKET", status: "open", url: "https://famarket.store/", type: "market", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "blacksmith", label: "BLACKSMITH", status: "shop", url: "", message: "상점에 입장하시겠습니까?", type: "building", size: "M", x: 0, y: 0, w: 0, h: 0 }
+      { key: "blacksmith", label: "BLACKSMITH", status: "shop", url: "", message: "SHOP에 GO IN하시겠습니까?", type: "building", size: "M", x: 0, y: 0, w: 0, h: 0 }
     ];
 
           const portalsByKey = (k) => portals.find((p) => p.key === k);
@@ -889,10 +889,10 @@
       inventoryOpen: false,
       equipmentOpen: false,
       items: [
-        { id: "hat_royal", slot: "hat", name: "Royal Helm", desc: "기본 투구", color: "#dc2626", owned: true, icon: "helm", price: 0, tier: "starter", def: 4 },
-        { id: "armor_shadow", slot: "armor", name: "Shadow Armor", desc: "기본 갑옷", color: "#111827", owned: true, icon: "armor", price: 0, tier: "starter", def: 8 },
-        { id: "weapon_blade", slot: "weapon", name: "Crimson Blade", desc: "기본 검", color: "#94a3b8", owned: true, icon: "sword", price: 0, tier: "starter", atk: 8 },
-        { id: "shield_guard", slot: "shield", name: "Aegis Guard", desc: "기본 방패", color: "#94a3b8", owned: true, icon: "shield", price: 0, tier: "starter", def: 6 },
+        { id: "hat_royal", slot: "hat", name: "Royal Helm", desc: "Starter Helm", color: "#dc2626", owned: true, icon: "helm", price: 0, tier: "starter", def: 4 },
+        { id: "armor_shadow", slot: "armor", name: "Shadow Armor", desc: "Starter Armor", color: "#111827", owned: true, icon: "armor", price: 0, tier: "starter", def: 8 },
+        { id: "weapon_blade", slot: "weapon", name: "Crimson Blade", desc: "Starter Sword", color: "#94a3b8", owned: true, icon: "sword", price: 0, tier: "starter", atk: 8 },
+        { id: "shield_guard", slot: "shield", name: "Aegis Guard", desc: "Starter Shield", color: "#94a3b8", owned: true, icon: "shield", price: 0, tier: "starter", def: 6 },
       ],
       equipped: {
         hat: "hat_royal",
@@ -973,7 +973,7 @@
         UI.toast.hidden = false;
         UI.toast.style.display = "block";
         UI.toast.style.top = isTouchDevice() ? "84px" : "92px";
-        UI.toast.innerHTML = blockSpan(`💾 저장되었습니다<br/><b>${activeProfileId}</b>`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
+        UI.toast.innerHTML = blockSpan(`💾 SAVE되었습니다<br/><b>${activeProfileId}</b>`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
         clearTimeout(saveNowToast._tid);
         saveNowToast._tid = setTimeout(() => {
           if (!shopState.open && performance.now() >= mobileToastUntil) {
@@ -1005,13 +1005,13 @@
       overlay.innerHTML = `
         <div style="width:min(92vw,420px);padding:22px 20px;border-radius:24px;background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(30,41,59,.95));border:1px solid rgba(148,163,184,.18);box-shadow:0 24px 60px rgba(0,0,0,.38);color:#f8fafc;font:700 14px system-ui">
           <div style="font:1000 24px system-ui;margin-bottom:8px">XGP SAVE</div>
-          <div style="color:rgba(226,232,240,.74);margin-bottom:14px">고유 ID를 입력하면 같은 브라우저에서 저장 데이터를 이어서 불러옵니다.</div>
-          <input id="startup_profile_id" placeholder="고유 ID 입력" value="${savedId}" style="width:100%;box-sizing:border-box;padding:14px 16px;border-radius:14px;border:1px solid rgba(148,163,184,.22);background:rgba(2,6,23,.75);color:#fff;font:900 14px system-ui;outline:none" />
+          <div style="color:rgba(226,232,240,.74);margin-bottom:14px">고유 ID를 입력하면 같은 브라우저에서 SAVE 데이터를 이어서 불러옵니다.</div>
+          <input id="startup_profile_id" placeholder="Enter Unique ID" value="${savedId}" style="width:100%;box-sizing:border-box;padding:14px 16px;border-radius:14px;border:1px solid rgba(148,163,184,.22);background:rgba(2,6,23,.75);color:#fff;font:900 14px system-ui;outline:none" />
           <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
-            <button id="startup_begin_btn" style="flex:1;min-width:120px;border:none;border-radius:14px;padding:13px 14px;background:linear-gradient(180deg,#38bdf8,#2563eb);color:#fff;font:1000 14px system-ui;cursor:pointer">시작 / 불러오기</button>
-            <button id="startup_new_btn" style="flex:1;min-width:120px;border:none;border-radius:14px;padding:13px 14px;background:linear-gradient(180deg,#334155,#0f172a);color:#fff;font:1000 14px system-ui;cursor:pointer">새 ID 생성</button>
+            <button id="startup_begin_btn" style="flex:1;min-width:120px;border:none;border-radius:14px;padding:13px 14px;background:linear-gradient(180deg,#38bdf8,#2563eb);color:#fff;font:1000 14px system-ui;cursor:pointer">START / LOAD</button>
+            <button id="startup_new_btn" style="flex:1;min-width:120px;border:none;border-radius:14px;padding:13px 14px;background:linear-gradient(180deg,#334155,#0f172a);color:#fff;font:1000 14px system-ui;cursor:pointer">NEW ID</button>
           </div>
-          <div style="margin-top:10px;color:rgba(226,232,240,.6);font:800 12px system-ui">게임 중에는 좌측 상단의 저장 버튼으로 수동 저장할 수 있습니다.</div>
+          <div style="margin-top:10px;color:rgba(226,232,240,.6);font:800 12px system-ui">게임 중에는 좌측 상단의 SAVE 버튼으로 수동 SAVE할 수 있습니다.</div>
         </div>`;
       document.body.appendChild(overlay);
       const input = overlay.querySelector('#startup_profile_id');
@@ -1045,22 +1045,22 @@
         weapon: {
           icon: "sword",
           names: ["Iron Saber","Blaze Edge","Moon Fang","Storm Carver","Obsidian Saber","Celestial Reaver","Nova Longblade","Rune Splitter","Void Cleaver","Meteor Fang","Astra Fang","Frost Shard","Inferno Blade"],
-          desc: "공격력을 높이는 검"
+          desc: "Boosts attack"
         },
         shield: {
           icon: "shield",
           names: ["Tower Ward","Aegis Crest","Void Bulwark","Moon Bastion","Titan Guard","Solar Guard","Echo Barrier","Rune Shelter","Azure Ward","Crimson Bastion","Mythril Wall","Onyx Guard"],
-          desc: "생존력을 높이는 방패"
+          desc: "Boosts defense"
         },
         hat: {
           icon: "helm",
           names: ["Pilot Helm","Knight Visor","Gundam Crest","Shadow Crown","Nova Helm","Dread Visor","Aether Mask","Steel Horn","Black Flame Helm","Arc Reactor Helm","Nebula Crown","Dragon Crest"],
-          desc: "투구 슬롯 장비"
+          desc: "Helm gear"
         },
         armor: {
           icon: "armor",
           names: ["Field Armor","Titan Plate","Nebula Armor","Gundam Frame","Nightguard Suit","Astra Plate","Infernal Mail","Void Shell","Phantom Armor","Guardian Frame","Royal Plate","Mythic Suit","Steel Jacket"],
-          desc: "갑옷 슬롯 장비"
+          desc: "Armor gear"
         }
       };
       const prices = [30,45,60,75,90,110,130,150,180,210,240,270,300,340,380,420,460,500,560,620,700,780,860,940,1000];
@@ -1144,7 +1144,7 @@
       if (!item || item.owned) return;
       if (combatState.stars < item.price) {
         UI.toast.hidden = false;
-        UI.toast.innerHTML = blockSpan(`⭐ 스타가 부족합니다.<br/><b>${item.price}</b> STAR 필요`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
+        UI.toast.innerHTML = blockSpan(`⭐ Not enough stars.<br/><b>${item.price}</b> STAR 필요`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
         setTimeout(() => { if (!modalState.open && !shopState.open && performance.now() >= mobileToastUntil) { UI.toast.hidden = true; UI.toast.style.display = "none"; } }, 1200);
         return;
       }
@@ -1168,14 +1168,14 @@
       if (lv >= 10) {
         UI.toast.hidden = false;
         UI.toast.style.display = "block";
-        UI.toast.innerHTML = blockSpan(`✨ <b>${item.name}</b> 는 이미 <b>+10</b> 입니다.`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
+        UI.toast.innerHTML = blockSpan(`✨ <b>${item.name}</b> is already <b>+10</b> `, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
         return;
       }
       const cost = enhanceCost(slot);
       if (combatState.stars < cost) {
         UI.toast.hidden = false;
         UI.toast.style.display = "block";
-        UI.toast.innerHTML = blockSpan(`⭐ 강화 비용 부족<br/><b>${cost}</b> STAR 필요`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
+        UI.toast.innerHTML = blockSpan(`⭐ Not enough upgrade stars<br/><b>${cost}</b> STAR 필요`, { bg: "rgba(15,23,42,0.92)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
         return;
       }
       combatState.stars -= cost;
@@ -1185,11 +1185,11 @@
         player.gearFlashT = 0.9;
         UI.toast.hidden = false;
         UI.toast.style.display = "block";
-        UI.toast.innerHTML = blockSpan(`✨ <b>${item.name}</b> 강화 성공 <b>+${lv + 1}</b>`, { bg: "rgba(15,23,42,0.94)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
+        UI.toast.innerHTML = blockSpan(`✨ <b>${item.name}</b> Upgrade Success <b>+${lv + 1}</b>`, { bg: "rgba(15,23,42,0.94)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
       } else {
         UI.toast.hidden = false;
         UI.toast.style.display = "block";
-        UI.toast.innerHTML = blockSpan(`💥 <b>${item.name}</b> 강화 실패`, { bg: "rgba(15,23,42,0.94)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
+        UI.toast.innerHTML = blockSpan(`💥 <b>${item.name}</b> Upgrade Failed`, { bg: "rgba(15,23,42,0.94)", fg: "#f8fafc", pad: "12px 16px", radius: "16px" });
       }
       renderPanels();
       if (shopState.open) renderShop(shopState.filter || "all");
@@ -1200,28 +1200,28 @@
       shopState.open = true;
       UI.shopModal.style.display = "flex";
       const filters = [
-        { key: "all", label: "전체" },
-        { key: "weapon", label: "무기" },
-        { key: "shield", label: "방패" },
-        { key: "hat", label: "투구" },
-        { key: "armor", label: "갑옷" }
+        { key: "all", label: "ALL" },
+        { key: "weapon", label: "WEAPON" },
+        { key: "shield", label: "SHIELD" },
+        { key: "hat", label: "HELM" },
+        { key: "armor", label: "ARMOR" }
       ];
       const items = inventoryState.items.filter((it) => !it.owned && (filter === "all" || it.slot === filter)).sort((a,b) => a.price - b.price);
       UI.shopTitle.innerHTML = `
         <div class="shop-head">
           <div>
             <div style="font:1000 22px system-ui;color:#f8fafc">⚒ BLACKSMITH</div>
-            <div style="font:800 12px system-ui;color:rgba(226,232,240,0.70);margin-top:4px">입장하시겠습니까? → 상점이 열렸습니다. 무기 / 방패 / 투구 / 갑옷을 구매하세요.</div>
+            <div style="font:800 12px system-ui;color:rgba(226,232,240,0.70);margin-top:4px">GO IN하시겠습니까? → Shop Open. WEAPON / SHIELD / HELM / ARMOR을 BUY하세요.</div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <div style="padding:10px 12px;border-radius:999px;background:linear-gradient(180deg,rgba(245,158,11,0.22),rgba(251,191,36,0.10));border:1px solid rgba(251,191,36,0.25);font:1000 14px system-ui;color:#fde68a">★ ${combatState.stars} STAR</div>
-            <button id="shop_close_btn" style="border:none;border-radius:12px;padding:10px 12px;background:linear-gradient(180deg,#334155,#0f172a);color:#fff;font:900 12px system-ui;cursor:pointer">닫기</button>
+            <button id="shop_close_btn" style="border:none;border-radius:12px;padding:10px 12px;background:linear-gradient(180deg,#334155,#0f172a);color:#fff;font:900 12px system-ui;cursor:pointer">CLOSE</button>
           </div>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">${filters.map((f) => `<button class="shop_filter_btn" data-filter="${f.key}" style="border:none;border-radius:999px;padding:9px 12px;cursor:pointer;background:${filter===f.key ? "linear-gradient(180deg,#38bdf8,#2563eb)" : "linear-gradient(180deg,#1e293b,#0f172a)"};color:#fff;font:900 11px system-ui">${f.label}</button>`).join("")}<div style="margin-left:auto;padding:9px 12px;border-radius:999px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.22);color:#fde68a;font:900 11px system-ui">강화는 장비창에서 진행</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">${filters.map((f) => `<button class="shop_filter_btn" data-filter="${f.key}" style="border:none;border-radius:999px;padding:9px 12px;cursor:pointer;background:${filter===f.key ? "linear-gradient(180deg,#38bdf8,#2563eb)" : "linear-gradient(180deg,#1e293b,#0f172a)"};color:#fff;font:900 11px system-ui">${f.label}</button>`).join("")}<div style="margin-left:auto;padding:9px 12px;border-radius:999px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.22);color:#fde68a;font:900 11px system-ui">Upgrade in Equip</div></div>
       `;
       if (!items.length) {
-        UI.shopBody.innerHTML = `<div style="margin-top:18px;padding:24px;border-radius:20px;background:linear-gradient(180deg,rgba(15,23,42,0.96),rgba(30,41,59,0.92));border:1px solid rgba(148,163,184,0.18);font:900 14px system-ui;color:rgba(226,232,240,0.82)">모든 상품을 구매했습니다.</div>`;
+        UI.shopBody.innerHTML = `<div style="margin-top:18px;padding:24px;border-radius:20px;background:linear-gradient(180deg,rgba(15,23,42,0.96),rgba(30,41,59,0.92));border:1px solid rgba(148,163,184,0.18);font:900 14px system-ui;color:rgba(226,232,240,0.82)">All items purchased.</div>`;
       } else {
         UI.shopBody.innerHTML = `<div class="shop-grid">${items.map((item) => {
           const disabled = combatState.stars < item.price ? "disabled" : "";
@@ -1236,12 +1236,12 @@
                 <span style="color:${rare.color};font-weight:900">${statLine(item)}</span>
                 <div class="price">★ ${item.price}</div>
               </div>
-              <button data-buy="${item.id}" ${disabled}>구매</button>
+              <button data-buy="${item.id}" ${disabled}>BUY</button>
             </div>
           `;
         }).join("")}</div>`;
       }
-      UI.shopHint.innerHTML = `<div style="margin-top:14px;font:800 12px system-ui;color:rgba(226,232,240,0.64)">닫기: 바깥 터치 / ESC</div>`;
+      UI.shopHint.innerHTML = `<div style="margin-top:14px;font:800 12px system-ui;color:rgba(226,232,240,0.64)">CLOSE: 바깥 터치 / ESC</div>`;
 
       const closeBtn = document.getElementById("shop_close_btn");
       if (closeBtn) closeBtn.onclick = () => closeShop();
@@ -1385,11 +1385,11 @@
           ${iconMarkup(item, equipped)}
           <div class="meta">
             <b>${item.name}</b>
-            <span>${item.desc} · ${statLine(item)} · ${equipped ? "장착중" : "인벤토리 보관중"}</span>
+            <span>${item.desc} · ${statLine(item)} · ${equipped ? "EQUIP중" : "INVEN토리 보관중"}</span>
           </div>
         `;
         const btn = document.createElement("button");
-        btn.textContent = equipped ? "해제" : "장착";
+        btn.textContent = equipped ? "해제" : "EQUIP";
         btn.addEventListener("click", () => equipItem(item.id));
         row.appendChild(btn);
         UI.inventoryPanel.appendChild(row);
@@ -1401,7 +1401,7 @@
           <span style="color:rgba(226,232,240,0.65)">Tab 키 · 장비별 강화 가능</span>
         </div>
       `;
-      [["hat","헬멧"],["armor","갑옷"],["weapon","무기"],["shield","방패"]].forEach(([slot, label]) => {
+      [["hat","헬멧"],["armor","ARMOR"],["weapon","WEAPON"],["shield","SHIELD"]].forEach(([slot, label]) => {
         const row = document.createElement("div");
         row.className = "slot-card";
         const itemId = inventoryState.equipped[slot];
@@ -2364,7 +2364,7 @@
       if (UI.enterBtn) {
         UI.enterBtn.style.display = "none";
         UI.enterBtn.disabled = false;
-        UI.enterBtn.textContent = "입장";
+        UI.enterBtn.textContent = "GO IN";
         UI.enterBtn.style.opacity = "1";
         UI.enterBtn.style.filter = "none";
       }
@@ -2416,9 +2416,9 @@
       UI.modalBody.innerHTML = "";
       UI.modalHint.innerHTML = "";
       const message = p.key === "blacksmith"
-        ? `⚒ <b>${p.label}</b><br/>상점에 입장하시겠습니까?`
+        ? `⚒ <b>${p.label}</b><br/>SHOP에 GO IN하시겠습니까?`
         : (p.status === "open" && (!!p.url || !!p.message)
-            ? `🧱 <b>${p.label}</b><br/>입장하시겠습니까?`
+            ? `🧱 <b>${p.label}</b><br/>GO IN하시겠습니까?`
             : `🧱 <b>${p.label}</b><br/>${p.message || "COMING SOON"}`);
       if (isTouchDevice()) {
         UI.toast.hidden = true;
@@ -4460,11 +4460,11 @@
           if (UI.enterBtn) {
             UI.enterBtn.style.display = "block";
             if (activePortal.key === "blacksmith") {
-              UI.enterBtn.textContent = "상점";
+              UI.enterBtn.textContent = "SHOP";
               UI.enterBtn.disabled = false;
               UI.enterBtn.style.opacity = "1";
             } else if (activePortal.status === "open" && activePortal.url) {
-              UI.enterBtn.textContent = "입장";
+              UI.enterBtn.textContent = "GO IN";
               UI.enterBtn.disabled = false;
               UI.enterBtn.style.opacity = "1";
             } else {
@@ -4497,7 +4497,7 @@
         if (UI.enterBtn) {
           UI.enterBtn.style.display = "none";
           UI.enterBtn.disabled = false;
-          UI.enterBtn.textContent = "입장";
+          UI.enterBtn.textContent = "GO IN";
           UI.enterBtn.style.opacity = "1";
         }
       }
@@ -4698,7 +4698,7 @@
 
     canvas.addEventListener("pointerdown", () => {
       if (!isTouchDevice()) return;
-      // 모바일 포털 진입은 전용 입장 버튼으로만 처리해서 입력 멈춤을 방지한다.
+      // 모바일 포털 진입은 전용 GO IN 버튼으로만 처리해서 입력 멈춤을 방지한다.
       touchTapAt = performance.now();
     }, { passive: true });
 
@@ -4730,9 +4730,9 @@
   const hideHint=()=>{
     document.querySelectorAll('div,span,p').forEach(el=>{
       const t=(el.textContent||'').toLowerCase().replace(/\s+/g,' ');
-      if((t.includes('enter') || t.includes('/e')) && t.includes('입장')) { el.style.display='none'; el.style.visibility='hidden'; }
-      if(t.includes('손') && t.includes('입장')) { el.style.display='none'; el.style.visibility='hidden'; }
-      if(t.includes('안내') && t.includes('입장')) { el.style.display='none'; el.style.visibility='hidden'; }
+      if((t.includes('enter') || t.includes('/e')) && t.includes('GO IN')) { el.style.display='none'; el.style.visibility='hidden'; }
+      if(t.includes('손') && t.includes('GO IN')) { el.style.display='none'; el.style.visibility='hidden'; }
+      if(t.includes('안내') && t.includes('GO IN')) { el.style.display='none'; el.style.visibility='hidden'; }
     });
   };
   hideHint();
@@ -4774,8 +4774,8 @@
         const t = document.getElementById('toast');
         if (!t) return;
         const html = t.innerHTML || '';
-        if (html.includes('포털로 입장하시겠습니까?')) {
-          t.innerHTML = html.replace(/포털로 입장하시겠습니까\?/g, 'Enter Portal?').replace(/게임 준비중입니다\./g, 'COMING SOON').replace(/게임 준비중입니다/g, 'COMING SOON');
+        if (html.includes('포털로 GO IN하시겠습니까?')) {
+          t.innerHTML = html.replace(/포털로 GO IN하시겠습니까\?/g, 'Enter Portal?').replace(/게임 준비중입니다\./g, 'COMING SOON').replace(/게임 준비중입니다/g, 'COMING SOON');
         } else if (html.includes('게임 준비중입니다')) {
           t.innerHTML = html.replace(/게임 준비중입니다\./g, 'COMING SOON').replace(/게임 준비중입니다/g, 'COMING SOON');
         }
@@ -4806,7 +4806,7 @@
         const top=parseFloat(cs.top||'999'); const left=parseFloat(cs.left||'999');
         const fixed=(cs.position==='fixed'||cs.position==='sticky'||cs.position==='absolute');
         if(el.id==='toast' || el.id==='lego_modal' || el.id==='lego_modal_inner' || el.closest('[data-keep-hint="1"]')) continue;
-        if(fixed && top<90 && left<520 && ((t.includes('Enter')||t.includes('/E')||t.includes('손 떼면')) && t.includes('입장'))){
+        if(fixed && top<90 && left<520 && ((t.includes('Enter')||t.includes('/E')||t.includes('손 떼면')) && t.includes('GO IN'))){
           el.style.display='none'; el.style.visibility='hidden'; el.style.opacity='0'; el.style.pointerEvents='none';
         }
       }
