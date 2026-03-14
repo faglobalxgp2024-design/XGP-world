@@ -1241,7 +1241,7 @@
           `;
         }).join("")}</div>`;
       }
-      UI.shopHint.innerHTML = `<div style="margin-top:14px;font:800 12px system-ui;color:rgba(226,232,240,0.64)">CLOSE: 바깥 터치 / ESC</div>`;
+      UI.shopHint.innerHTML = `<div style="margin-top:14px;font:800 12px system-ui;color:rgba(226,232,240,0.64)">CLOSE: outside tap / ESC</div>`;
 
       const closeBtn = document.getElementById("shop_close_btn");
       if (closeBtn) closeBtn.onclick = () => closeShop();
@@ -1398,7 +1398,7 @@
       UI.equipmentPanel.innerHTML = `
         <div class="panel-title">
           <b style="color:#f8fafc">EQUIPMENT</b>
-          <span style="color:rgba(226,232,240,0.65)">Tab 키 · 장비별 강화 가능</span>
+          <span style="color:rgba(226,232,240,0.65)">Tab 키 · 장비별 Upgrade Ready</span>
         </div>
       `;
       [["hat","헬멧"],["armor","ARMOR"],["weapon","WEAPON"],["shield","SHIELD"]].forEach(([slot, label]) => {
@@ -1418,7 +1418,7 @@
         actionWrap.style.gap = "8px";
         actionWrap.style.alignItems = "center";
         const btn = document.createElement("button");
-        btn.textContent = item ? "빼기" : "없음";
+        btn.textContent = item ? "UNEQUIP" : "없음";
         btn.disabled = !item;
         btn.style.opacity = item ? "1" : "0.45";
         if (item) btn.addEventListener("click", () => equipItem(item.id));
@@ -1426,10 +1426,10 @@
         if (item) {
           const enhanceBtn = document.createElement("button");
           const plus = getEnhanceLevel(slot);
-          enhanceBtn.textContent = plus >= 10 ? `+10 완료` : `강화 +${plus}`;
+          enhanceBtn.textContent = plus >= 10 ? `+10 MAX` : `UPGRADE +${plus}`;
           enhanceBtn.style.background = plus >= 10 ? "linear-gradient(180deg,#475569,#1e293b)" : "linear-gradient(180deg,#f59e0b,#ea580c)";
           enhanceBtn.style.minWidth = "86px";
-          enhanceBtn.title = plus >= 10 ? "최대 강화 완료" : `${enhanceCost(slot)} STAR 소모`;
+          enhanceBtn.title = plus >= 10 ? "최대 UPGRADE MAX" : `${enhanceCost(slot)} STAR 소모`;
           if (plus >= 10) {
             enhanceBtn.disabled = true;
             enhanceBtn.style.opacity = "0.72";
@@ -4468,7 +4468,7 @@
               UI.enterBtn.disabled = false;
               UI.enterBtn.style.opacity = "1";
             } else {
-              UI.enterBtn.textContent = "준비중";
+              UI.enterBtn.textContent = "COMING SOON";
               UI.enterBtn.disabled = true;
               UI.enterBtn.style.opacity = "0.72";
             }
@@ -4775,9 +4775,9 @@
         if (!t) return;
         const html = t.innerHTML || '';
         if (html.includes('포털로 GO IN하시겠습니까?')) {
-          t.innerHTML = html.replace(/포털로 GO IN하시겠습니까\?/g, 'Enter Portal?').replace(/게임 준비중입니다\./g, 'COMING SOON').replace(/게임 준비중입니다/g, 'COMING SOON');
-        } else if (html.includes('게임 준비중입니다')) {
-          t.innerHTML = html.replace(/게임 준비중입니다\./g, 'COMING SOON').replace(/게임 준비중입니다/g, 'COMING SOON');
+          t.innerHTML = html.replace(/포털로 GO IN하시겠습니까\?/g, 'Enter Portal?').replace(/게임 COMING SOON입니다\./g, 'COMING SOON').replace(/게임 COMING SOON입니다/g, 'COMING SOON');
+        } else if (html.includes('게임 COMING SOON입니다')) {
+          t.innerHTML = html.replace(/게임 COMING SOON입니다\./g, 'COMING SOON').replace(/게임 COMING SOON입니다/g, 'COMING SOON');
         }
       } catch(e){}
     };
@@ -4880,4 +4880,103 @@
     rafId = requestAnimationFrame(loop);
   };
   loop();
+})();
+
+
+
+// ===== v104 ENGLISH CLEANUP PATCH =====
+(function(){
+  function applyEnglishCleanup(){
+    try{
+      // Remove lingering translucent top-left legacy hint
+      const candidates = Array.from(document.querySelectorAll('body > div, body > section, body > aside, body > span'));
+      candidates.forEach(el=>{
+        if(!el) return;
+        const txt = (el.innerText || el.textContent || "").trim();
+        const cs = getComputedStyle(el);
+        const looksLikeHint = /Enter\/E|손 떼면 입장|입장 \(|남으면 안내가 떠요|Tab 키|장비별 강화 가능|바깥 터치/.test(txt);
+        const topLeft = (parseFloat(cs.left)||0) <= 40 && (parseFloat(cs.top)||0) <= 80;
+        const translucent = cs.position === "fixed" && (parseFloat(cs.opacity || "1") < 1 || /rgba\(/.test(cs.backgroundColor));
+        if(looksLikeHint && topLeft && translucent){
+          el.style.display = "none";
+          el.remove();
+        }
+      });
+
+      // Normalize all button/label text to English
+      const map = new Map([
+        ["빼기","UNEQUIP"],
+        ["강화","UPGRADE"],
+        ["강화 가능","Upgrade Ready"],
+        ["준비중","COMING SOON"],
+        ["바깥 터치 / ESC","outside tap / ESC"],
+        ["닫기: 바깥 터치 / ESC","Close: outside tap / ESC"],
+        ["Tab 키 - 장비별 강화 가능","Tab - upgrade each gear"],
+      ]);
+
+      document.querySelectorAll("button, div, span, b").forEach(el=>{
+      });
+    }catch(e){}
+  }
+
+  function walkTextNodes(root){
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while(walker.nextNode()) nodes.push(walker.currentNode);
+    return nodes;
+  }
+
+  function replaceTextContent(root){
+    const pairs = [
+      [/빼기/g, "UNEQUIP"],
+      [/강화 가능/g, "Upgrade Ready"],
+      [/강화\s*\+?/g, "UPGRADE +"],
+      [/\+10 완료/g, "MAX +10"],
+      [/준비중/g, "COMING SOON"],
+      [/바깥 터치 \/ ESC/g, "outside tap / ESC"],
+      [/닫기:\s*바깥 터치 \/ ESC/g, "Close: outside tap / ESC"],
+      [/Tab 키 - 장비별 강화 가능/g, "Tab - upgrade each gear"],
+      [/장비별 강화 가능/g, "upgrade each gear"],
+      [/손 떼면 입장/g, ""],
+      [/Enter\/E로 입장\s*\(모바일은\s*손 떼면 입장\)\.?/g, ""],
+      [/Enter\/E로 입장/g, ""],
+      [/입장\s*\(모바일은\s*손 떼면 입장\)\.?/g, ""],
+      [/남으면 안내가 떠요\.?/g, ""],
+    ];
+    walkTextNodes(root).forEach(node=>{
+      let v = node.nodeValue || "";
+      let nv = v;
+      for(const [rx, rep] of pairs) nv = nv.replace(rx, rep);
+      if(nv !== v) node.nodeValue = nv;
+    });
+  }
+
+  function tick(){
+    try{
+      applyEnglishCleanup();
+      replaceTextContent(document.body);
+
+      // Ensure mobile enter button says GO IN and coming soon buttons say COMING SOON if any
+      const enterBtn = document.getElementById("btn_enter");
+      if(enterBtn && /입장|go in/i.test(enterBtn.textContent || "")) enterBtn.textContent = "GO IN";
+
+      // Equipment/shop runtime labels
+      document.querySelectorAll("button").forEach(btn=>{
+        const t = (btn.textContent || "").trim();
+        if(t === "빼기") btn.textContent = "UNEQUIP";
+        else if(/^강화/.test(t)) btn.textContent = t.replace(/^강화/, "UPGRADE");
+        else if(t === "+10 완료") btn.textContent = "MAX +10";
+        else if(t === "준비중") btn.textContent = "COMING SOON";
+      });
+
+      // Shop footer close hint
+      document.querySelectorAll("div, span").forEach(el=>{
+        const t = (el.textContent || "").trim();
+        if(t === "닫기: 바깥 터치 / ESC") el.textContent = "Close: outside tap / ESC";
+        if(t === "바깥 터치 / ESC") el.textContent = "outside tap / ESC";
+      });
+    }catch(e){}
+    requestAnimationFrame(tick);
+  }
+  tick();
 })();
