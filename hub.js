@@ -2,7 +2,7 @@
  * 요청 반영:
  * 1) 배경/SHOP 크기 축소 + 포탈/SHOP 위치 정렬 개선
  * 2) 커스텀 월드아트와 존/포탈 배치 좌표 동기화
- * 3) 캐릭터 공중에 뜨는 현상 완화 + 걷기 애니메이션 강화
+ * 3) 캐릭터 공에 뜨는 현상 완화 + 걷기 애니메이션 강화
  * 4) I INVEN토리 / Tab EQUIP창 + 모자/옷/WEAPON EQUIP/해제 + 외형 반영
  * 5) 상단 하늘 라인 아래만 마을 활동 영역으로 제한 (NPC/차량 동선 안정화)
  *
@@ -1011,7 +1011,7 @@
             <button id="startup_begin_btn" style="flex:1;min-width:120px;border:none;border-radius:14px;padding:13px 14px;background:linear-gradient(180deg,#38bdf8,#2563eb);color:#fff;font:1000 14px system-ui;cursor:pointer">START / LOAD</button>
             <button id="startup_new_btn" style="flex:1;min-width:120px;border:none;border-radius:14px;padding:13px 14px;background:linear-gradient(180deg,#334155,#0f172a);color:#fff;font:1000 14px system-ui;cursor:pointer">NEW ID</button>
           </div>
-          <div style="margin-top:10px;color:rgba(226,232,240,.6);font:800 12px system-ui">게임 중에는 좌측 상단의 SAVE 버튼으로 수동 SAVE할 수 있습니다.</div>
+          <div style="margin-top:10px;color:rgba(226,232,240,.6);font:800 12px system-ui">게임 에는 좌측 상단의 SAVE 버튼으로 수동 SAVE할 수 있습니다.</div>
         </div>`;
       document.body.appendChild(overlay);
       const input = overlay.querySelector('#startup_profile_id');
@@ -1385,7 +1385,7 @@
           ${iconMarkup(item, equipped)}
           <div class="meta">
             <b>${item.name}</b>
-            <span>${item.desc} · ${statLine(item)} · ${equipped ? "EQUIP중" : "INVEN토리 보관중"}</span>
+            <span>${item.desc} · ${statLine(item)} · ${equipped ? "EQUIP" : "INVEN토리 보관"}</span>
           </div>
         `;
         const btn = document.createElement("button");
@@ -1398,7 +1398,7 @@
       UI.equipmentPanel.innerHTML = `
         <div class="panel-title">
           <b style="color:#f8fafc">EQUIPMENT</b>
-          <span style="color:rgba(226,232,240,0.65)">Tab 키 · 장비별 Upgrade Ready</span>
+          <span style="color:rgba(226,232,240,0.65)">Tab 키 · gear Upgrade Ready</span>
         </div>
       `;
       [["hat","헬멧"],["armor","ARMOR"],["weapon","WEAPON"],["shield","SHIELD"]].forEach(([slot, label]) => {
@@ -4894,7 +4894,7 @@
         if(!el) return;
         const txt = (el.innerText || el.textContent || "").trim();
         const cs = getComputedStyle(el);
-        const looksLikeHint = /Enter\/E|손 떼면 입장|입장 \(|남으면 안내가 떠요|Tab 키|장비별 강화 가능|바깥 터치/.test(txt);
+        const looksLikeHint = /Enter\/E|손 떼면 입장|입장 \(|남으면 안내가 떠요|Tab 키|gear 강화 가능|바깥 터치/.test(txt);
         const topLeft = (parseFloat(cs.left)||0) <= 40 && (parseFloat(cs.top)||0) <= 80;
         const translucent = cs.position === "fixed" && (parseFloat(cs.opacity || "1") < 1 || /rgba\(/.test(cs.backgroundColor));
         if(looksLikeHint && topLeft && translucent){
@@ -4908,10 +4908,10 @@
         ["빼기","UNEQUIP"],
         ["강화","UPGRADE"],
         ["강화 가능","Upgrade Ready"],
-        ["준비중","COMING SOON"],
+        ["준비","COMING SOON"],
         ["바깥 터치 / ESC","outside tap / ESC"],
         ["닫기: 바깥 터치 / ESC","Close: outside tap / ESC"],
-        ["Tab 키 - 장비별 강화 가능","Tab - upgrade each gear"],
+        ["Tab 키 - gear 강화 가능","Tab - upgrade each gear"],
       ]);
 
       document.querySelectorAll("button, div, span, b").forEach(el=>{
@@ -4932,11 +4932,11 @@
       [/강화 가능/g, "Upgrade Ready"],
       [/강화\s*\+?/g, "UPGRADE +"],
       [/\+10 완료/g, "MAX +10"],
-      [/준비중/g, "COMING SOON"],
+      [/준비/g, "COMING SOON"],
       [/바깥 터치 \/ ESC/g, "outside tap / ESC"],
       [/닫기:\s*바깥 터치 \/ ESC/g, "Close: outside tap / ESC"],
-      [/Tab 키 - 장비별 강화 가능/g, "Tab - upgrade each gear"],
-      [/장비별 강화 가능/g, "upgrade each gear"],
+      [/Tab 키 - gear 강화 가능/g, "Tab - upgrade each gear"],
+      [/gear 강화 가능/g, "upgrade each gear"],
       [/손 떼면 입장/g, ""],
       [/Enter\/E로 입장\s*\(모바일은\s*손 떼면 입장\)\.?/g, ""],
       [/Enter\/E로 입장/g, ""],
@@ -4966,7 +4966,7 @@
         if(t === "빼기") btn.textContent = "UNEQUIP";
         else if(/^강화/.test(t)) btn.textContent = t.replace(/^강화/, "UPGRADE");
         else if(t === "+10 완료") btn.textContent = "MAX +10";
-        else if(t === "준비중") btn.textContent = "COMING SOON";
+        else if(t === "준비") btn.textContent = "COMING SOON";
       });
 
       // Shop footer close hint
@@ -4992,7 +4992,7 @@ function fixText(){
     ["엔터", "ENTER"],
     ["모바일은", ""],
     ["헬멧", "HELM"],
-    ["보관중", "STORED"],
+    ["보관", "STORED"],
     ["입장하시겠습니까", "GO IN ?"],
     ["GO IN 하시겠습니까", "GO IN ?"],
     ["하시겠습니까", "?"],
@@ -5055,3 +5055,91 @@ loop();
 
 })();
 
+
+
+
+/* ===== v106 english cleanup + centered save toast ===== */
+(function(){
+  function replaceTextNodes(){
+    const pairs = [
+      [/buy하세요/g, "BUY"],
+      [/\bTab키\b/g, "TAB"],
+      [/\btab키\b/g, "TAB"],
+      [/탭키/g, "TAB"],
+      [/장비별/g, "gear"],
+      [/Tab\s*-\s*gear\s*upgrade\s*가능/g, "TAB - upgrade each gear"],
+      [/Tab\s*-\s*upgrade each gear\s*가능/g, "TAB - upgrade each gear"],
+      [/Tab\s*키\s*-\s*gear\s*upgrade\s*가능/g, "TAB - upgrade each gear"],
+      [/Tab\s*키\s*-\s*장비별\s*upgrade\s*가능/g, "TAB - upgrade each gear"],
+      [/Tab\s*키\s*-\s*장비별\s*강화\s*가능/g, "TAB - upgrade each gear"],
+      [/저장되었습니다/g, "Saved"],
+      [/보관중/g, "STORED"],
+      [/헬멧/g, "HELM"],
+      [/하시겠습니까/g, "?"],
+      [/입장하시겠습니까/g, "GO IN ?"],
+    ];
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let node;
+    while((node = walker.nextNode())){
+      let v = node.nodeValue || "";
+      let nv = v;
+      for(const [rx, rep] of pairs) nv = nv.replace(rx, rep);
+      if(nv !== v) node.nodeValue = nv;
+    }
+  }
+
+  function cleanSpecificEls(){
+    document.querySelectorAll("div,span,b,button").forEach(el=>{
+      const t = (el.textContent || "").trim();
+      if(t === "저장되었습니다") el.textContent = "Saved";
+      if(t.includes("buy하세요")) el.textContent = t.replaceAll("buy하세요","BUY");
+      if(t.includes("Tab키") || t.includes("tab키") || t.includes("탭키") || t.includes("장비별")){
+        el.textContent = "TAB - upgrade each gear";
+      }
+    });
+  }
+
+  function patchSaveToast(){
+    const saveBtns = [...document.querySelectorAll("button,div")].filter(e => (e.textContent||"").trim() === "SAVE");
+    saveBtns.forEach(saveBtn=>{
+      if(saveBtn.__centerSavePatched) return;
+      saveBtn.__centerSavePatched = true;
+      saveBtn.addEventListener("click", ()=>{
+        let toast = document.getElementById("__save_center_toast");
+        if(!toast){
+          toast = document.createElement("div");
+          toast.id = "__save_center_toast";
+          toast.style.position = "fixed";
+          toast.style.left = "50%";
+          toast.style.top = "50%";
+          toast.style.transform = "translate(-50%, -50%)";
+          toast.style.padding = "14px 22px";
+          toast.style.background = "rgba(15,23,42,0.92)";
+          toast.style.color = "#fff";
+          toast.style.borderRadius = "16px";
+          toast.style.boxShadow = "0 18px 44px rgba(0,0,0,0.28)";
+          toast.style.font = "1000 16px system-ui";
+          toast.style.zIndex = "999999";
+          toast.style.pointerEvents = "none";
+          document.body.appendChild(toast);
+        }
+        toast.textContent = "Saved";
+        toast.style.display = "block";
+        clearTimeout(window.__saveCenterToastTid);
+        window.__saveCenterToastTid = setTimeout(()=>{
+          if(toast) toast.style.display = "none";
+        }, 1400);
+      }, true);
+    });
+  }
+
+  function loop(){
+    try{
+      replaceTextNodes();
+      cleanSpecificEls();
+      patchSaveToast();
+    }catch(e){}
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
