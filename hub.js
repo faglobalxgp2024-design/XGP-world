@@ -1011,7 +1011,7 @@
             <button id="startup_begin_btn" style="flex:1;min-width:120px;border:none;border-radius:14px;padding:13px 14px;background:linear-gradient(180deg,#38bdf8,#2563eb);color:#fff;font:1000 14px system-ui;cursor:pointer">START / LOAD</button>
             <button id="startup_new_btn" style="flex:1;min-width:120px;border:none;border-radius:14px;padding:13px 14px;background:linear-gradient(180deg,#334155,#0f172a);color:#fff;font:1000 14px system-ui;cursor:pointer">NEW ID</button>
           </div>
-          <div style="margin-top:10px;color:rgba(226,232,240,.6);font:800 12px system-ui">게임 에는 좌측 상단의 SAVE 버튼으로 수동 SAVE할 수 있습니다.</div>
+          <div style="margin-top:10px;color:rgba(226,232,240,.6);font:800 12px system-ui">Left top manual save.</div>
         </div>`;
       document.body.appendChild(overlay);
       const input = overlay.querySelector('#startup_profile_id');
