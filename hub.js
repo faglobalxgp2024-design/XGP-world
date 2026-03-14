@@ -3634,22 +3634,22 @@
       if (isHero && gear && gear.weaponColor) {
         ctx.save();
         const sideMap = {
-          up: 0.78,
+          up: -2.36,
           down: 2.18,
-          left: 1.02,
+          left: -2.12,
           right: 2.02
         };
         const swingBase = sideMap[dir] ?? 2.18;
         const swingArc =
           dir === "up"
-            ? (attackPose ? (-0.26 + 0.92 * attackEase) : -0.04)
+            ? (attackPose ? (0.24 - 0.92 * attackEase) : 0.05)
             : dir === "left"
-              ? (attackPose ? (-0.30 + 0.96 * attackEase) : -0.05)
+              ? (attackPose ? (0.30 - 0.96 * attackEase) : 0.05)
               : dir === "right"
                 ? (attackPose ? (0.42 - 1.10 * attackEase) : 0.06)
                 : (attackPose ? (0.42 - 1.18 * attackEase) : 0.06);
-        const gripOffsetX = dir === "left" ? -4.4 : dir === "up" ? 1.8 : 5.8;
-        const gripOffsetY = dir === "up" ? 11.2 : 13.8;
+        const gripOffsetX = dir === "left" ? -5.0 : dir === "up" ? -1.4 : 5.8;
+        const gripOffsetY = dir === "up" ? 11.0 : 13.8;
         ctx.translate(gripOffsetX, gripOffsetY);
         ctx.rotate(swingBase + swingArc);
         const weaponGlow = gear.weaponTier ? gear.weaponTier.glow : gear.weaponColor;
