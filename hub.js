@@ -5143,3 +5143,57 @@ loop();
   }
   loop();
 })();
+
+
+
+/* ===== v107 final english sweep ===== */
+(function(){
+
+const fixes = [
+  [/I키/g, "I"],
+  [/Tab 키/g, "TAB"],
+  [/tab 키/g, "TAB"],
+  [/goin/gi, "GO IN"],
+  [/armor을/g, "ARMOR"],
+  [/buy 하세요/g, "BUY"],
+  [/inven토리/gi, "INVENTORY"],
+  [/인벤토리/g, "INVENTORY"]
+];
+
+function replaceText(){
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  let n;
+  while(n = walker.nextNode()){
+    let v = n.nodeValue || "";
+    let nv = v;
+    fixes.forEach(([rx,rep])=>{
+      nv = nv.replace(rx,rep);
+    });
+    if(nv!==v) n.nodeValue = nv;
+  }
+}
+
+function cleanUI(){
+  document.querySelectorAll("div,span,b,button").forEach(el=>{
+    const t=(el.textContent||"").trim();
+
+    if(t.includes("I키")) el.textContent = t.replace("I키","I");
+    if(t.includes("Tab 키")) el.textContent = "TAB - upgrade each gear";
+    if(t.toLowerCase().includes("goin")) el.textContent = t.replace(/goin/gi,"GO IN");
+    if(t.includes("armor을")) el.textContent = t.replace("armor을","ARMOR");
+    if(t.includes("buy 하세요")) el.textContent = t.replace("buy 하세요","BUY");
+    if(t.includes("inven토리")) el.textContent = t.replace("inven토리","INVENTORY");
+  });
+}
+
+function loop(){
+  try{
+    replaceText();
+    cleanUI();
+  }catch(e){}
+  requestAnimationFrame(loop);
+}
+
+loop();
+
+})();
