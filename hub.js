@@ -1211,7 +1211,7 @@
         <div class="shop-head">
           <div>
             <div style="font:1000 22px system-ui;color:#f8fafc">⚒ BLACKSMITH</div>
-            <div style="font:800 12px system-ui;color:rgba(226,232,240,0.70);margin-top:4px">GO IN하시겠습니까? → Shop Open. WEAPON / SHIELD / HELM / ARMOR을 BUY하세요.</div>
+            <div style="font:800 12px system-ui;color:rgba(226,232,240,0.70);margin-top:4px">GO IN하시겠습니까? → Shop Open. WEAPON / SHIELD / HELM / ARMOR BUY.</div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <div style="padding:10px 12px;border-radius:999px;background:linear-gradient(180deg,rgba(245,158,11,0.22),rgba(251,191,36,0.10));border:1px solid rgba(251,191,36,0.25);font:1000 14px system-ui;color:#fde68a">★ ${combatState.stars} STAR</div>
@@ -1355,7 +1355,7 @@
       UI.inventoryPanel.innerHTML = `
         <div class="panel-title">
           <b style="color:#f8fafc">INVENTORY</b>
-          <span style="color:rgba(226,232,240,0.65)">I 키</span>
+          <span style="color:rgba(226,232,240,0.65)">I Key</span>
         </div>
         <div style="margin-top:8px;margin-bottom:12px;padding:10px 12px;border-radius:12px;background:linear-gradient(180deg,rgba(245,158,11,0.22),rgba(251,191,36,0.10));border:1px solid rgba(251,191,36,0.25);color:#fde68a;font:900 13px system-ui;display:flex;justify-content:space-between;align-items:center;">
           <span>STAR</span><span style="font-size:16px">★ ${combatState.stars}</span>
@@ -1389,7 +1389,7 @@
           </div>
         `;
         const btn = document.createElement("button");
-        btn.textContent = equipped ? "해제" : "EQUIP";
+        btn.textContent = equipped ? "OFF" : "EQUIP";
         btn.addEventListener("click", () => equipItem(item.id));
         row.appendChild(btn);
         UI.inventoryPanel.appendChild(row);
@@ -1398,7 +1398,7 @@
       UI.equipmentPanel.innerHTML = `
         <div class="panel-title">
           <b style="color:#f8fafc">EQUIPMENT</b>
-          <span style="color:rgba(226,232,240,0.65)">Tab 키 · gear Upgrade Ready</span>
+          <span style="color:rgba(226,232,240,0.65)">Tab KEY · gear Upgrade Ready</span>
         </div>
       `;
       [["hat","헬멧"],["armor","ARMOR"],["weapon","WEAPON"],["shield","SHIELD"]].forEach(([slot, label]) => {
