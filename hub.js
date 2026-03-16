@@ -1004,7 +1004,7 @@
       const savedId = (() => { try { return localStorage.getItem(PROFILE_KEY) || ''; } catch (_) { return ''; } })();
       overlay.innerHTML = `
         <div style="width:min(92vw,420px);padding:22px 20px;border-radius:24px;background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(30,41,59,.95));border:1px solid rgba(148,163,184,.18);box-shadow:0 24px 60px rgba(0,0,0,.38);color:#f8fafc;font:700 14px system-ui">
-          <div style="font:1000 24px system-ui;margin-bottom:8px">XGP SAVE</div>
+          <div style="font:1000 24px system-ui;margin-bottom:8px">FA WORLD SAVE</div>
           <div style="color:rgba(226,232,240,.74);margin-bottom:14px">Start load is saved history.</div>
           <input id="startup_profile_id" placeholder="Enter Unique ID" value="${savedId}" style="width:100%;box-sizing:border-box;padding:14px 16px;border-radius:14px;border:1px solid rgba(148,163,184,.22);background:rgba(2,6,23,.75);color:#fff;font:900 14px system-ui;outline:none" />
           <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
