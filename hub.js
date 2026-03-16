@@ -823,9 +823,9 @@
 
     const portals = [
       { key: "avoid", label: "AIRPLANE", status: "open", url: "https://faglobalxgp2024-design.github.io/index.html/", type: "arcade", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "shooting", label: "SHOOTING", status: "open", url: "https://faglobalxgp2024-design.github.io/-/", message: "슈팅게임에 GO IN하시겠습니까?", type: "tower", size: "L", x: 0, y: 0, w: 0, h: 0 },
+      { key: "shooting", label: "SHOOTING", status: "soon", url: "", message: "COMING SOON", type: "tower", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "archery", label: "ARCHERY", status: "soon", url: "", message: "COMING SOON", type: "tower", size: "L", x: 0, y: 0, w: 0, h: 0 },
-      { key: "janggi", label: "JANGGI", status: "open", url: "https://faglobalxgp2024-design.github.io/MINIGAME/", type: "dojo", size: "L", x: 0, y: 0, w: 0, h: 0 },
+      { key: "janggi", label: "JANGGI", status: "soon", url: "", message: "COMING SOON", type: "dojo", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "omok", label: "OMOK", status: "soon", url: "", message: "COMING SOON", type: "cafe", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "twitter", label: "TWITTER", status: "open", url: "https://x.com/FAGLOBAL_", type: "social", size: "L", x: 0, y: 0, w: 0, h: 0 },
       { key: "telegram", label: "TELEGRAM", status: "open", url: "https://t.me/faglobalgp", type: "social", size: "L", x: 0, y: 0, w: 0, h: 0 },
